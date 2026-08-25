@@ -1,0 +1,328 @@
+{
+  "data": [
+    {
+      "id": "page-home",
+      "title": "玩舞首页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 338,
+        "y": 346,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-08d71653",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/home.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "nav-booking",
+            "targetPageId": "page-booking",
+            "label": "TabBar → 课程预约"
+          },
+          {
+            "trigger": "click",
+            "domId": "cta-redeem-fab",
+            "targetPageId": "page-redeem",
+            "label": "FAB → 手办兑换"
+          },
+          {
+            "trigger": "click",
+            "domId": "nav-qa",
+            "targetPageId": "page-qa",
+            "label": "TabBar → 资讯问答"
+          },
+          {
+            "trigger": "click",
+            "domId": "nav-my",
+            "targetPageId": "page-my",
+            "label": "TabBar → 我的会员"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-booking",
+      "title": "课程预约",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 169,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1217,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-1d74aed6",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/booking.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "link-course-detail",
+            "targetPageId": "page-course-detail",
+            "label": "课程卡 → 课程详情"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-qa",
+      "title": "资讯问答",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 169,
+        "y": 692,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1446,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-657a622a",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/qa.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "cta-rank-more",
+            "targetPageId": "page-like-ranking",
+            "label": "点赞排行 → 排行榜"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-my",
+      "title": "我的会员",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 169,
+        "y": 1038,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-52535fa4",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/my.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "link-my-bookings",
+            "targetPageId": "page-my-bookings",
+            "label": "我的约课 → 我的约课页"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-course-detail",
+      "title": "课程详情",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1248,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-03a4e19b",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/course-detail.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "confirm-booking-ok",
+            "targetPageId": "page-booking",
+            "label": "确认预约 → 课程预约"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-my-bookings",
+      "title": "我的约课",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 0,
+        "y": 1038,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-d27f31a6",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/my-bookings.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "link-booking-course-1",
+            "targetPageId": "page-course-detail",
+            "label": "约课项 → 课程详情"
+          },
+          {
+            "trigger": "click",
+            "domId": "back-my",
+            "targetPageId": "page-my",
+            "label": "返回 → 我的会员"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-like-ranking",
+      "title": "点赞排行",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 0,
+        "y": 346,
+        "group": 1,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-6c9e6f7a",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/like-ranking.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "cta-upload",
+            "targetPageId": "page-qa-upload",
+            "label": "上传 CTA → 上传弹层"
+          },
+          {
+            "trigger": "click",
+            "domId": "back-qa",
+            "targetPageId": "page-qa",
+            "label": "返回 → 资讯问答"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-qa-upload",
+      "title": "点赞排行 · 上传视频",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 0,
+        "y": 692,
+        "group": 1,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-d01f5db8",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/qa-upload.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "uploadClose",
+            "targetPageId": "page-like-ranking",
+            "label": "关闭弹层 → 点赞排行"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-redeem",
+      "title": "玩舞首页 · 手办兑换",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 169,
+        "y": 346,
+        "group": 1,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 901,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-ddf50533",
+          "measuredAt": 1787369481453
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/redeem.html",
+        "interactions": [
+          {
+            "trigger": "click",
+            "domId": "redeemCloseBtn",
+            "targetPageId": "page-home",
+            "label": "关闭弹层 → 玩舞首页"
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "首页 Banner",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1787371200000,
+      "canvasData": {
+        "x": 0,
+        "y": 1384,
+        "naturalSize": {
+          "width": 2560,
+          "height": 1440
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/home-banner.jpg"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "mobile",
+    "projectName": "玩舞街舞小程序",
+    "designLibrary": null
+  }
+}

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的会员</title>
+    <style id="theme-vars">
+/* 玩舞街舞小程序 · 品牌样式（延续原型 BLACKPINK 黑粉潮酷基因） */
+
+:root {
+  /* 基础表面 */
+  --dance-background: #070708;
+  --dance-foreground: #ffffff;
+  --dance-card: #1a1a1d;
+  --dance-card-foreground: #ffffff;
+  --dance-popover: #1a1a1d;
+  --dance-popover-foreground: #ffffff;
+  --dance-muted: #2e2e33;
+  --dance-muted-foreground: #9a9aa2;
+  --dance-border: #2e2e33;
+  --dance-input: #1a1a1d;
+  --dance-surface: #141417;
+  --dance-surface-2: #222226;
+  --dance-text-tertiary: #6b6b73;
+
+  /* 品牌主色（唯一品牌色相：荧光粉） */
+  --dance-primary: #FF2D9B;
+  --dance-primary-foreground: #ffffff;
+  --dance-secondary: #FF6FB5;
+  --dance-primary-soft: rgba(255, 45, 155, 0.16);
+  --dance-primary-dark: #b3126b;
+  --dance-ring: #FF2D9B;
+
+  /* 语义状态色（仅状态使用） */
+  --dance-state-success: #3ecf8e;
+  --dance-state-success-soft: rgba(62, 207, 142, 0.14);
+  --dance-state-warning: #ffd166;
+  --dance-state-warning-bg: rgba(255, 209, 102, 0.1);
+  --dance-warning: #ffd166;
+  --dance-warning-bg: rgba(255, 209, 102, 0.1);
+
+  /* 圆角（克制层级） */
+  --dance-radius-sm: 8px;
+  --dance-radius-md: 12px;
+  --dance-radius-lg: 16px;
+  --dance-radius-xl: 20px;
+  --dance-radius-small: 8px;
+  --dance-radius-medium: 12px;
+  --dance-radius-large: 16px;
+
+  /* 阴影（静态表面以描边分层为主；深阴影仅用于浮动层） */
+  --dance-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --dance-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dance-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--dance-background);
+  --color-foreground: var(--dance-foreground);
+  --color-card: var(--dance-card);
+  --color-card-foreground: var(--dance-card-foreground);
+  --color-popover: var(--dance-popover);
+  --color-popover-foreground: var(--dance-popover-foreground);
+  --color-primary: var(--dance-primary);
+  --color-primary-foreground: var(--dance-primary-foreground);
+  --color-secondary: var(--dance-secondary);
+  --color-muted: var(--dance-muted);
+  --color-muted-foreground: var(--dance-muted-foreground);
+  --color-border: var(--dance-border);
+  --color-input: var(--dance-input);
+  --color-ring: var(--dance-ring);
+  --radius-sm: var(--dance-radius-sm);
+  --radius-md: var(--dance-radius-md);
+  --radius-lg: var(--dance-radius-lg);
+  --radius-xl: var(--dance-radius-xl);
+}
+
+@layer base {
+  body {
+    background-color: var(--dance-background);
+    color: var(--dance-foreground);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dance-background);
+    --color-foreground: var(--dance-foreground);
+    --color-card: var(--dance-card);
+    --color-card-foreground: var(--dance-card-foreground);
+    --color-popover: var(--dance-popover);
+    --color-popover-foreground: var(--dance-popover-foreground);
+    --color-primary: var(--dance-primary);
+    --color-primary-foreground: var(--dance-primary-foreground);
+    --color-secondary: var(--dance-secondary);
+    --color-muted: var(--dance-muted);
+    --color-muted-foreground: var(--dance-muted-foreground);
+    --color-border: var(--dance-border);
+    --color-input: var(--dance-input);
+    --color-ring: var(--dance-ring);
+    --radius-sm: var(--dance-radius-sm);
+    --radius-md: var(--dance-radius-md);
+    --radius-lg: var(--dance-radius-lg);
+    --radius-xl: var(--dance-radius-xl);
+  }
+  @layer base {
+    body { background: var(--dance-background); color: var(--dance-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dance-background); }
+      .text-background { color: var(--dance-background); }
+      .border-background { border-color: var(--dance-background); }
+      .ring-background { --tw-ring-color: var(--dance-background); }
+      .bg-foreground { background-color: var(--dance-foreground); }
+      .text-foreground { color: var(--dance-foreground); }
+      .border-foreground { border-color: var(--dance-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dance-foreground); }
+      .bg-card { background-color: var(--dance-card); }
+      .text-card { color: var(--dance-card); }
+      .border-card { border-color: var(--dance-card); }
+      .ring-card { --tw-ring-color: var(--dance-card); }
+      .bg-card-foreground { background-color: var(--dance-card-foreground); }
+      .text-card-foreground { color: var(--dance-card-foreground); }
+      .border-card-foreground { border-color: var(--dance-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dance-card-foreground); }
+      .bg-popover { background-color: var(--dance-popover); }
+      .text-popover { color: var(--dance-popover); }
+      .border-popover { border-color: var(--dance-popover); }
+      .ring-popover { --tw-ring-color: var(--dance-popover); }
+      .bg-popover-foreground { background-color: var(--dance-popover-foreground); }
+      .text-popover-foreground { color: var(--dance-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dance-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dance-popover-foreground); }
+      .bg-primary { background-color: var(--dance-primary); }
+      .text-primary { color: var(--dance-primary); }
+      .border-primary { border-color: var(--dance-primary); }
+      .ring-primary { --tw-ring-color: var(--dance-primary); }
+      .bg-primary-foreground { background-color: var(--dance-primary-foreground); }
+      .text-primary-foreground { color: var(--dance-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dance-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dance-primary-foreground); }
+      .bg-secondary { background-color: var(--dance-secondary); }
+      .text-secondary { color: var(--dance-secondary); }
+      .border-secondary { border-color: var(--dance-secondary); }
+      .ring-secondary { --tw-ring-color: var(--dance-secondary); }
+      .bg-muted { background-color: var(--dance-muted); }
+      .text-muted { color: var(--dance-muted); }
+      .border-muted { border-color: var(--dance-muted); }
+      .ring-muted { --tw-ring-color: var(--dance-muted); }
+      .bg-muted-foreground { background-color: var(--dance-muted-foreground); }
+      .text-muted-foreground { color: var(--dance-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dance-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dance-muted-foreground); }
+      .bg-border { background-color: var(--dance-border); }
+      .text-border { color: var(--dance-border); }
+      .border-border { border-color: var(--dance-border); }
+      .ring-border { --tw-ring-color: var(--dance-border); }
+      .bg-input { background-color: var(--dance-input); }
+      .text-input { color: var(--dance-input); }
+      .border-input { border-color: var(--dance-input); }
+      .ring-input { --tw-ring-color: var(--dance-input); }
+      .bg-ring { background-color: var(--dance-ring); }
+      .text-ring { color: var(--dance-ring); }
+      .border-ring { border-color: var(--dance-ring); }
+      .ring-ring { --tw-ring-color: var(--dance-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+      <!-- 渐变头部：编辑资料胶囊 + 径向粉色光晕 -->
+      <header class="my-header">
+        <button type="button" class="edit-pill" id="editProfile" aria-label="编辑资料">
+          <i data-lucide="pencil" class="ico-14"></i>编辑资料
+        </button>
+        <div class="profile-row">
+          <div class="avatar" aria-hidden="true">M</div>
+          <div class="profile-info">
+            <div class="profile-name">阿May<span class="member-tag">进阶</span></div>
+            <div class="profile-phone"><i data-lucide="smartphone" class="ico-12"></i>138****8888</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 顶部资产卡：课时余额 + 会员有效期 单卡合并展示 -->
+      <section class="asset-wrap" aria-label="会员资产">
+        <div class="asset-card">
+          <button type="button" class="recharge-pill" id="rechargeBtn">充值</button>
+          <div class="asset-cols">
+            <div class="asset-col asset-col-left">
+              <div class="asset-label">课时余额</div>
+              <div class="asset-value">12<span class="asset-unit">课时</span></div>
+            </div>
+            <div class="asset-divider" aria-hidden="true"></div>
+            <div class="asset-col asset-col-right">
+              <div class="asset-label">会员有效期</div>
+              <div class="asset-date">2026-09-10</div>
+              <div class="asset-days">剩 22 天</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 菜单卡：仅保留高频入口 -->
+      <h2 class="sec-title">常用功能</h2>
+      <nav class="menu-card" aria-label="常用功能">
+        <a class="menu-row" href="my-bookings.html" data-dom-id="link-my-bookings">
+          <span class="menu-ic"><i data-lucide="calendar-check" class="ico-18"></i></span>
+          <span class="menu-label">我的约课</span>
+          <span class="menu-side">2 待上课</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
+        </a>
+        <button type="button" class="menu-row" id="noticeRow">
+          <span class="menu-ic"><i data-lucide="bell" class="ico-18"></i></span>
+          <span class="menu-label">消息通知</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
+        </button>
+        <button type="button" class="menu-row" id="settingsRow">
+          <span class="menu-ic"><i data-lucide="settings" class="ico-18"></i></span>
+          <span class="menu-label">设置</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
+        </button>
+      </nav>
+
+      <footer class="page-foot">XX 街舞工作室 · 玩舞小程序 v1.0</footer>
+
+      <nav data-mobile-nav="global" class="app-tabbar grid-cols-5 h-[64px]" aria-label="底部导航"><a href="#" class="app-tab" data-nav-key="home" data-dom-id="nav-home"><i data-lucide="home" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">玩舞首页</span></a><a href="#" class="app-tab" data-nav-key="booking" data-dom-id="nav-booking"><i data-lucide="calendar-days" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">课程预约</span></a><a href="#" class="app-tab-fab" data-nav-key="redeem" data-dom-id="cta-redeem-fab" aria-label="手办兑换"><i data-lucide="gift" class="app-tab-fab-ico"></i><span class="app-tab-label whitespace-nowrap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">手办兑换</span></a><a href="#" class="app-tab" data-nav-key="qa" data-dom-id="nav-qa"><i data-lucide="messages-square" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">资讯问答</span></a><a href="#" class="app-tab" data-nav-key="my" data-active="true"><i data-lucide="user" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">我的会员</span></a></nav>
+
+      <!-- 联系客服底部弹层 -->
+      <div class="contact-overlay" id="contactOverlay" role="dialog" aria-modal="true" aria-label="联系客服">
+        <div class="contact-sheet">
+          <h3 class="contact-title">联系客服</h3>
+          <p class="contact-desc">请拨打电话购买续费：400-888-6688</p>
+          <button type="button" class="contact-ok" id="contactOk">我知道了</button>
+        </div>
+      </div>
+
+      <div class="page-toast" id="pageToast" role="status" aria-live="polite"></div>
+    </main>
+    <style>
+      /* 玩舞小程序 · 我的会员：关键布局静态样式（document-scroll / body 420px 居中） */
+      body { max-width: 420px; margin: 0 auto; }
+      .ico-12 { width: 12px; height: 12px; }
+      .ico-14 { width: 14px; height: 14px; }
+      .ico-18 { width: 18px; height: 18px; }
+
+      /* 渐变头部 */
+      .my-header {
+        position: relative;
+        background: linear-gradient(150deg, var(--dance-primary-dark), #6e0f44 45%, #1a0a12);
+        padding: 16px 16px 34px;
+        overflow: hidden;
+      }
+      .my-header::after {
+        content: "";
+        position: absolute;
+        right: -36px;
+        top: -36px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 45, 155, 0.45), transparent 70%);
+        pointer-events: none;
+      }
+      .edit-pill {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: none;
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--dance-foreground);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background-color 0.15s;
+      }
+      .edit-pill:hover { background: rgba(0, 0, 0, 0.4); }
+      .edit-pill:active { transform: scale(0.97); }
+      .edit-pill:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+
+      /* 资料行 */
+      .profile-row { position: relative; z-index: 2; display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+      .avatar {
+        width: 62px;
+        height: 62px;
+        flex: none;
+        border-radius: 50%;
+        border: 2px solid var(--dance-foreground);
+        background: var(--dance-primary-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--dance-foreground);
+      }
+      .profile-info { min-width: 0; }
+      .profile-name { display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 900; color: var(--dance-foreground); }
+      .member-tag {
+        flex: none;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        padding: 4px 9px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.18);
+        color: var(--dance-foreground);
+      }
+      .profile-phone { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 12px; color: rgba(255, 255, 255, 0.75); }
+
+      /* 顶部资产卡（负 margin 上浮压住头部底部） */
+      .asset-wrap { position: relative; z-index: 3; margin: -18px 16px 0; }
+      .asset-card {
+        position: relative;
+        background: var(--dance-card);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        padding: 14px 16px 16px;
+        box-shadow: var(--dance-shadow-2);
+        animation: cardRise 0.32s cubic-bezier(0.3, 0, 0, 1) both;
+      }
+      .asset-cols { display: flex; align-items: stretch; }
+      .asset-col-left { flex: none; width: 132px; }
+      .asset-divider { flex: none; width: 1px; background: var(--dance-border); margin: 2px 16px; }
+      .asset-col-right { flex: 1; min-width: 0; padding-right: 58px; }
+      .asset-label { font-size: 12px; color: var(--dance-muted-foreground); }
+      .asset-value { margin-top: 4px; font-size: 26px; font-weight: 900; line-height: 1.15; color: var(--dance-foreground); font-variant-numeric: tabular-nums; }
+      .asset-unit { font-size: 12px; font-weight: 400; color: var(--dance-muted-foreground); margin-left: 4px; }
+      .asset-date { margin-top: 5px; font-size: 22px; font-weight: 900; line-height: 1.15; color: var(--dance-foreground); font-variant-numeric: tabular-nums; }
+      .asset-days { margin-top: 4px; font-size: 11px; color: var(--dance-warning); }
+      .recharge-pill {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border: none;
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        color: var(--dance-primary-foreground);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        box-shadow: var(--dance-shadow-float);
+        transition: transform 0.15s;
+      }
+      .recharge-pill:hover { transform: translateY(-1px); }
+      .recharge-pill:active { transform: scale(0.96); }
+      .recharge-pill:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+
+      /* 小节标题：粉竖条前缀 */
+      .sec-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 22px 16px 10px;
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--dance-foreground);
+      }
+      .sec-title::before {
+        content: "";
+        width: 4px;
+        height: 14px;
+        background: var(--dance-primary);
+        border-radius: 2px;
+      }
+
+      /* 菜单卡 */
+      .menu-card {
+        margin: 0 16px;
+        background: var(--dance-card);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        overflow: hidden;
+      }
+      .menu-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 15px 16px;
+        border: none;
+        border-bottom: 1px solid var(--dance-border);
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.15s;
+      }
+      .menu-row:last-child { border-bottom: none; }
+      .menu-row:hover, .menu-row:active { background: var(--dance-surface-2); }
+      .menu-row:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: -2px; }
+      .menu-ic { flex: none; width: 24px; display: flex; justify-content: center; color: var(--dance-secondary); }
+      .menu-label { flex: 1; min-width: 0; text-align: left; font-size: 14px; color: var(--dance-foreground); }
+      .menu-side { flex: none; font-size: 12px; color: var(--dance-muted-foreground); }
+      .menu-arrow { flex: none; font-size: 16px; line-height: 1; color: var(--dance-text-tertiary); }
+
+      .page-foot { text-align: center; font-size: 11px; color: var(--dance-text-tertiary); padding: 24px 0 16px; }
+
+      /* 底部 TabBar（文档流末尾，5 槽 + 中央 FAB） */
+      .app-tabbar {
+        height: 64px;
+        background: var(--dance-surface);
+        border-top: 1px solid var(--dance-border);
+        display: flex;
+        align-items: center;
+      }
+      .app-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        text-decoration: none;
+        color: var(--dance-muted-foreground);
+        font-size: 11px;
+        transition: color 0.15s;
+      }
+      .app-tab-ico { width: 20px; height: 20px; }
+      .app-tab-label { line-height: 1; }
+      .app-tab[data-active="true"] { color: var(--dance-secondary); }
+      .app-tab:active .app-tab-ico { transform: scale(1.08); }
+      .app-tab:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: -4px; border-radius: 8px; }
+      .app-tab-fab {
+        position: relative;
+        top: -18px;
+        flex: none;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 4px solid var(--dance-surface);
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        box-shadow: var(--dance-shadow-float);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      .app-tab-fab:active { transform: scale(0.92); }
+      .app-tab-fab:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 3px; }
+      .app-tab-fab-ico { width: 24px; height: 24px; color: var(--dance-primary-foreground); }
+
+      /* 联系客服底部弹层 */
+      .contact-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .contact-overlay.show { display: flex; animation: fadeIn 0.2s ease; }
+      .contact-sheet {
+        width: 100%;
+        max-width: 420px;
+        background: var(--dance-card);
+        border-radius: 20px 20px 0 0;
+        padding: 20px 20px 28px;
+        box-shadow: var(--dance-shadow-2);
+        animation: sheetUp 0.28s cubic-bezier(0.3, 0, 0, 1);
+      }
+      .contact-title { text-align: center; font-size: 17px; font-weight: 800; color: var(--dance-foreground); margin: 0 0 10px; }
+      .contact-desc { text-align: center; font-size: 13px; line-height: 1.6; color: var(--dance-muted-foreground); margin: 0 0 20px; }
+      .contact-ok {
+        width: 100%;
+        border: none;
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        color: var(--dance-primary-foreground);
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        padding: 12px;
+        border-radius: var(--dance-radius-md);
+        box-shadow: var(--dance-shadow-float);
+        cursor: pointer;
+        transition: transform 0.15s;
+      }
+      .contact-ok:active { transform: scale(0.98); }
+      .contact-ok:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+
+      /* Toast */
+      .page-toast {
+        position: fixed;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 70;
+        background: rgba(0, 0, 0, 0.85);
+        color: var(--dance-foreground);
+        font-size: 14px;
+        padding: 12px 24px;
+        border-radius: 10px;
+        display: none;
+      }
+      .page-toast.show { display: block; animation: fadeIn 0.2s ease; }
+
+      @keyframes cardRise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+    <script>
+      (function () {
+        var toastEl = document.getElementById('pageToast');
+        var toastTimer = null;
+        function showToast(msg) {
+          toastEl.textContent = msg;
+          toastEl.classList.add('show');
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+        }
+
+        var overlay = document.getElementById('contactOverlay');
+        function openContact() { overlay.classList.add('show'); }
+        function closeContact() { overlay.classList.remove('show'); }
+
+        document.getElementById('rechargeBtn').addEventListener('click', openContact);
+        document.getElementById('contactOk').addEventListener('click', closeContact);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) closeContact(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeContact(); });
+
+        document.getElementById('editProfile').addEventListener('click', function () { showToast('编辑个人资料'); });
+        document.getElementById('noticeRow').addEventListener('click', function () { showToast('查看消息通知'); });
+        document.getElementById('settingsRow').addEventListener('click', function () { showToast('设置 / 关于'); });
+      })();
+    </script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

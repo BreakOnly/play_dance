@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资讯问答</title>
+    <style id="theme-vars">
+/* 玩舞街舞小程序 · 品牌样式（延续原型 BLACKPINK 黑粉潮酷基因） */
+
+:root {
+  /* 基础表面 */
+  --dance-background: #070708;
+  --dance-foreground: #ffffff;
+  --dance-card: #1a1a1d;
+  --dance-card-foreground: #ffffff;
+  --dance-popover: #1a1a1d;
+  --dance-popover-foreground: #ffffff;
+  --dance-muted: #2e2e33;
+  --dance-muted-foreground: #9a9aa2;
+  --dance-border: #2e2e33;
+  --dance-input: #1a1a1d;
+  --dance-surface: #141417;
+  --dance-surface-2: #222226;
+  --dance-text-tertiary: #6b6b73;
+
+  /* 品牌主色（唯一品牌色相：荧光粉） */
+  --dance-primary: #FF2D9B;
+  --dance-primary-foreground: #ffffff;
+  --dance-secondary: #FF6FB5;
+  --dance-primary-soft: rgba(255, 45, 155, 0.16);
+  --dance-primary-dark: #b3126b;
+  --dance-ring: #FF2D9B;
+
+  /* 语义状态色（仅状态使用） */
+  --dance-state-success: #3ecf8e;
+  --dance-state-success-soft: rgba(62, 207, 142, 0.14);
+  --dance-state-warning: #ffd166;
+  --dance-state-warning-bg: rgba(255, 209, 102, 0.1);
+  --dance-warning: #ffd166;
+  --dance-warning-bg: rgba(255, 209, 102, 0.1);
+
+  /* 圆角（克制层级） */
+  --dance-radius-sm: 8px;
+  --dance-radius-md: 12px;
+  --dance-radius-lg: 16px;
+  --dance-radius-xl: 20px;
+  --dance-radius-small: 8px;
+  --dance-radius-medium: 12px;
+  --dance-radius-large: 16px;
+
+  /* 阴影（静态表面以描边分层为主；深阴影仅用于浮动层） */
+  --dance-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --dance-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dance-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--dance-background);
+  --color-foreground: var(--dance-foreground);
+  --color-card: var(--dance-card);
+  --color-card-foreground: var(--dance-card-foreground);
+  --color-popover: var(--dance-popover);
+  --color-popover-foreground: var(--dance-popover-foreground);
+  --color-primary: var(--dance-primary);
+  --color-primary-foreground: var(--dance-primary-foreground);
+  --color-secondary: var(--dance-secondary);
+  --color-muted: var(--dance-muted);
+  --color-muted-foreground: var(--dance-muted-foreground);
+  --color-border: var(--dance-border);
+  --color-input: var(--dance-input);
+  --color-ring: var(--dance-ring);
+  --radius-sm: var(--dance-radius-sm);
+  --radius-md: var(--dance-radius-md);
+  --radius-lg: var(--dance-radius-lg);
+  --radius-xl: var(--dance-radius-xl);
+}
+
+@layer base {
+  body {
+    background-color: var(--dance-background);
+    color: var(--dance-foreground);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dance-background);
+    --color-foreground: var(--dance-foreground);
+    --color-card: var(--dance-card);
+    --color-card-foreground: var(--dance-card-foreground);
+    --color-popover: var(--dance-popover);
+    --color-popover-foreground: var(--dance-popover-foreground);
+    --color-primary: var(--dance-primary);
+    --color-primary-foreground: var(--dance-primary-foreground);
+    --color-secondary: var(--dance-secondary);
+    --color-muted: var(--dance-muted);
+    --color-muted-foreground: var(--dance-muted-foreground);
+    --color-border: var(--dance-border);
+    --color-input: var(--dance-input);
+    --color-ring: var(--dance-ring);
+    --radius-sm: var(--dance-radius-sm);
+    --radius-md: var(--dance-radius-md);
+    --radius-lg: var(--dance-radius-lg);
+    --radius-xl: var(--dance-radius-xl);
+  }
+  @layer base {
+    body { background: var(--dance-background); color: var(--dance-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dance-background); }
+      .text-background { color: var(--dance-background); }
+      .border-background { border-color: var(--dance-background); }
+      .ring-background { --tw-ring-color: var(--dance-background); }
+      .bg-foreground { background-color: var(--dance-foreground); }
+      .text-foreground { color: var(--dance-foreground); }
+      .border-foreground { border-color: var(--dance-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dance-foreground); }
+      .bg-card { background-color: var(--dance-card); }
+      .text-card { color: var(--dance-card); }
+      .border-card { border-color: var(--dance-card); }
+      .ring-card { --tw-ring-color: var(--dance-card); }
+      .bg-card-foreground { background-color: var(--dance-card-foreground); }
+      .text-card-foreground { color: var(--dance-card-foreground); }
+      .border-card-foreground { border-color: var(--dance-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dance-card-foreground); }
+      .bg-popover { background-color: var(--dance-popover); }
+      .text-popover { color: var(--dance-popover); }
+      .border-popover { border-color: var(--dance-popover); }
+      .ring-popover { --tw-ring-color: var(--dance-popover); }
+      .bg-popover-foreground { background-color: var(--dance-popover-foreground); }
+      .text-popover-foreground { color: var(--dance-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dance-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dance-popover-foreground); }
+      .bg-primary { background-color: var(--dance-primary); }
+      .text-primary { color: var(--dance-primary); }
+      .border-primary { border-color: var(--dance-primary); }
+      .ring-primary { --tw-ring-color: var(--dance-primary); }
+      .bg-primary-foreground { background-color: var(--dance-primary-foreground); }
+      .text-primary-foreground { color: var(--dance-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dance-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dance-primary-foreground); }
+      .bg-secondary { background-color: var(--dance-secondary); }
+      .text-secondary { color: var(--dance-secondary); }
+      .border-secondary { border-color: var(--dance-secondary); }
+      .ring-secondary { --tw-ring-color: var(--dance-secondary); }
+      .bg-muted { background-color: var(--dance-muted); }
+      .text-muted { color: var(--dance-muted); }
+      .border-muted { border-color: var(--dance-muted); }
+      .ring-muted { --tw-ring-color: var(--dance-muted); }
+      .bg-muted-foreground { background-color: var(--dance-muted-foreground); }
+      .text-muted-foreground { color: var(--dance-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dance-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dance-muted-foreground); }
+      .bg-border { background-color: var(--dance-border); }
+      .text-border { color: var(--dance-border); }
+      .border-border { border-color: var(--dance-border); }
+      .ring-border { --tw-ring-color: var(--dance-border); }
+      .bg-input { background-color: var(--dance-input); }
+      .text-input { color: var(--dance-input); }
+      .border-input { border-color: var(--dance-input); }
+      .ring-input { --tw-ring-color: var(--dance-input); }
+      .bg-ring { background-color: var(--dance-ring); }
+      .text-ring { color: var(--dance-ring); }
+      .border-ring { border-color: var(--dance-ring); }
+      .ring-ring { --tw-ring-color: var(--dance-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+      <!-- 页面标题区 -->
+      <header class="page-head">
+        <h1 class="page-title">资讯问答</h1>
+        <p class="page-sub">看视频 · 查排行 · 问老师同学</p>
+      </header>
+
+      <!-- 视频推荐（后台推荐位） -->
+      <section class="sec sec-anim" style="animation-delay:.02s">
+        <div class="sec-head">
+          <h2 class="sec-title">视频推荐</h2>
+          <span class="sec-note">内容由工作室后台推荐</span>
+        </div>
+        <div class="video-grid">
+          <button type="button" class="video-card" data-toast="视频播放演示">
+            <span class="video-thumb"><i data-lucide="play" class="i20"></i><span class="video-dur">09:47</span></span>
+            <span class="video-info"><b>Smart - LE SSERAFIM</b><span>10 分钟 · 重点动作教学 · 3.2k 赞</span></span>
+          </button>
+          <button type="button" class="video-card" data-toast="视频播放演示">
+            <span class="video-thumb"><i data-lucide="play" class="i20"></i><span class="video-dur">12:03</span></span>
+            <span class="video-info"><b>Pink Venom - BLACKPINK</b><span>12 分钟 · 副歌翻跳 · 2.8k 赞</span></span>
+          </button>
+          <button type="button" class="video-card" data-toast="视频播放演示">
+            <span class="video-thumb"><i data-lucide="play" class="i20"></i><span class="video-dur">17:22</span></span>
+            <span class="video-info"><b>How You Like That</b><span>18 分钟 · 完整版教学 · 1.5k 赞</span></span>
+          </button>
+          <button type="button" class="video-card" data-toast="视频播放演示">
+            <span class="video-thumb"><i data-lucide="play" class="i20"></i><span class="video-dur">13:58</span></span>
+            <span class="video-info"><b>Standing Next to You</b><span>14 分钟 · Jung Kook 翻跳 · 2.1k 赞</span></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 点赞排行（入口，查看全部进入独立排行页） -->
+      <section class="sec sec-anim" style="animation-delay:.08s">
+        <div class="sec-head">
+          <h2 class="sec-title">点赞排行</h2>
+          <a href="like-ranking.html" class="link-more" data-dom-id="cta-rank-more">查看全部 ›</a>
+        </div>
+        <ul class="rank-list">
+          <li class="rank-item">
+            <span class="rank-num top">1</span>
+            <span class="rank-thumb"><i data-lucide="play" class="i16"></i></span>
+            <span class="rank-info"><b>Smart - LE SSERAFIM</b><span>10 分钟 · 重点动作教学</span></span>
+            <span class="rank-like"><i data-lucide="heart" class="i16"></i>3.2k</span>
+          </li>
+          <li class="rank-item">
+            <span class="rank-num top">2</span>
+            <span class="rank-thumb"><i data-lucide="play" class="i16"></i></span>
+            <span class="rank-info"><b>Pink Venom - BLACKPINK</b><span>12 分钟 · 副歌翻跳</span></span>
+            <span class="rank-like"><i data-lucide="heart" class="i16"></i>2.8k</span>
+          </li>
+          <li class="rank-item">
+            <span class="rank-num top">3</span>
+            <span class="rank-thumb"><i data-lucide="play" class="i16"></i></span>
+            <span class="rank-info"><b>Standing Next to You</b><span>14 分钟 · Jung Kook 翻跳</span></span>
+            <span class="rank-like"><i data-lucide="heart" class="i16"></i>2.1k</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 问答 Q&A -->
+      <section class="sec sec-anim" style="animation-delay:.14s">
+        <div class="sec-head">
+          <h2 class="sec-title">问答 Q&amp;A</h2>
+        </div>
+        <button type="button" class="qa-input-bar" data-toast="发布问题演示">
+          <i data-lucide="edit-3" class="i16 qa-bar-ico"></i>
+          <span>有问题？点击发布，老师和同学都会帮你解答</span>
+        </button>
+        <article class="qa-card">
+          <div class="qa-author">
+            <span class="qa-avatar">M</span>
+            <div class="qa-meta">
+              <b>阿May</b>
+              <span>2小时前 · 零基础提问</span>
+            </div>
+          </div>
+          <p class="qa-content">第一次上 Hiphop 课需要准备什么鞋子吗？看大家穿的都不太一样。</p>
+          <div class="qa-img" aria-hidden="true"><i data-lucide="image" class="i20"></i></div>
+          <div class="qa-actions">
+            <button type="button" class="qa-act" data-toast="回答列表演示"><i data-lucide="message-circle" class="i16"></i>3 回答</button>
+            <button type="button" class="qa-act" data-toast="点赞演示 +1"><i data-lucide="heart" class="i16"></i>12 赞</button>
+          </div>
+          <div class="qa-comments">
+            <p class="qa-comment"><b>Lina 老师：</b>建议穿平底运动鞋或板鞋，鞋底不要太厚，方便感受地面。</p>
+            <p class="qa-comment"><b>小K：</b>我穿匡威来的，没问题。</p>
+          </div>
+        </article>
+        <button type="button" class="more-btn" data-toast="查看更多问答演示">查看更多</button>
+      </section>
+
+      <footer class="page-foot">XX 街舞工作室 · 玩舞小程序</footer>
+
+      <!-- 底部导航（文档流末尾） -->
+      <nav data-mobile-nav="global" class="app-tabbar grid-cols-5 h-[64px]" aria-label="底部导航"><a href="#" class="app-tab" data-nav-key="home" data-dom-id="nav-home"><i data-lucide="home" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">玩舞首页</span></a><a href="#" class="app-tab" data-nav-key="booking" data-dom-id="nav-booking"><i data-lucide="calendar-days" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">课程预约</span></a><a href="#" class="app-tab-fab" data-nav-key="redeem" data-dom-id="cta-redeem-fab" aria-label="手办兑换"><i data-lucide="gift" class="app-tab-fab-ico"></i><span class="app-tab-label whitespace-nowrap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">手办兑换</span></a><a href="#" class="app-tab" data-nav-key="qa" data-active="true"><i data-lucide="messages-square" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">资讯问答</span></a><a href="#" class="app-tab" data-nav-key="my" data-dom-id="nav-my"><i data-lucide="user" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">我的会员</span></a></nav>
+    </main>
+    <style id="critical-layout">
+      /* ===== 玩舞小程序 · 资讯问答页 · 静态关键布局（CSS-first，无第三方动画库） ===== */
+      html { -webkit-text-size-adjust: 100%; }
+      body { max-width: 420px; margin: 0 auto; }
+
+      /* 图标尺寸（16 / 20 / 24 固定档） */
+      .i16, svg.i16 { width: 16px; height: 16px; flex: none; }
+      .i20, svg.i20 { width: 20px; height: 20px; flex: none; }
+
+      /* 焦点可见性 */
+      button:focus-visible, a:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+
+      /* 页面标题区 */
+      .page-head { padding: 22px 16px 4px; }
+      .page-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--dance-foreground); }
+      .page-sub { margin: 6px 0 0; font-size: 12px; color: var(--dance-muted-foreground); }
+
+      /* 小节标题（粉色竖条前缀） */
+      .sec { margin-top: 26px; }
+      .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 16px; margin-bottom: 12px; }
+      .sec-title { margin: 0; font-size: 15px; font-weight: 800; color: var(--dance-foreground); }
+      .sec-title::before { content: ""; display: inline-block; width: 4px; height: 14px; background: var(--dance-primary); border-radius: 2px; margin-right: 7px; vertical-align: -2px; }
+      .sec-note { font-size: 11px; color: var(--dance-text-tertiary); }
+
+      /* 视频推荐宫格（2 列 x 2 行） */
+      .video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0 16px; }
+      .video-card { appearance: none; -webkit-appearance: none; display: block; width: 100%; margin: 0; padding: 0; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-card); color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; transition: transform .15s cubic-bezier(.2,.8,.2,1), border-color .15s; }
+      .video-card:active { transform: scale(.97); border-color: var(--dance-primary); }
+      .video-thumb { position: relative; display: flex; align-items: center; justify-content: center; height: 88px; background: linear-gradient(135deg, #2a0f1f, var(--dance-card)); color: var(--dance-primary); }
+      .video-dur { position: absolute; right: 8px; bottom: 8px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.55); color: var(--dance-foreground); font-size: 11px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+      .video-info { display: block; padding: 9px 10px 10px; }
+      .video-info b { display: block; font-size: 13px; font-weight: 700; color: var(--dance-foreground); line-height: 1.35; word-break: break-word; }
+      .video-info span { display: block; margin-top: 3px; font-size: 11px; color: var(--dance-muted-foreground); }
+
+      /* 查看全部入口 */
+      .link-more { flex: none; font-size: 13px; font-weight: 700; color: var(--dance-secondary); text-decoration: none; }
+      .link-more:active { opacity: .7; }
+
+      /* 点赞排行摘要（Top3 行卡） */
+      .rank-list { list-style: none; margin: 0; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+      .rank-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-card); }
+      .rank-num { flex: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: var(--dance-surface-2); color: var(--dance-muted-foreground); }
+      .rank-num.top { background: var(--dance-primary); color: var(--dance-primary-foreground); }
+      .rank-thumb { flex: none; width: 48px; height: 48px; border-radius: var(--dance-radius-sm); background: linear-gradient(135deg, #2a0f1f, var(--dance-card)); display: flex; align-items: center; justify-content: center; color: var(--dance-primary); }
+      .rank-info { flex: 1; min-width: 0; }
+      .rank-info b { display: block; font-size: 14px; font-weight: 700; color: var(--dance-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .rank-info span { display: block; margin-top: 2px; font-size: 11px; color: var(--dance-muted-foreground); }
+      .rank-like { flex: none; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--dance-secondary); font-variant-numeric: tabular-nums; }
+
+      /* 问答区 */
+      .qa-input-bar { appearance: none; -webkit-appearance: none; display: flex; align-items: center; gap: 10px; width: calc(100% - 32px); margin: 0 16px; padding: 12px 14px; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-card); color: var(--dance-muted-foreground); font: inherit; font-size: 13px; text-align: left; cursor: pointer; transition: border-color .15s; }
+      .qa-input-bar:active { border-color: var(--dance-primary); }
+      .qa-bar-ico { color: var(--dance-secondary); }
+      .qa-card { margin: 12px 16px 0; padding: 14px; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-card); }
+      .qa-author { display: flex; align-items: center; gap: 10px; }
+      .qa-avatar { flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--dance-primary-soft); color: var(--dance-secondary); font-size: 14px; font-weight: 700; }
+      .qa-meta { min-width: 0; }
+      .qa-meta b { display: block; font-size: 14px; font-weight: 700; color: var(--dance-foreground); }
+      .qa-meta span { display: block; margin-top: 1px; font-size: 11px; color: var(--dance-muted-foreground); }
+      .qa-content { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--dance-foreground); }
+      .qa-img { width: 120px; height: 120px; margin-top: 10px; border-radius: var(--dance-radius-sm); background: var(--dance-surface-2); display: flex; align-items: center; justify-content: center; color: var(--dance-text-tertiary); }
+      .qa-actions { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--dance-border); }
+      .qa-act { appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; margin: 0; border: none; background: transparent; color: var(--dance-muted-foreground); font: inherit; font-size: 12px; cursor: pointer; }
+      .qa-act svg { color: var(--dance-secondary); transition: transform .15s cubic-bezier(.2,.8,.2,1); }
+      .qa-act:active { color: var(--dance-foreground); }
+      .qa-act:active svg { transform: scale(1.25); }
+      .qa-comments { margin-top: 12px; padding: 10px 12px; border-radius: var(--dance-radius-sm); background: var(--dance-surface); }
+      .qa-comment { margin: 0 0 6px; font-size: 12px; line-height: 1.55; color: var(--dance-muted-foreground); }
+      .qa-comment:last-child { margin-bottom: 0; }
+      .qa-comment b { color: var(--dance-secondary); font-weight: 700; }
+      .more-btn { appearance: none; -webkit-appearance: none; display: block; width: calc(100% - 32px); margin: 10px 16px 0; padding: 10px; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: transparent; color: var(--dance-muted-foreground); font: inherit; font-size: 13px; text-align: center; cursor: pointer; transition: background-color .15s, color .15s; }
+      .more-btn:active { background: var(--dance-surface-2); color: var(--dance-foreground); }
+
+      /* 页脚 */
+      .page-foot { margin-top: 28px; padding: 0 16px; text-align: center; font-size: 11px; color: var(--dance-text-tertiary); }
+
+      /* 底部 TabBar（文档流末尾，5 槽 + 中央粉色 FAB） */
+      .app-tabbar { display: flex; align-items: center; height: 64px; margin-top: 18px; padding: 0 8px; background: var(--dance-surface); border-top: 1px solid var(--dance-border); }
+      .app-tab { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; color: var(--dance-muted-foreground); text-decoration: none; transition: color .15s; }
+      .app-tab-ico, svg.app-tab-ico { width: 20px; height: 20px; }
+      .app-tab-label { font-size: 11px; line-height: 1; }
+      .app-tab[data-active="true"], .app-tab:active { color: var(--dance-secondary); }
+      .app-tab-fab { position: relative; top: -18px; flex: none; width: 56px; height: 56px; margin: 0 4px; border: 4px solid var(--dance-surface); border-radius: 50%; background: linear-gradient(135deg, var(--dance-primary), var(--dance-secondary)); color: var(--dance-primary-foreground); display: flex; align-items: center; justify-content: center; box-shadow: var(--dance-shadow-float); cursor: pointer; transition: transform .15s cubic-bezier(.2,.8,.2,1); }
+      .app-tab-fab:active { transform: scale(.92); }
+      .app-tab-fab-ico, svg.app-tab-fab-ico { width: 24px; height: 24px; }
+
+      /* 首屏入场动效 + Toast */
+      @keyframes sec-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+      .sec-anim { animation: sec-rise .32s cubic-bezier(.3,0,0,1) both; }
+      #app-toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(6px); padding: 8px 16px; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-popover); color: var(--dance-foreground); font-size: 13px; box-shadow: var(--dance-shadow-2); opacity: 0; pointer-events: none; z-index: 60; transition: opacity .2s, transform .2s; }
+      #app-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      /* 悬停反馈（触屏不依赖） */
+      @media (hover: hover) {
+        .video-card:hover { border-color: var(--dance-primary); }
+        .link-more:hover { opacity: .8; }
+        .qa-input-bar:hover { border-color: var(--dance-primary); }
+        .qa-act:hover { color: var(--dance-foreground); }
+        .more-btn:hover { color: var(--dance-foreground); border-color: var(--dance-muted); }
+      }
+
+      /* 动效降级 */
+      @media (prefers-reduced-motion: reduce) {
+        .sec-anim { animation-duration: .01ms; }
+        .video-card, .qa-act svg, .app-tab-fab, #app-toast { transition-duration: .01ms; }
+      }
+    </style>
+    <script>
+      (function () {
+        var toastTimer = null;
+        function showToast(msg) {
+          var el = document.getElementById('app-toast');
+          if (!el) {
+            el = document.createElement('div');
+            el.id = 'app-toast';
+            el.setAttribute('role', 'status');
+            document.body.appendChild(el);
+          }
+          el.textContent = msg;
+          el.classList.add('show');
+          if (toastTimer) { clearTimeout(toastTimer); }
+          toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1800);
+        }
+        document.querySelectorAll('[data-toast]').forEach(function (node) {
+          node.addEventListener('click', function (e) {
+            e.preventDefault();
+            showToast(node.getAttribute('data-toast'));
+          });
+        });
+        document.querySelectorAll('a[href="#"]').forEach(function (node) {
+          node.addEventListener('click', function (e) { e.preventDefault(); });
+        });
+      })();
+    </script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

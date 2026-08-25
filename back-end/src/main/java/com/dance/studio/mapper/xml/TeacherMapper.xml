@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.TeacherMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Teacher">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="phone" property="phone"/>
+        <result column="avatar" property="avatar"/>
+        <result column="intro" property="intro"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="listByStore" resultMap="BaseMap">
+        SELECT * FROM teacher
+        WHERE store_id = #{storeId}
+        <if test="onlyEnabled">AND status = 1</if>
+        ORDER BY id DESC
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM teacher WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teacher (store_id, name, phone, avatar, intro, status)
+        VALUES (#{storeId}, #{name}, #{phone}, #{avatar}, #{intro}, COALESCE(#{status},1))
+    </insert>
+
+    <update id="update">
+        UPDATE teacher
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="intro != null">intro = #{intro},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM teacher WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+</mapper>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.CourseMapper">
+
+    <resultMap id="EntityMap" type="com.dance.studio.entity.Course">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="dance_type_id" property="danceTypeId"/>
+        <result column="level_id" property="levelId"/>
+        <result column="duration_min" property="durationMin"/>
+        <result column="price" property="price"/>
+        <result column="cost_hours" property="costHours"/>
+        <result column="cover" property="cover"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="VoMap" type="com.dance.studio.vo.CourseVo">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="dance_type_id" property="danceTypeId"/>
+        <result column="dance_type_name" property="danceTypeName"/>
+        <result column="level_id" property="levelId"/>
+        <result column="level_name" property="levelName"/>
+        <result column="duration_min" property="durationMin"/>
+        <result column="price" property="price"/>
+        <result column="cost_hours" property="costHours"/>
+        <result column="cover" property="cover"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <sql id="voSelect">
+        SELECT c.id, c.name, c.type, c.dance_type_id, dt.name AS dance_type_name,
+               c.level_id, lv.name AS level_name, c.duration_min, c.price, c.cost_hours,
+               c.cover, c.description, c.status
+        FROM course c
+        LEFT JOIN dance_type dt ON dt.id = c.dance_type_id
+        LEFT JOIN course_level lv ON lv.id = c.level_id
+    </sql>
+
+    <select id="list" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE c.store_id = #{storeId}
+        <if test="type != null and type != ''">AND c.type = #{type}</if>
+        <if test="danceTypeId != null">AND c.dance_type_id = #{danceTypeId}</if>
+        <if test="status != null">AND c.status = #{status}</if>
+        ORDER BY c.id DESC
+    </select>
+
+    <select id="findVoById" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE c.id = #{id}
+    </select>
+
+    <select id="findById" resultMap="EntityMap">
+        SELECT * FROM course WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course (store_id, name, type, dance_type_id, level_id, duration_min,
+                            price, cost_hours, cover, description, status)
+        VALUES (#{storeId}, #{name}, COALESCE(#{type},'group'), #{danceTypeId}, #{levelId},
+                COALESCE(#{durationMin},60), COALESCE(#{price},0), COALESCE(#{costHours},1),
+                #{cover}, #{description}, COALESCE(#{status},1))
+    </insert>
+
+    <update id="update">
+        UPDATE course
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="danceTypeId != null">dance_type_id = #{danceTypeId},</if>
+            <if test="levelId != null">level_id = #{levelId},</if>
+            <if test="durationMin != null">duration_min = #{durationMin},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="costHours != null">cost_hours = #{costHours},</if>
+            <if test="cover != null">cover = #{cover},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM course WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+</mapper>

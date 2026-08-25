@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.DashboardMapper">
+
+    <select id="overview" resultType="java.util.LinkedHashMap">
+        SELECT
+          (SELECT IFNULL(SUM(amount),0) FROM recharge_order
+             WHERE store_id = #{storeId}
+             <if test="from != null">AND created_at &gt;= #{from}</if>
+             <if test="to != null">AND created_at &lt; #{to}</if>) AS revenue,
+          (SELECT IFNULL(SUM(hours+gift_hours),0) FROM recharge_order
+             WHERE store_id = #{storeId}
+             <if test="from != null">AND created_at &gt;= #{from}</if>
+             <if test="to != null">AND created_at &lt; #{to}</if>) AS rechargeHours,
+          (SELECT COUNT(*) FROM checkin
+             WHERE store_id = #{storeId}
+             <if test="from != null">AND check_time &gt;= #{from}</if>
+             <if test="to != null">AND check_time &lt; #{to}</if>) AS checkinCount,
+          (SELECT COUNT(DISTINCT student_id) FROM checkin
+             WHERE store_id = #{storeId}
+             <if test="from != null">AND check_time &gt;= #{from}</if>
+             <if test="to != null">AND check_time &lt; #{to}</if>) AS activeStudents,
+          (SELECT COUNT(*) FROM student WHERE store_id = #{storeId} AND status = 1) AS studentTotal
+    </select>
+
+    <select id="lowHoursStudents" resultType="java.util.LinkedHashMap">
+        SELECT id, name, phone, course_balance AS courseBalance, points_balance AS pointsBalance
+        FROM student
+        WHERE store_id = #{storeId} AND status = 1 AND course_balance &lt;= #{threshold}
+        ORDER BY course_balance
+    </select>
+
+    <select id="inactiveStudents" resultType="java.util.LinkedHashMap">
+        SELECT s.id, s.name, s.phone,
+               (SELECT MAX(ck.check_time) FROM checkin ck WHERE ck.student_id = s.id) AS lastCheckin
+        FROM student s
+        WHERE s.store_id = #{storeId} AND s.status = 1
+          AND NOT EXISTS (SELECT 1 FROM checkin ck WHERE ck.student_id = s.id AND ck.check_time &gt;= #{before})
+        ORDER BY lastCheckin
+    </select>
+</mapper>

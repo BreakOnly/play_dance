@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.GoodsMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Goods">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="images" property="images"/>
+        <result column="description" property="description"/>
+        <result column="category" property="category"/>
+        <result column="points_required" property="pointsRequired"/>
+        <result column="stock" property="stock"/>
+        <result column="status" property="status"/>
+        <result column="sort" property="sort"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="list" resultMap="BaseMap">
+        SELECT * FROM goods
+        WHERE store_id = #{storeId}
+        <if test="category != null and category != ''">AND category = #{category}</if>
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY sort, id DESC
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM goods WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO goods (store_id, name, images, description, category, points_required, stock, status, sort)
+        VALUES (#{storeId}, #{name}, #{images}, #{description}, COALESCE(#{category},'redeem'),
+                COALESCE(#{pointsRequired},0), COALESCE(#{stock},0), COALESCE(#{status},1), COALESCE(#{sort},0))
+    </insert>
+
+    <update id="update">
+        UPDATE goods
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="images != null">images = #{images},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="pointsRequired != null">points_required = #{pointsRequired},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sort != null">sort = #{sort},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM goods WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+
+    <select id="clawPool" resultMap="BaseMap">
+        SELECT * FROM goods
+        WHERE store_id = #{storeId} AND category = 'claw' AND status = 1 AND stock &gt; 0
+    </select>
+
+    <update id="decreaseStock">
+        UPDATE goods SET stock = stock - 1 WHERE id = #{id} AND stock &gt; 0
+    </update>
+
+    <update id="increaseStock">
+        UPDATE goods SET stock = stock + 1 WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.RechargeOrderMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO recharge_order (store_id, student_id, hours, gift_hours, amount,
+                                    points_gain, validity_days, operator_id, remark)
+        VALUES (#{storeId}, #{studentId}, #{hours}, COALESCE(#{giftHours},0), COALESCE(#{amount},0),
+                COALESCE(#{pointsGain},0), #{validityDays}, #{operatorId}, #{remark})
+    </insert>
+</mapper>

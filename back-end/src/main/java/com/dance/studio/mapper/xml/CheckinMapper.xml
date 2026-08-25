@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.CheckinMapper">
+
+    <resultMap id="EntityMap" type="com.dance.studio.entity.Checkin">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="booking_id" property="bookingId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="schedule_id" property="scheduleId"/>
+        <result column="check_time" property="checkTime"/>
+        <result column="method" property="method"/>
+        <result column="operator_id" property="operatorId"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO checkin (store_id, booking_id, student_id, schedule_id, check_time, method, operator_id)
+        VALUES (#{storeId}, #{bookingId}, #{studentId}, #{scheduleId}, COALESCE(#{checkTime},NOW()), #{method}, #{operatorId})
+    </insert>
+
+    <select id="findByBooking" resultMap="EntityMap">
+        SELECT * FROM checkin WHERE booking_id = #{bookingId} LIMIT 1
+    </select>
+
+    <select id="listRecords" resultType="java.util.LinkedHashMap">
+        SELECT ck.id, ck.check_time AS checkTime, ck.method,
+               stu.name AS studentName, c.name AS courseName, s.start_time AS startTime
+        FROM checkin ck
+        LEFT JOIN student stu ON stu.id = ck.student_id
+        LEFT JOIN course_schedule s ON s.id = ck.schedule_id
+        LEFT JOIN course c ON c.id = s.course_id
+        WHERE ck.store_id = #{storeId}
+        <if test="from != null">AND ck.check_time &gt;= #{from}</if>
+        <if test="to != null">AND ck.check_time &lt; #{to}</if>
+        <if test="scheduleId != null">AND ck.schedule_id = #{scheduleId}</if>
+        ORDER BY ck.check_time DESC
+    </select>
+
+    <select id="attendanceStat" resultType="java.util.LinkedHashMap">
+        SELECT
+          (SELECT COUNT(*) FROM checkin ck WHERE ck.store_id = #{storeId}
+             <if test="from != null">AND ck.check_time &gt;= #{from}</if>
+             <if test="to != null">AND ck.check_time &lt; #{to}</if>) AS checkinCount,
+          (SELECT COUNT(*) FROM booking b JOIN course_schedule s ON s.id=b.schedule_id
+             WHERE b.store_id = #{storeId} AND b.status IN ('booked','checked','noshow')
+             <if test="from != null">AND s.start_time &gt;= #{from}</if>
+             <if test="to != null">AND s.start_time &lt; #{to}</if>) AS bookingCount,
+          (SELECT COUNT(*) FROM booking b JOIN course_schedule s ON s.id=b.schedule_id
+             WHERE b.store_id = #{storeId} AND b.status = 'noshow'
+             <if test="from != null">AND s.start_time &gt;= #{from}</if>
+             <if test="to != null">AND s.start_time &lt; #{to}</if>) AS noshowCount
+    </select>
+</mapper>

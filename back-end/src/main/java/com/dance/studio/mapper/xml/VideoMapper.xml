@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.VideoMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Video">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="schedule_id" property="scheduleId"/>
+        <result column="video_date" property="videoDate"/>
+        <result column="title" property="title"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="duration" property="duration"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="scope_type" property="scopeType"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO video (store_id, course_id, schedule_id, video_date, title, file_url,
+                           cover_url, duration, file_size, scope_type, status)
+        VALUES (#{storeId}, #{courseId}, #{scheduleId}, #{videoDate}, #{title}, #{fileUrl},
+                #{coverUrl}, #{duration}, #{fileSize}, COALESCE(#{scopeType},'checked_in'), 1)
+    </insert>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM video WHERE id = #{id}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM video WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+
+    <select id="listAdmin" resultMap="BaseMap">
+        SELECT * FROM video
+        WHERE store_id = #{storeId} AND status = 1
+        <if test="courseId != null">AND course_id = #{courseId}</if>
+        <if test="date != null">AND video_date = #{date}</if>
+        ORDER BY video_date DESC, id DESC
+    </select>
+
+    <sql id="visibleCond">
+        v.status = 1 AND (
+            (v.scope_type = 'checked_in' AND EXISTS (
+                SELECT 1 FROM checkin ck WHERE ck.schedule_id = v.schedule_id AND ck.student_id = #{studentId}))
+         OR (v.scope_type = 'booked' AND EXISTS (
+                SELECT 1 FROM booking b WHERE b.schedule_id = v.schedule_id AND b.student_id = #{studentId}
+                  AND b.status IN ('booked','checked')))
+         OR (v.scope_type = 'custom' AND EXISTS (
+                SELECT 1 FROM video_visible vv WHERE vv.video_id = v.id AND vv.student_id = #{studentId}))
+        )
+    </sql>
+
+    <select id="listForStudent" resultMap="BaseMap">
+        SELECT v.* FROM video v
+        WHERE v.store_id = #{storeId} AND <include refid="visibleCond"/>
+        ORDER BY v.video_date DESC, v.id DESC
+    </select>
+
+    <select id="canAccess" resultType="int">
+        SELECT COUNT(*) FROM video v WHERE v.id = #{videoId} AND <include refid="visibleCond"/>
+    </select>
+
+    <insert id="insertVisible">
+        INSERT IGNORE INTO video_visible (video_id, student_id) VALUES (#{videoId}, #{studentId})
+    </insert>
+
+    <delete id="deleteVisible">
+        DELETE FROM video_visible WHERE video_id = #{videoId}
+    </delete>
+</mapper>

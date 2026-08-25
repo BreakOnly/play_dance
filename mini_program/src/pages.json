@@ -1,0 +1,36 @@
+{
+  "pages": [
+    { "path": "pages/home/home", "style": { "navigationBarTitleText": "玩舞首页" } },
+    { "path": "pages/booking/booking", "style": { "navigationBarTitleText": "约课" } },
+    { "path": "pages/booking/detail", "style": { "navigationBarTitleText": "课程详情" } },
+    { "path": "pages/qa/qa", "style": { "navigationBarTitleText": "咨询问答" } },
+    { "path": "pages/qa/ranking", "style": { "navigationBarTitleText": "点赞排行" } },
+    { "path": "pages/qa/detail", "style": { "navigationBarTitleText": "问题详情" } },
+    { "path": "pages/redeem/redeem", "style": { "navigationBarTitleText": "手办兑换" } },
+    { "path": "pages/mine/mine", "style": { "navigationBarTitleText": "我的" } },
+    { "path": "pages/login/login", "style": { "navigationBarTitleText": "登录", "navigationStyle": "custom" } },
+    { "path": "pages/mybookings/mybookings", "style": { "navigationBarTitleText": "我的约课" } },
+    { "path": "pages/logs/logs", "style": { "navigationBarTitleText": "课时明细" } },
+    { "path": "pages/notifications/notifications", "style": { "navigationBarTitleText": "消息通知" } },
+    { "path": "pages/profile/profile", "style": { "navigationBarTitleText": "编辑资料" } },
+    { "path": "pages/webview/webview", "style": { "navigationBarTitleText": "" } }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "玩舞",
+    "navigationBarBackgroundColor": "#0E0E0E",
+    "backgroundColor": "#0E0E0E"
+  },
+  "tabBar": {
+    "color": "#77777f",
+    "selectedColor": "#ed5a9a",
+    "backgroundColor": "#101014",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/home", "text": "首页" },
+      { "pagePath": "pages/booking/booking", "text": "约课" },
+      { "pagePath": "pages/qa/qa", "text": "咨询" },
+      { "pagePath": "pages/mine/mine", "text": "我的" }
+    ]
+  }
+}

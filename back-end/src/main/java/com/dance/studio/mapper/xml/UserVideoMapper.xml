@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.UserVideoMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.UserVideo">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="title" property="title"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="description" property="description"/>
+        <result column="duration" property="duration"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="status" property="status"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="is_recommended" property="isRecommended"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="audit_admin_id" property="auditAdminId"/>
+        <result column="audited_at" property="auditedAt"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="VoMap" type="com.dance.studio.vo.UserVideoVo">
+        <id column="id" property="id"/>
+        <result column="student_id" property="studentId"/>
+        <result column="title" property="title"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="description" property="description"/>
+        <result column="duration" property="duration"/>
+        <result column="status" property="status"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="is_recommended" property="isRecommended"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="author_name" property="authorName"/>
+        <result column="author_avatar" property="authorAvatar"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="liked" property="liked"/>
+    </resultMap>
+
+    <sql id="voSelect">
+        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+               v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
+               s.name AS author_name, s.avatar AS author_avatar,
+               <if test="viewerId != null">
+               EXISTS (SELECT 1 FROM like_record lr
+                        WHERE lr.student_id = #{viewerId} AND lr.target_type = 'video'
+                          AND lr.target_id = v.id) AS liked,
+               </if>
+               <if test="viewerId == null">
+               0 AS liked,
+               </if>
+        FROM user_video v
+        LEFT JOIN student s ON s.id = v.student_id
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_video (store_id, student_id, title, file_url, cover_url,
+                                description, duration, file_size, status)
+        VALUES (#{storeId}, #{studentId}, #{title}, #{fileUrl}, #{coverUrl},
+                #{description}, #{duration}, #{fileSize}, 'pending')
+    </insert>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM user_video WHERE id = #{id}
+    </select>
+
+    <select id="findByIdWithUrl" resultMap="BaseMap">
+        SELECT * FROM user_video WHERE id = #{id} AND status = 'approved'
+    </select>
+
+    <select id="ranking" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE v.store_id = #{storeId} AND v.status = 'approved'
+        ORDER BY v.like_count DESC, v.id DESC
+        <if test="limit != null">LIMIT #{limit}</if>
+    </select>
+
+    <select id="recommended" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE v.store_id = #{storeId} AND v.status = 'approved' AND v.is_recommended = 1
+        ORDER BY v.like_count DESC, v.id DESC
+        <if test="limit != null">LIMIT #{limit}</if>
+    </select>
+
+    <select id="myVideos" resultMap="VoMap">
+        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+               v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
+               s.name AS author_name, s.avatar AS author_avatar, 0 AS liked
+        FROM user_video v
+        LEFT JOIN student s ON s.id = v.student_id
+        WHERE v.student_id = #{studentId}
+        ORDER BY v.id DESC
+    </select>
+
+    <select id="listAdmin" resultMap="VoMap">
+        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+               v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
+               s.name AS author_name, s.avatar AS author_avatar, 0 AS liked
+        FROM user_video v
+        LEFT JOIN student s ON s.id = v.student_id
+        WHERE v.store_id = #{storeId}
+        <if test="status != null and status != ''">AND v.status = #{status}</if>
+        ORDER BY FIELD(v.status,'pending','approved','rejected'), v.id DESC
+    </select>
+
+    <update id="changeLikeCount">
+        UPDATE user_video SET like_count = like_count + #{delta}
+        WHERE id = #{id} AND like_count + #{delta} &gt;= 0
+    </update>
+
+    <update id="audit">
+        UPDATE user_video
+        SET status = #{status}, reject_reason = #{rejectReason},
+            audit_admin_id = #{adminId}, audited_at = NOW()
+        WHERE id = #{id} AND status = 'pending'
+    </update>
+
+    <update id="setRecommended">
+        UPDATE user_video SET is_recommended = #{recommended} WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.ConfigMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Config">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="config_key" property="configKey"/>
+        <result column="config_value" property="configValue"/>
+        <result column="remark" property="remark"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="listByStore" resultMap="BaseMap">
+        SELECT * FROM config WHERE store_id = #{storeId} ORDER BY id
+    </select>
+
+    <select id="findByKey" resultMap="BaseMap">
+        SELECT * FROM config WHERE store_id = #{storeId} AND config_key = #{key} LIMIT 1
+    </select>
+
+    <update id="update">
+        UPDATE config SET config_value = #{value} WHERE store_id = #{storeId} AND config_key = #{key}
+    </update>
+</mapper>

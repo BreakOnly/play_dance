@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.BannerMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Banner">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="title" property="title"/>
+        <result column="subtitle" property="subtitle"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="link_type" property="linkType"/>
+        <result column="link_value" property="linkValue"/>
+        <result column="sort" property="sort"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="listByStore" resultMap="BaseMap">
+        SELECT * FROM banner
+        WHERE store_id = #{storeId}
+        <if test="onlyEnabled">AND status = 1</if>
+        ORDER BY sort, id
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM banner WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO banner (store_id, title, subtitle, image_url, link_type, link_value, sort, status)
+        VALUES (#{storeId}, #{title}, #{subtitle}, #{imageUrl},
+                COALESCE(#{linkType},'none'), #{linkValue}, COALESCE(#{sort},0), COALESCE(#{status},1))
+    </insert>
+
+    <update id="update">
+        UPDATE banner
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="subtitle != null">subtitle = #{subtitle},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="linkType != null">link_type = #{linkType},</if>
+            <if test="linkValue != null">link_value = #{linkValue},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM banner WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+</mapper>

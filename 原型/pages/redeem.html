@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玩舞首页 · 手办兑换</title>
+    <style id="theme-vars">
+/* 玩舞街舞小程序 · 品牌样式（延续原型 BLACKPINK 黑粉潮酷基因） */
+
+:root {
+  /* 基础表面 */
+  --dance-background: #070708;
+  --dance-foreground: #ffffff;
+  --dance-card: #1a1a1d;
+  --dance-card-foreground: #ffffff;
+  --dance-popover: #1a1a1d;
+  --dance-popover-foreground: #ffffff;
+  --dance-muted: #2e2e33;
+  --dance-muted-foreground: #9a9aa2;
+  --dance-border: #2e2e33;
+  --dance-input: #1a1a1d;
+  --dance-surface: #141417;
+  --dance-surface-2: #222226;
+  --dance-text-tertiary: #6b6b73;
+
+  /* 品牌主色（唯一品牌色相：荧光粉） */
+  --dance-primary: #FF2D9B;
+  --dance-primary-foreground: #ffffff;
+  --dance-secondary: #FF6FB5;
+  --dance-primary-soft: rgba(255, 45, 155, 0.16);
+  --dance-primary-dark: #b3126b;
+  --dance-ring: #FF2D9B;
+
+  /* 语义状态色（仅状态使用） */
+  --dance-state-success: #3ecf8e;
+  --dance-state-success-soft: rgba(62, 207, 142, 0.14);
+  --dance-state-warning: #ffd166;
+  --dance-state-warning-bg: rgba(255, 209, 102, 0.1);
+  --dance-warning: #ffd166;
+  --dance-warning-bg: rgba(255, 209, 102, 0.1);
+
+  /* 圆角 */
+  --dance-radius-sm: 8px;
+  --dance-radius-md: 12px;
+  --dance-radius-lg: 16px;
+  --dance-radius-xl: 20px;
+  --dance-radius-small: 8px;
+  --dance-radius-medium: 12px;
+  --dance-radius-large: 16px;
+
+  /* 阴影 */
+  --dance-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --dance-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dance-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--dance-background);
+  --color-foreground: var(--dance-foreground);
+  --color-card: var(--dance-card);
+  --color-card-foreground: var(--dance-card-foreground);
+  --color-popover: var(--dance-popover);
+  --color-popover-foreground: var(--dance-popover-foreground);
+  --color-primary: var(--dance-primary);
+  --color-primary-foreground: var(--dance-primary-foreground);
+  --color-secondary: var(--dance-secondary);
+  --color-muted: var(--dance-muted);
+  --color-muted-foreground: var(--dance-muted-foreground);
+  --color-border: var(--dance-border);
+  --color-input: var(--dance-input);
+  --color-ring: var(--dance-ring);
+  --radius-sm: var(--dance-radius-sm);
+  --radius-md: var(--dance-radius-md);
+  --radius-lg: var(--dance-radius-lg);
+  --radius-xl: var(--dance-radius-xl);
+}
+
+@layer base {
+  body {
+    background-color: var(--dance-background);
+    color: var(--dance-foreground);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dance-background);
+    --color-foreground: var(--dance-foreground);
+    --color-card: var(--dance-card);
+    --color-card-foreground: var(--dance-card-foreground);
+    --color-popover: var(--dance-popover);
+    --color-popover-foreground: var(--dance-popover-foreground);
+    --color-primary: var(--dance-primary);
+    --color-primary-foreground: var(--dance-primary-foreground);
+    --color-secondary: var(--dance-secondary);
+    --color-muted: var(--dance-muted);
+    --color-muted-foreground: var(--dance-muted-foreground);
+    --color-border: var(--dance-border);
+    --color-input: var(--dance-input);
+    --color-ring: var(--dance-ring);
+    --radius-sm: var(--dance-radius-sm);
+    --radius-md: var(--dance-radius-md);
+    --radius-lg: var(--dance-radius-lg);
+    --radius-xl: var(--dance-radius-xl);
+  }
+  @layer base {
+    body { background: var(--dance-background); color: var(--dance-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dance-background); }
+      .text-background { color: var(--dance-background); }
+      .border-background { border-color: var(--dance-background); }
+      .ring-background { --tw-ring-color: var(--dance-background); }
+      .bg-foreground { background-color: var(--dance-foreground); }
+      .text-foreground { color: var(--dance-foreground); }
+      .border-foreground { border-color: var(--dance-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dance-foreground); }
+      .bg-card { background-color: var(--dance-card); }
+      .text-card { color: var(--dance-card); }
+      .border-card { border-color: var(--dance-card); }
+      .ring-card { --tw-ring-color: var(--dance-card); }
+      .bg-card-foreground { background-color: var(--dance-card-foreground); }
+      .text-card-foreground { color: var(--dance-card-foreground); }
+      .border-card-foreground { border-color: var(--dance-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dance-card-foreground); }
+      .bg-popover { background-color: var(--dance-popover); }
+      .text-popover { color: var(--dance-popover); }
+      .border-popover { border-color: var(--dance-popover); }
+      .ring-popover { --tw-ring-color: var(--dance-popover); }
+      .bg-popover-foreground { background-color: var(--dance-popover-foreground); }
+      .text-popover-foreground { color: var(--dance-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dance-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dance-popover-foreground); }
+      .bg-primary { background-color: var(--dance-primary); }
+      .text-primary { color: var(--dance-primary); }
+      .border-primary { border-color: var(--dance-primary); }
+      .ring-primary { --tw-ring-color: var(--dance-primary); }
+      .bg-primary-foreground { background-color: var(--dance-primary-foreground); }
+      .text-primary-foreground { color: var(--dance-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dance-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dance-primary-foreground); }
+      .bg-secondary { background-color: var(--dance-secondary); }
+      .text-secondary { color: var(--dance-secondary); }
+      .border-secondary { border-color: var(--dance-secondary); }
+      .ring-secondary { --tw-ring-color: var(--dance-secondary); }
+      .bg-muted { background-color: var(--dance-muted); }
+      .text-muted { color: var(--dance-muted); }
+      .border-muted { border-color: var(--dance-muted); }
+      .ring-muted { --tw-ring-color: var(--dance-muted); }
+      .bg-muted-foreground { background-color: var(--dance-muted-foreground); }
+      .text-muted-foreground { color: var(--dance-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dance-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dance-muted-foreground); }
+      .bg-border { background-color: var(--dance-border); }
+      .text-border { color: var(--dance-border); }
+      .border-border { border-color: var(--dance-border); }
+      .ring-border { --tw-ring-color: var(--dance-border); }
+      .bg-input { background-color: var(--dance-input); }
+      .text-input { color: var(--dance-input); }
+      .border-input { border-color: var(--dance-input); }
+      .ring-input { --tw-ring-color: var(--dance-input); }
+      .bg-ring { background-color: var(--dance-ring); }
+      .text-ring { color: var(--dance-ring); }
+      .border-ring { border-color: var(--dance-ring); }
+      .ring-ring { --tw-ring-color: var(--dance-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+<main>
+      <div class="home">
+        <header class="topbar">
+          <p class="greet">Hi, <em>阿May</em></p>
+          <button type="button" class="bell" id="bellBtn" aria-label="消息通知">
+            <i data-lucide="bell" class="ico-20"></i>
+            <span class="dot" aria-hidden="true"></span>
+          </button>
+        </header>
+        <section class="banner">
+          <img src="../assets/home-banner.jpg" alt="街舞工作室本周课程 Banner">
+          <span class="banner-tag">本周热门</span>
+        </section>
+        <button type="button" class="trial" id="trialBtn">
+          <span class="trial-txt">
+            <b>新人体验课 2 节</b>
+            <small>爵士 / K-POP / Hiphop 任选</small>
+          </span>
+          <span class="trial-price">
+            <b>¥9.9</b>
+            <small>原价 ¥199</small>
+          </span>
+          <span class="trial-arrow" aria-hidden="true"><i data-lucide="chevron-right" class="ico-16"></i></span>
+        </button>
+        <section class="guide">
+          <div class="guide-head">
+            <h2 class="guide-title">新手指南</h2>
+            <span class="guide-sub">3 步开启街舞之旅</span>
+          </div>
+          <ol class="guide-steps">
+            <li class="step done"><span class="step-dot">1</span><span class="step-label">购买体验课</span></li>
+            <li class="step done"><span class="step-dot">2</span><span class="step-label">选择门店和课程</span></li>
+            <li class="step todo"><span class="step-dot">3</span><span class="step-label">到店试课</span></li>
+          </ol>
+        </section>
+        <section class="video-sec">
+          <div class="sec-head">
+            <h2 class="sec-title">视频推荐</h2>
+            <span class="sec-note">每日精选 · 后台推荐</span>
+            <a href="#" class="sec-more" data-dom-id="shortcut-video-more">更多 ›</a>
+          </div>
+          <div class="video-list no-scrollbar">
+            <button type="button" class="video-card" data-video="Pink Venom">
+              <span class="video-thumb"><i data-lucide="play" class="ico-20 video-play"></i><span class="video-dur">12:03</span></span>
+              <span class="video-info"><b>Pink Venom</b><small>BLACKPINK 翻跳 · 2.8k 赞</small></span>
+            </button>
+            <button type="button" class="video-card" data-video="Smart">
+              <span class="video-thumb"><i data-lucide="play" class="ico-20 video-play"></i><span class="video-dur">09:47</span></span>
+              <span class="video-info"><b>Smart</b><small>LE SSERAFIM 教学 · 3.2k 赞</small></span>
+            </button>
+            <button type="button" class="video-card" data-video="How You Like That">
+              <span class="video-thumb"><i data-lucide="play" class="ico-20 video-play"></i><span class="video-dur">17:22</span></span>
+              <span class="video-info"><b>How You Like That</b><small>BLACKPINK 成品舞 · 1.5k 赞</small></span>
+            </button>
+          </div>
+        </section>
+        <nav data-mobile-nav="global" class="app-tabbar grid-cols-5 h-[64px]" aria-label="底部导航"><a href="#" class="app-tab" data-nav-key="home" data-active="true"><i data-lucide="home" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">玩舞首页</span></a><a href="#" class="app-tab" data-nav-key="booking" data-dom-id="nav-booking"><i data-lucide="calendar-days" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">课程预约</span></a><a href="#" class="app-tab-fab" data-nav-key="redeem" data-dom-id="cta-redeem-fab" aria-label="手办兑换"><i data-lucide="gift" class="app-tab-fab-ico"></i><span class="app-tab-label whitespace-nowrap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">手办兑换</span></a><a href="#" class="app-tab" data-nav-key="qa" data-dom-id="nav-qa"><i data-lucide="messages-square" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">资讯问答</span></a><a href="#" class="app-tab" data-nav-key="my" data-dom-id="nav-my"><i data-lucide="user" class="app-tab-ico"></i><span class="app-tab-label whitespace-nowrap">我的会员</span></a></nav>
+        <footer class="page-foot">XX 街舞工作室 · 玩舞小程序</footer>
+        <div class="sheet-mask" id="csMask" aria-hidden="true">
+          <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+            <h3 id="csTitle">联系客服</h3>
+            <p>请拨打电话购买体验课：400-888-6688</p>
+            <button type="button" class="sheet-btn" id="csOk">我知道了</button>
+          </div>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+    <script>lucide.createIcons();</script>
+    <style id="critical-layout">
+      html { background: var(--dance-background); }
+      body { max-width: 420px; margin: 0 auto; }
+      .home, .home *, .sheet-mask, .sheet-mask *, .toast { box-sizing: border-box; }
+      .home * { margin: 0; padding: 0; }
+      button { font: inherit; color: inherit; }
+      a { text-decoration: none; }
+      ol { list-style: none; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .ico-16 { width: 16px; height: 16px; }
+      .ico-20 { width: 20px; height: 20px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }
+      .greet { font-size: 18px; font-weight: 800; color: var(--dance-foreground); }
+      .greet em { font-style: normal; color: var(--dance-secondary); }
+      .bell { position: relative; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--dance-surface-2); border: 1px solid var(--dance-border); color: var(--dance-foreground); cursor: pointer; transition: border-color .15s, transform .15s; -webkit-tap-highlight-color: transparent; }
+      .bell .dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--dance-primary); }
+      .bell:hover { border-color: var(--dance-muted-foreground); }
+      .bell:active { transform: scale(.94); }
+      .bell:focus-visible, .trial:focus-visible, .video-card:focus-visible, .sec-more:focus-visible, .app-tab:focus-visible, .app-tab-fab:focus-visible, .sheet-btn:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .banner { position: relative; margin: 10px 16px 0; aspect-ratio: 16 / 9; border-radius: var(--dance-radius-lg); overflow: hidden; background: var(--dance-card); border: 1px solid var(--dance-border); }
+      .banner img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .banner-tag { position: absolute; left: 12px; bottom: 12px; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--dance-foreground); background: color-mix(in srgb, var(--dance-background) 55%, transparent); border: 1px solid color-mix(in srgb, var(--dance-border) 90%, transparent); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+      .trial { display: flex; align-items: center; gap: 10px; width: calc(100% - 32px); margin: 14px 16px 0; aspect-ratio: 10 / 3; padding: 0 14px 0 18px; border: none; border-radius: var(--dance-radius-lg); background: linear-gradient(135deg, var(--dance-primary), var(--dance-primary-dark)); cursor: pointer; transition: transform .16s cubic-bezier(.2,.8,.2,1); -webkit-tap-highlight-color: transparent; }
+      .trial:active { transform: scale(.98); }
+      .trial-txt { flex: 1; min-width: 0; text-align: left; }
+      .trial-txt b { display: block; font-size: 18px; font-weight: 900; color: var(--dance-primary-foreground); }
+      .trial-txt small { display: block; margin-top: 4px; font-size: 12px; color: color-mix(in srgb, var(--dance-primary-foreground) 84%, transparent); }
+      .trial-price { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+      .trial-price b { display: block; font-size: 22px; font-weight: 900; color: var(--dance-primary-foreground); }
+      .trial-price small { display: block; margin-top: 2px; font-size: 10px; text-decoration: line-through; color: color-mix(in srgb, var(--dance-primary-foreground) 76%, transparent); }
+      .trial-arrow { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--dance-primary-foreground) 16%, transparent); color: var(--dance-primary-foreground); }
+      .guide { width: calc(100% - 32px); margin: 14px 16px 0; padding: 16px; background: var(--dance-card); border: 1px solid var(--dance-border); border-radius: var(--dance-radius-lg); }
+      .guide-head { display: flex; align-items: baseline; justify-content: space-between; }
+      .guide-title { font-size: 15px; font-weight: 800; color: var(--dance-foreground); }
+      .guide-title::before, .sec-title::before { content: ""; display: inline-block; width: 4px; height: 14px; margin-right: 7px; border-radius: 2px; background: var(--dance-primary); vertical-align: -2px; }
+      .guide-sub { font-size: 11px; color: var(--dance-muted-foreground); }
+      .guide-steps { position: relative; display: flex; margin-top: 18px; }
+      .guide-steps::before { content: ""; position: absolute; top: 10px; left: calc(100% / 6); right: calc(100% / 6); height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary)); }
+      .step { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; }
+      .step-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--dance-foreground); }
+      .step.done .step-dot { background: linear-gradient(135deg, var(--dance-primary), var(--dance-secondary)); }
+      .step.todo .step-dot { border: 2px solid var(--dance-muted); background: var(--dance-card); color: var(--dance-muted-foreground); }
+      .step-label { margin-top: 8px; padding: 0 4px; font-size: 10px; line-height: 1.35; color: var(--dance-muted-foreground); }
+      .step.done .step-label { color: var(--dance-foreground); }
+      .sec-head { display: flex; align-items: baseline; margin: 22px 16px 10px; }
+      .sec-title { flex: none; font-size: 15px; font-weight: 800; color: var(--dance-foreground); }
+      .sec-note { flex: none; margin-left: 10px; font-size: 11px; color: var(--dance-text-tertiary); }
+      .sec-more { margin-left: auto; font-size: 12px; color: var(--dance-muted-foreground); transition: color .15s; }
+      .sec-more:hover, .sec-more:active { color: var(--dance-secondary); }
+      .video-list { display: flex; gap: 10px; margin: 0 16px; padding: 2px 2px 8px; overflow-x: auto; scroll-snap-type: x proximity; }
+      .video-card { flex: none; width: 140px; overflow: hidden; text-align: left; border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md); background: var(--dance-card); cursor: pointer; scroll-snap-align: start; transition: border-color .15s, transform .15s; -webkit-tap-highlight-color: transparent; }
+      .video-card:hover { border-color: var(--dance-primary); }
+      .video-card:active { transform: scale(.97); }
+      .video-thumb { position: relative; display: flex; align-items: center; justify-content: center; height: 88px; color: var(--dance-primary); background: linear-gradient(135deg, #2a0f1f, var(--dance-card)); }
+      .video-play { fill: currentColor; }
+      .video-dur { position: absolute; right: 6px; bottom: 6px; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; color: var(--dance-foreground); background: color-mix(in srgb, var(--dance-background) 72%, transparent); font-variant-numeric: tabular-nums; }
+      .video-info { display: block; padding: 8px 9px 9px; }
+      .video-info b { display: block; font-size: 12px; font-weight: 700; color: var(--dance-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .video-info small { display: block; margin-top: 3px; font-size: 10px; color: var(--dance-muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .app-tabbar { display: flex; align-items: stretch; height: 64px; margin-top: 26px; background: var(--dance-surface); border-top: 1px solid var(--dance-border); border-radius: 0; }
+      .app-tab { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--dance-muted-foreground); transition: color .15s; -webkit-tap-highlight-color: transparent; }
+      .app-tab-ico { width: 20px; height: 20px; }
+      .app-tab-label { font-size: 11px; line-height: 1; }
+      .app-tab[data-active="true"] { color: var(--dance-secondary); }
+      .app-tab-fab { flex: 1 1 0; align-self: flex-start; margin-top: -20px; display: flex; align-items: flex-start; justify-content: center; background: transparent; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+      .app-tab-fab-ico { width: 24px; height: 24px; padding: 16px; border-radius: 50%; background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary)); border: 4px solid var(--dance-surface); color: var(--dance-primary-foreground); box-shadow: var(--dance-shadow-float); transition: transform .15s cubic-bezier(.2,.8,.2,1); }
+      .app-tab-fab:hover .app-tab-fab-ico { transform: translateY(-1px); }
+      .app-tab-fab:active .app-tab-fab-ico { transform: scale(.92); }
+      .page-foot { padding: 18px 0 24px; text-align: center; font-size: 11px; color: var(--dance-text-tertiary); }
+      .sheet-mask { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; max-width: 420px; height: 100%; z-index: 60; display: none; align-items: flex-end; background: color-mix(in srgb, var(--dance-background) 68%, transparent); }
+      .sheet-mask.show { display: flex; animation: maskIn .2s ease both; }
+      .sheet { width: 100%; padding: 22px 20px 32px; background: var(--dance-card); border: 1px solid var(--dance-border); border-bottom: none; border-radius: var(--dance-radius-lg) var(--dance-radius-lg) 0 0; box-shadow: var(--dance-shadow-2); animation: sheetUp .28s cubic-bezier(.3,0,0,1) both; }
+      .sheet h3 { font-size: 17px; font-weight: 800; text-align: center; color: var(--dance-foreground); }
+      .sheet p { margin-top: 10px; font-size: 13px; line-height: 1.6; text-align: center; color: var(--dance-muted-foreground); }
+      .sheet-btn { display: block; width: 100%; margin-top: 20px; padding: 13px; border: none; border-radius: var(--dance-radius-md); font-size: 15px; font-weight: 800; letter-spacing: 2px; color: var(--dance-primary-foreground); background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary)); cursor: pointer; transition: transform .15s; }
+      .sheet-btn:active { transform: scale(.98); }
+      .toast { position: fixed; left: 50%; bottom: 108px; transform: translateX(-50%); z-index: 70; display: none; max-width: 80%; padding: 11px 20px; border-radius: var(--dance-radius-md); background: var(--dance-surface-2); border: 1px solid var(--dance-border); box-shadow: var(--dance-shadow-2); color: var(--dance-foreground); font-size: 13px; text-align: center; }
+      .toast.show { display: block; animation: maskIn .18s ease both; }
+      @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes sheetUp { from { transform: translateY(24px); opacity: .4; } to { transform: none; opacity: 1; } }
+      @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+      @media (prefers-reduced-motion: no-preference) {
+        .banner { animation: rise .4s cubic-bezier(.3,0,0,1) both; }
+        .trial { animation: rise .4s cubic-bezier(.3,0,0,1) .06s both; }
+        .guide { animation: rise .4s cubic-bezier(.3,0,0,1) .12s both; }
+        .video-sec { animation: rise .4s cubic-bezier(.3,0,0,1) .18s both; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      }
+    </style>
+    <script>
+      (function () {
+        var toast = document.getElementById('toast');
+        var toastTimer = null;
+        function showToast(msg) {
+          toast.textContent = msg;
+          toast.classList.add('show');
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+        }
+        document.getElementById('bellBtn').addEventListener('click', function () { showToast('暂无新消息'); });
+        Array.prototype.forEach.call(document.querySelectorAll('.video-card'), function (card) {
+          card.addEventListener('click', function () { showToast('视频播放演示'); });
+        });
+        var mask = document.getElementById('csMask');
+        function openSheet() { mask.classList.add('show'); mask.setAttribute('aria-hidden', 'false'); }
+        function closeSheet() { mask.classList.remove('show'); mask.setAttribute('aria-hidden', 'true'); }
+        document.getElementById('trialBtn').addEventListener('click', openSheet);
+        document.getElementById('csOk').addEventListener('click', closeSheet);
+        mask.addEventListener('click', function (e) { if (e.target === mask) closeSheet(); });
+      })();
+    </script>
+
+    <!-- ===== 追加：手办兑换弹层样式 ===== -->
+    <style id="redeem-sheet-style">
+      .redeem-sheet-mask, .redeem-sheet-mask *, .confirm-dialog-mask, .confirm-dialog-mask * { box-sizing: border-box; }
+      .redeem-sheet-mask {
+        position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+        width: 100%; max-width: 420px; height: 100%; z-index: 80;
+        display: none; align-items: flex-end;
+        background: rgba(7, 7, 8, 0.72);
+      }
+      .redeem-sheet-mask.show { display: flex; animation: maskIn .2s ease both; }
+      .redeem-sheet {
+        width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+        background: var(--dance-card); border: 1px solid var(--dance-border); border-bottom: none;
+        border-radius: 16px 16px 0 0; padding: 8px 16px 24px; box-shadow: var(--dance-shadow-2);
+        animation: sheetUp .28s cubic-bezier(.3,0,0,1) both;
+      }
+      .redeem-grab {
+        width: 12px; height: 4px; margin: 0 auto 8px;
+        border-radius: 999px; background: var(--dance-border);
+      }
+      .redeem-header {
+        display: flex; align-items: center; justify-content: space-between; padding: 4px 0 12px;
+      }
+      .redeem-header h3 {
+        font-size: 17px; font-weight: 800; color: var(--dance-foreground);
+      }
+      .redeem-close {
+        width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        background: var(--dance-surface-2); border: 1px solid var(--dance-border); color: var(--dance-foreground);
+        cursor: pointer; transition: border-color .15s, transform .15s; -webkit-tap-highlight-color: transparent;
+      }
+      .redeem-close:hover { border-color: var(--dance-muted-foreground); }
+      .redeem-close:active { transform: scale(.94); }
+      .redeem-points {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 14px; margin-bottom: 14px;
+        background: var(--dance-surface-2); border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md);
+        color: var(--dance-secondary);
+      }
+      .redeem-points-label { font-size: 13px; color: var(--dance-muted-foreground); }
+      .redeem-points-val { margin-left: auto; font-size: 20px; font-weight: 900; color: var(--dance-foreground); font-variant-numeric: tabular-nums; }
+      .redeem-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      }
+      .redeem-card {
+        display: flex; flex-direction: column; overflow: hidden;
+        background: var(--dance-surface); border: 1px solid var(--dance-border); border-radius: var(--dance-radius-md);
+      }
+      .redeem-card-img {
+        position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        background: linear-gradient(135deg, var(--dance-primary-dark), var(--dance-card)); color: var(--dance-primary);
+      }
+      .redeem-card-ico { width: 48px; height: 48px; }
+      .redeem-card-deg { font-size: 10px; font-weight: 600; color: color-mix(in srgb, var(--dance-foreground) 72%, transparent); }
+      .redeem-card-body { display: flex; flex-direction: column; gap: 6px; padding: 9px 10px 11px; }
+      .redeem-card-name {
+        font-size: 13px; font-weight: 700; color: var(--dance-foreground);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .redeem-card-price {
+        display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--dance-primary); font-variant-numeric: tabular-nums;
+      }
+      .redeem-card-price b { font-weight: 800; }
+      .redeem-card-price .ico-16 { width: 14px; height: 14px; }
+      .redeem-btn {
+        margin-top: 2px; padding: 7px 0; border: none; border-radius: var(--dance-radius-sm);
+        font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--dance-primary-foreground);
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        cursor: pointer; transition: transform .15s; -webkit-tap-highlight-color: transparent;
+      }
+      .redeem-btn:active { transform: scale(.96); }
+      .redeem-btn:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .redeem-foot {
+        margin-top: 16px; font-size: 11px; line-height: 1.6; text-align: center; color: var(--dance-text-tertiary);
+      }
+
+      .confirm-dialog-mask {
+        position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+        width: 100%; max-width: 420px; height: 100%; z-index: 90;
+        display: none; align-items: center; justify-content: center;
+        background: rgba(7, 7, 8, 0.8); padding: 24px;
+      }
+      .confirm-dialog-mask.show { display: flex; animation: maskIn .2s ease both; }
+      .confirm-dialog {
+        width: 100%; max-width: 320px; padding: 24px 20px;
+        background: var(--dance-card); border: 1px solid var(--dance-border); border-radius: 16px;
+        box-shadow: var(--dance-shadow-2); animation: sheetUp .24s cubic-bezier(.3,0,0,1) both;
+      }
+      .confirm-icon {
+        width: 48px; height: 48px; margin: 0 auto 14px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--dance-primary-soft); color: var(--dance-primary);
+      }
+      .confirm-title { font-size: 17px; font-weight: 800; text-align: center; color: var(--dance-foreground); }
+      .confirm-text { margin-top: 10px; font-size: 13px; line-height: 1.6; text-align: center; color: var(--dance-muted-foreground); }
+      .confirm-text b { color: var(--dance-secondary); font-weight: 800; }
+      .confirm-actions { display: flex; gap: 10px; margin-top: 20px; }
+      .confirm-cancel {
+        flex: 1; padding: 12px 0; border-radius: var(--dance-radius-md);
+        font-size: 14px; font-weight: 700; color: var(--dance-foreground);
+        background: transparent; border: 1px solid var(--dance-border); cursor: pointer; transition: transform .15s; -webkit-tap-highlight-color: transparent;
+      }
+      .confirm-cancel:active { transform: scale(.97); }
+      .confirm-cancel:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .confirm-ok {
+        flex: 1; padding: 12px 0; border: none; border-radius: var(--dance-radius-md);
+        font-size: 14px; font-weight: 800; letter-spacing: 1px; color: var(--dance-primary-foreground);
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        cursor: pointer; transition: transform .15s; -webkit-tap-highlight-color: transparent;
+      }
+      .confirm-ok:active { transform: scale(.97); }
+      .confirm-ok:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+    </style>
+
+    <!-- ===== 追加：手办兑换弹层 DOM（默认展开） ===== -->
+    <div class="redeem-sheet-mask show" id="redeemMask" role="dialog" aria-modal="true" aria-labelledby="redeemTitle">
+      <div class="redeem-sheet">
+        <div class="redeem-grab" aria-hidden="true"></div>
+        <div class="redeem-header">
+          <h3 id="redeemTitle">手办兑换</h3>
+          <button type="button" class="redeem-close" id="redeemCloseBtn" data-dom-id="redeemCloseBtn" aria-label="关闭">
+            <i data-lucide="x" class="ico-20"></i>
+          </button>
+        </div>
+        <div class="redeem-points">
+          <i data-lucide="coins" class="ico-20"></i>
+          <span class="redeem-points-label">我的积分</span>
+          <span class="redeem-points-val">1,280</span>
+        </div>
+        <div class="redeem-grid no-scrollbar">
+          <div class="redeem-card">
+            <div class="redeem-card-img">
+              <i data-lucide="shirt" class="redeem-card-ico"></i>
+              <span class="redeem-card-deg">鸭舌帽</span>
+            </div>
+            <div class="redeem-card-body">
+              <p class="redeem-card-name">街舞潮牌鸭舌帽</p>
+              <p class="redeem-card-price"><i data-lucide="coins" class="ico-16"></i><b>680</b>积分</p>
+              <button type="button" class="redeem-btn" data-name="街舞潮牌鸭舌帽" data-points="680">兑换</button>
+            </div>
+          </div>
+          <div class="redeem-card">
+            <div class="redeem-card-img">
+              <i data-lucide="watch" class="redeem-card-ico"></i>
+              <span class="redeem-card-deg">手环</span>
+            </div>
+            <div class="redeem-card-body">
+              <p class="redeem-card-name">BLACKPINK 同款手环</p>
+              <p class="redeem-card-price"><i data-lucide="coins" class="ico-16"></i><b>450</b>积分</p>
+              <button type="button" class="redeem-btn" data-name="BLACKPINK 同款手环" data-points="450">兑换</button>
+            </div>
+          </div>
+          <div class="redeem-card">
+            <div class="redeem-card-img">
+              <i data-lucide="toy-brick" class="redeem-card-ico"></i>
+              <span class="redeem-card-deg">潮玩</span>
+            </div>
+            <div class="redeem-card-body">
+              <p class="redeem-card-name">限量潮玩公仔</p>
+              <p class="redeem-card-price"><i data-lucide="coins" class="ico-16"></i><b>1200</b>积分</p>
+              <button type="button" class="redeem-btn" data-name="限量潮玩公仔" data-points="1200">兑换</button>
+            </div>
+          </div>
+          <div class="redeem-card">
+            <div class="redeem-card-img">
+              <i data-lucide="footprints" class="redeem-card-ico"></i>
+              <span class="redeem-card-deg">运动袜</span>
+            </div>
+            <div class="redeem-card-body">
+              <p class="redeem-card-name">荧光粉运动袜</p>
+              <p class="redeem-card-price"><i data-lucide="coins" class="ico-16"></i><b>320</b>积分</p>
+              <button type="button" class="redeem-btn" data-name="荧光粉运动袜" data-points="320">兑换</button>
+            </div>
+          </div>
+        </div>
+        <p class="redeem-foot">商品由后台上传定价，兑换后积分自动扣除</p>
+      </div>
+    </div>
+
+    <!-- ===== 追加：兑换确认弹窗（默认展开，叠加于兑换弹层之上） ===== -->
+    <div class="confirm-dialog-mask show" id="confirmMask" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="confirm-dialog">
+        <div class="confirm-icon">
+          <i data-lucide="triangle-alert" class="ico-20"></i>
+        </div>
+        <h3 class="confirm-title" id="confirmTitle">确认兑换</h3>
+        <p class="confirm-text" id="confirmText">是否扣除 <b>1200</b> 积分兑换 [<b>限量潮玩公仔</b>]？</p>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-cancel" id="confirmCancel">取消</button>
+          <button type="button" class="confirm-ok" id="confirmOk">确认兑换</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 追加：兑换弹层交互脚本 ===== -->
+    <script>
+      (function () {
+        var toast = document.getElementById('toast');
+        var toastTimer = null;
+        function showToast(msg) {
+          toast.textContent = msg;
+          toast.classList.add('show');
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+        }
+
+        var redeemMask = document.getElementById('redeemMask');
+        var confirmMask = document.getElementById('confirmMask');
+        var confirmText = document.getElementById('confirmText');
+
+        function closeRedeem() { redeemMask.classList.remove('show'); }
+        function openConfirm(name, points) {
+          confirmText.innerHTML = '是否扣除 <b>' + points + '</b> 积分兑换 [<b>' + name + '</b>]？';
+          confirmMask.classList.add('show');
+        }
+        function closeConfirm() { confirmMask.classList.remove('show'); }
+
+        document.getElementById('redeemCloseBtn').addEventListener('click', closeRedeem);
+        redeemMask.addEventListener('click', function (e) { if (e.target === redeemMask) closeRedeem(); });
+
+        Array.prototype.forEach.call(document.querySelectorAll('.redeem-btn'), function (btn) {
+          btn.addEventListener('click', function () {
+            openConfirm(btn.getAttribute('data-name'), btn.getAttribute('data-points'));
+          });
+        });
+
+        document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
+        confirmMask.addEventListener('click', function (e) { if (e.target === confirmMask) closeConfirm(); });
+        document.getElementById('confirmOk').addEventListener('click', function () {
+          closeConfirm();
+          closeRedeem();
+          showToast('兑换成功！积分已扣除');
+        });
+      })();
+      lucide.createIcons();
+    </script>
+</body>
+</html>

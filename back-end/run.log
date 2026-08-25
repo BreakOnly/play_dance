@@ -1,0 +1,48 @@
+﻿Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-05-31T22:46:20.975+08:00  INFO 21024 --- [dance-studio] [           main] c.dance.studio.DanceStudioApplication    : Starting DanceStudioApplication using Java 21.0.7 with PID 21024 (D:\work\project\play_dance\back-end\target\classes started by 王胜 in D:\work\project\play_dance\back-end)
+2026-05-31T22:46:20.979+08:00  INFO 21024 --- [dance-studio] [           main] c.dance.studio.DanceStudioApplication    : The following 1 profile is active: "dev"
+2026-05-31T22:46:22.294+08:00  INFO 21024 --- [dance-studio] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-05-31T22:46:22.310+08:00  INFO 21024 --- [dance-studio] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-31T22:46:22.312+08:00  INFO 21024 --- [dance-studio] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2026-05-31T22:46:22.397+08:00  INFO 21024 --- [dance-studio] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-31T22:46:22.397+08:00  INFO 21024 --- [dance-studio] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1370 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-05-31T22:46:24.441+08:00  INFO 21024 --- [dance-studio] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-05-31T22:46:24.456+08:00  INFO 21024 --- [dance-studio] [           main] c.dance.studio.DanceStudioApplication    : Started DanceStudioApplication in 4.094 seconds (process running for 4.539)
+2026-05-31T22:46:24.484+08:00  INFO 21024 --- [dance-studio] [   scheduling-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-31T22:46:24.723+08:00  INFO 21024 --- [dance-studio] [   scheduling-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@283916ed
+2026-05-31T22:46:24.726+08:00  INFO 21024 --- [dance-studio] [   scheduling-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-31T22:46:24.736+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : ==>  Preparing: UPDATE course_schedule SET status = 'finished' WHERE status IN ('open','full') AND end_time < ?
+2026-05-31T22:46:24.741+08:00 DEBUG 21024 --- [dance-studio] [           main] c.d.s.mapper.AdminMapper.findByUsername  : ==>  Preparing: SELECT * FROM admin WHERE username = ? LIMIT 1
+2026-05-31T22:46:24.762+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : ==> Parameters: 2026-05-31T22:46:24.460342800(LocalDateTime)
+2026-05-31T22:46:24.762+08:00 DEBUG 21024 --- [dance-studio] [           main] c.d.s.mapper.AdminMapper.findByUsername  : ==> Parameters: admin(String)
+2026-05-31T22:46:24.767+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : <==    Updates: 0
+2026-05-31T22:46:24.773+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : ==>  Preparing: SELECT b.* FROM booking b JOIN course_schedule s ON s.id = b.schedule_id WHERE b.status = 'booked' AND s.end_time < ?
+2026-05-31T22:46:24.773+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : ==> Parameters: 2026-05-31T22:46:24.773008200(LocalDateTime)
+2026-05-31T22:46:24.794+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : <==      Total: 0
+2026-05-31T22:46:24.799+08:00 DEBUG 21024 --- [dance-studio] [           main] c.d.s.mapper.AdminMapper.findByUsername  : <==      Total: 1
+2026-05-31T22:46:41.329+08:00  INFO 21024 --- [dance-studio] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-31T22:46:41.330+08:00  INFO 21024 --- [dance-studio] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-31T22:46:41.332+08:00  INFO 21024 --- [dance-studio] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-05-31T22:46:41.550+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.mapper.AdminMapper.findByUsername  : ==>  Preparing: SELECT * FROM admin WHERE username = ? LIMIT 1
+2026-05-31T22:46:41.550+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.mapper.AdminMapper.findByUsername  : ==> Parameters: admin(String)
+2026-05-31T22:46:41.553+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.mapper.AdminMapper.findByUsername  : <==      Total: 1
+2026-05-31T22:46:41.646+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.m.AdminMapper.updateLastLogin      : ==>  Preparing: UPDATE admin SET last_login_at = NOW() WHERE id = ?
+2026-05-31T22:46:41.649+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.m.AdminMapper.updateLastLogin      : ==> Parameters: 1(Long)
+2026-05-31T22:46:41.673+08:00 DEBUG 21024 --- [dance-studio] [nio-8080-exec-1] c.d.s.m.AdminMapper.updateLastLogin      : <==    Updates: 1
+2026-05-31T22:51:24.813+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : ==>  Preparing: UPDATE course_schedule SET status = 'finished' WHERE status IN ('open','full') AND end_time < ?
+2026-05-31T22:51:24.813+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : ==> Parameters: 2026-05-31T22:51:24.812350800(LocalDateTime)
+2026-05-31T22:51:24.818+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.C.finishExpired                  : <==    Updates: 0
+2026-05-31T22:51:24.818+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : ==>  Preparing: SELECT b.* FROM booking b JOIN course_schedule s ON s.id = b.schedule_id WHERE b.status = 'booked' AND s.end_time < ?
+2026-05-31T22:51:24.818+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : ==> Parameters: 2026-05-31T22:51:24.818939600(LocalDateTime)
+2026-05-31T22:51:24.820+08:00 DEBUG 21024 --- [dance-studio] [   scheduling-1] c.d.s.m.B.listNoShowCandidates           : <==      Total: 0

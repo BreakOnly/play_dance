@@ -1,0 +1,129 @@
+{
+  "root": {
+    "nodeId": "gen-root",
+    "kind": "project-shell",
+    "pageIds": ["page-home", "page-booking", "page-qa", "page-my", "page-course-detail", "page-my-bookings", "page-like-ranking", "page-qa-upload", "page-redeem"],
+    "output": null,
+    "sharedRegions": [
+      "底部 5 槽 TabBar（4 个图标+文字槽 + 中央粉色渐变凸起圆形手办兑换按钮），由 sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey 提供，不生成 partials",
+      "品牌 CSS tokens（colors_and_type.css，黑底荧光粉单色相体系）",
+      "页面骨架：document-scroll 移动端页面，body 最大宽度 420px 居中，无固定手机外框",
+      "视觉语言：卡片 --dance-card 底 + 1px --dance-border 描边、12-16px 圆角、粉色仅用于 CTA/高亮"
+    ],
+    "privateRegions": [],
+    "mutableSlots": [],
+    "status": "planned",
+    "note": "唯一共享区域为底部导航，按规则保持 leaf-only，不生成 partials 片段",
+    "children": [
+      {
+        "nodeId": "gen-page-home",
+        "kind": "page-leaf",
+        "pageIds": ["page-home"],
+        "output": "pages/home.html",
+        "sharedRegions": ["mobileNavigation(home active)", "brand tokens", "document-scroll 移动端骨架"],
+        "privateRegions": ["问候栏", "Banner 轮播位", "新人体验课入口", "新手指南 3 步", "视频推荐横滑列表（后台推荐位）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-booking",
+        "kind": "page-leaf",
+        "pageIds": ["page-booking"],
+        "output": "pages/booking.html",
+        "sharedRegions": ["mobileNavigation(booking active)", "brand tokens", "document-scroll 移动端骨架"],
+        "privateRegions": ["搜索栏", "日期横滑条", "门店分组", "课程卡片列表（点击进课程详情）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-qa",
+        "kind": "page-leaf",
+        "pageIds": ["page-qa"],
+        "output": "pages/qa.html",
+        "sharedRegions": ["mobileNavigation(qa active)", "brand tokens", "document-scroll 移动端骨架"],
+        "privateRegions": ["视频推荐宫格（后台推荐，与首页一致）", "点赞排行 Top3 + 查看全部入口", "问答 Q&A 发布条与帖子卡"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-my",
+        "kind": "page-leaf",
+        "pageIds": ["page-my"],
+        "output": "pages/my.html",
+        "sharedRegions": ["mobileNavigation(my active)", "brand tokens", "document-scroll 移动端骨架"],
+        "privateRegions": ["会员头部（头像/昵称/编辑资料）", "顶部资产卡（剩余课时 + 会员有效期同卡展示）", "功能菜单（我的约课/消息通知/设置，无课时余额项）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-course-detail",
+        "kind": "page-leaf",
+        "pageIds": ["page-course-detail"],
+        "output": "pages/course-detail.html",
+        "sharedRegions": ["brand tokens", "document-scroll 移动端骨架", "二级页导航头（返回+标题，无 TabBar）"],
+        "privateRegions": ["课程媒体区", "导师与课程元信息", "后台签到积分提示条（工作人员代签到 +100 积分）", "课程内容分区", "底部立即约课 CTA + 约课确认弹层（页面内 JS 状态）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-my-bookings",
+        "kind": "page-leaf",
+        "pageIds": ["page-my-bookings"],
+        "output": "pages/my-bookings.html",
+        "sharedRegions": ["brand tokens", "document-scroll 移动端骨架", "二级页导航头（返回+标题，无 TabBar）"],
+        "privateRegions": ["待上课分组（日期+课程，可取消预约）", "已使用分组（几月几号什么课程，已签到+积分）", "卡片点击进课程详情", "取消预约确认弹层（页面内 JS 状态）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-like-ranking",
+        "kind": "page-leaf",
+        "pageIds": ["page-like-ranking"],
+        "output": "pages/like-ranking.html",
+        "sharedRegions": ["brand tokens", "document-scroll 移动端骨架", "二级页导航头（返回+标题，无 TabBar）"],
+        "privateRegions": ["点赞排行列表（视频按点赞数排序）", "底部上传视频 CTA（sticky）"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-qa-upload",
+        "kind": "page-leaf",
+        "pageIds": ["page-qa-upload"],
+        "output": "pages/qa-upload.html",
+        "sharedRegions": ["sg-upload 状态组：整页复制 like-ranking.html 后仅追加弹层"],
+        "privateRegions": [],
+        "mutableRegions": ["追加遮罩层 + 上传视频底部弹层（选择视频/标题/选择封面/文案说明/发布）"],
+        "derivedFrom": "pages/like-ranking.html",
+        "stateGroupId": "sg-upload",
+        "stateRole": "derived",
+        "baseStatePageId": "page-like-ranking",
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-redeem",
+        "kind": "page-leaf",
+        "pageIds": ["page-redeem"],
+        "output": "pages/redeem.html",
+        "sharedRegions": ["sg-redeem 状态组：整页复制 home.html 后仅追加弹层"],
+        "privateRegions": [],
+        "mutableRegions": ["追加遮罩层 + 手办兑换底部弹层（积分余额/商品宫格/兑换按钮）+ 扣积分确认对话框"],
+        "derivedFrom": "pages/home.html",
+        "stateGroupId": "sg-redeem",
+        "stateRole": "derived",
+        "baseStatePageId": "page-home",
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

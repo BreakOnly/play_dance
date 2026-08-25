@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点赞排行 · 上传视频</title>
+    <style id="theme-vars">
+/* 玩舞街舞小程序 · 品牌样式（延续原型 BLACKPINK 黑粉潮酷基因） */
+
+:root {
+  /* 基础表面 */
+  --dance-background: #070708;
+  --dance-foreground: #ffffff;
+  --dance-card: #1a1a1d;
+  --dance-card-foreground: #ffffff;
+  --dance-popover: #1a1a1d;
+  --dance-popover-foreground: #ffffff;
+  --dance-muted: #2e2e33;
+  --dance-muted-foreground: #9a9aa2;
+  --dance-border: #2e2e33;
+  --dance-input: #1a1a1d;
+  --dance-surface: #141417;
+  --dance-surface-2: #222226;
+  --dance-text-tertiary: #6b6b73;
+
+  /* 品牌主色（唯一品牌色相：荧光粉） */
+  --dance-primary: #FF2D9B;
+  --dance-primary-foreground: #ffffff;
+  --dance-secondary: #FF6FB5;
+  --dance-primary-soft: rgba(255, 45, 155, 0.16);
+  --dance-primary-dark: #b3126b;
+  --dance-ring: #FF2D9B;
+
+  /* 语义状态色（仅状态使用） */
+  --dance-state-success: #3ecf8e;
+  --dance-state-success-soft: rgba(62, 207, 142, 0.14);
+  --dance-state-warning: #ffd166;
+  --dance-state-warning-bg: rgba(255, 209, 102, 0.1);
+  --dance-warning: #ffd166;
+  --dance-warning-bg: rgba(255, 209, 102, 0.1);
+
+  /* 圆角 */
+  --dance-radius-sm: 8px;
+  --dance-radius-md: 12px;
+  --dance-radius-lg: 16px;
+  --dance-radius-xl: 20px;
+  --dance-radius-small: 8px;
+  --dance-radius-medium: 12px;
+  --dance-radius-large: 16px;
+
+  /* 阴影 */
+  --dance-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --dance-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dance-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--dance-background);
+  --color-foreground: var(--dance-foreground);
+  --color-card: var(--dance-card);
+  --color-card-foreground: var(--dance-card-foreground);
+  --color-popover: var(--dance-popover);
+  --color-popover-foreground: var(--dance-popover-foreground);
+  --color-primary: var(--dance-primary);
+  --color-primary-foreground: var(--dance-primary-foreground);
+  --color-secondary: var(--dance-secondary);
+  --color-muted: var(--dance-muted);
+  --color-muted-foreground: var(--dance-muted-foreground);
+  --color-border: var(--dance-border);
+  --color-input: var(--dance-input);
+  --color-ring: var(--dance-ring);
+  --radius-sm: var(--dance-radius-sm);
+  --radius-md: var(--dance-radius-md);
+  --radius-lg: var(--dance-radius-lg);
+  --radius-xl: var(--dance-radius-xl);
+}
+
+@layer base {
+  body {
+    background-color: var(--dance-background);
+    color: var(--dance-foreground);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dance-background);
+    --color-foreground: var(--dance-foreground);
+    --color-card: var(--dance-card);
+    --color-card-foreground: var(--dance-card-foreground);
+    --color-popover: var(--dance-popover);
+    --color-popover-foreground: var(--dance-popover-foreground);
+    --color-primary: var(--dance-primary);
+    --color-primary-foreground: var(--dance-primary-foreground);
+    --color-secondary: var(--dance-secondary);
+    --color-muted: var(--dance-muted);
+    --color-muted-foreground: var(--dance-muted-foreground);
+    --color-border: var(--dance-border);
+    --color-input: var(--dance-input);
+    --color-ring: var(--dance-ring);
+    --radius-sm: var(--dance-radius-sm);
+    --radius-md: var(--dance-radius-md);
+    --radius-lg: var(--dance-radius-lg);
+    --radius-xl: var(--dance-radius-xl);
+  }
+  @layer base {
+    body { background: var(--dance-background); color: var(--dance-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dance-background); }
+      .text-background { color: var(--dance-background); }
+      .border-background { border-color: var(--dance-background); }
+      .ring-background { --tw-ring-color: var(--dance-background); }
+      .bg-foreground { background-color: var(--dance-foreground); }
+      .text-foreground { color: var(--dance-foreground); }
+      .border-foreground { border-color: var(--dance-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dance-foreground); }
+      .bg-card { background-color: var(--dance-card); }
+      .text-card { color: var(--dance-card); }
+      .border-card { border-color: var(--dance-card); }
+      .ring-card { --tw-ring-color: var(--dance-card); }
+      .bg-card-foreground { background-color: var(--dance-card-foreground); }
+      .text-card-foreground { color: var(--dance-card-foreground); }
+      .border-card-foreground { border-color: var(--dance-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dance-card-foreground); }
+      .bg-popover { background-color: var(--dance-popover); }
+      .text-popover { color: var(--dance-popover); }
+      .border-popover { border-color: var(--dance-popover); }
+      .ring-popover { --tw-ring-color: var(--dance-popover); }
+      .bg-popover-foreground { background-color: var(--dance-popover-foreground); }
+      .text-popover-foreground { color: var(--dance-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dance-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dance-popover-foreground); }
+      .bg-primary { background-color: var(--dance-primary); }
+      .text-primary { color: var(--dance-primary); }
+      .border-primary { border-color: var(--dance-primary); }
+      .ring-primary { --tw-ring-color: var(--dance-primary); }
+      .bg-primary-foreground { background-color: var(--dance-primary-foreground); }
+      .text-primary-foreground { color: var(--dance-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dance-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dance-primary-foreground); }
+      .bg-secondary { background-color: var(--dance-secondary); }
+      .text-secondary { color: var(--dance-secondary); }
+      .border-secondary { border-color: var(--dance-secondary); }
+      .ring-secondary { --tw-ring-color: var(--dance-secondary); }
+      .bg-muted { background-color: var(--dance-muted); }
+      .text-muted { color: var(--dance-muted); }
+      .border-muted { border-color: var(--dance-muted); }
+      .ring-muted { --tw-ring-color: var(--dance-muted); }
+      .bg-muted-foreground { background-color: var(--dance-muted-foreground); }
+      .text-muted-foreground { color: var(--dance-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dance-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dance-muted-foreground); }
+      .bg-border { background-color: var(--dance-border); }
+      .text-border { color: var(--dance-border); }
+      .border-border { border-color: var(--dance-border); }
+      .ring-border { --tw-ring-color: var(--dance-border); }
+      .bg-input { background-color: var(--dance-input); }
+      .text-input { color: var(--dance-input); }
+      .border-input { border-color: var(--dance-input); }
+      .ring-input { --tw-ring-color: var(--dance-input); }
+      .bg-ring { background-color: var(--dance-ring); }
+      .text-ring { color: var(--dance-ring); }
+      .border-ring { border-color: var(--dance-ring); }
+      .ring-ring { --tw-ring-color: var(--dance-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+<main class="page">
+      <header class="nav-head">
+        <a class="nav-back" data-dom-id="back-qa" href="#" aria-label="返回资讯问答">
+          <i data-lucide="chevron-left"></i>
+        </a>
+        <h1 class="nav-title">点赞排行</h1>
+        <div class="nav-spacer" aria-hidden="true"></div>
+      </header>
+      <section class="board" aria-label="视频点赞排行榜">
+        <div class="board-head">
+          <h2 class="section-title"><span class="title-bar" aria-hidden="true"></span>点赞排行</h2>
+          <span class="board-note">按点赞数排序 · 每日更新</span>
+        </div>
+        <ol class="rank-list">
+          <li class="rank-item top1" tabindex="0" role="button" aria-label="播放视频 Smart - LE SSERAFIM">
+            <span class="rank-num top">1</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">09:47</span></div>
+            <div class="rank-info"><b>Smart - LE SSERAFIM</b><span>重点动作教学 · 10 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>3.2k</span>
+          </li>
+          <li class="rank-item" tabindex="0" role="button" aria-label="播放视频 Pink Venom - BLACKPINK">
+            <span class="rank-num top">2</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">12:03</span></div>
+            <div class="rank-info"><b>Pink Venom - BLACKPINK</b><span>副歌翻跳 · 12 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>2.8k</span>
+          </li>
+          <li class="rank-item" tabindex="0" role="button" aria-label="播放视频 Standing Next to You">
+            <span class="rank-num top">3</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">13:58</span></div>
+            <div class="rank-info"><b>Standing Next to You</b><span>Jung Kook 翻跳 · 14 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>2.1k</span>
+          </li>
+          <li class="rank-item" tabindex="0" role="button" aria-label="播放视频 How You Like That">
+            <span class="rank-num">4</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">17:22</span></div>
+            <div class="rank-info"><b>How You Like That</b><span>完整版教学 · 18 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>1.5k</span>
+          </li>
+          <li class="rank-item" tabindex="0" role="button" aria-label="播放视频 Anti-Hero">
+            <span class="rank-num">5</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">12:56</span></div>
+            <div class="rank-info"><b>Anti-Hero</b><span>副歌翻跳 · 13 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>1.2k</span>
+          </li>
+          <li class="rank-item" tabindex="0" role="button" aria-label="播放视频 Ditto - NewJeans">
+            <span class="rank-num">6</span>
+            <div class="rank-thumb"><i data-lucide="play"></i><span class="thumb-dur">08:41</span></div>
+            <div class="rank-info"><b>Ditto - NewJeans</b><span>手势舞 · 9 分钟</span></div>
+            <span class="rank-like"><i data-lucide="heart"></i>980</span>
+          </li>
+        </ol>
+      </section>
+      <footer class="page-foot">XX 街舞工作室 · 玩舞小程序</footer>
+      <aside class="cta-dock" aria-label="上传视频入口">
+        <a class="cta-btn" data-dom-id="cta-upload" href="#">
+          <i data-lucide="upload"></i>上传我的视频
+        </a>
+        <p class="cta-note">支持视频/标题/封面/文案说明，投稿获点赞可涨积分</p>
+      </aside>
+    </main>
+    <style id="critical-layout">
+      body.font-sans {
+        max-width: 420px;
+        margin: 0 auto;
+        font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+      }
+      .page { display: block; min-height: 100vh; background: var(--dance-background); }
+      .nav-head {
+        position: sticky; top: 0; z-index: 20;
+        display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+        height: 56px; padding: 0 12px;
+        background: var(--dance-background);
+        border-bottom: 1px solid var(--dance-border);
+      }
+      .nav-back {
+        display: flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 50%;
+        border: 1px solid var(--dance-border); background: var(--dance-card);
+        color: var(--dance-foreground); text-decoration: none;
+        transition: border-color .15s cubic-bezier(.2,.8,.2,1), transform .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .nav-back svg { width: 18px; height: 18px; }
+      .nav-back:hover { border-color: var(--dance-primary); }
+      .nav-back:active { transform: scale(.94); }
+      .nav-back:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .nav-title { text-align: center; font-size: 16px; font-weight: 700; color: var(--dance-foreground); white-space: nowrap; }
+      .nav-spacer { width: 34px; height: 34px; }
+      .board { padding: 16px 16px 8px; }
+      .board-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+      .section-title {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 15px; font-weight: 800; color: var(--dance-foreground); letter-spacing: .01em;
+      }
+      .title-bar { width: 3px; height: 14px; border-radius: 2px; background: linear-gradient(180deg, var(--dance-primary), var(--dance-secondary)); }
+      .board-note { font-size: 11px; color: var(--dance-text-tertiary); white-space: nowrap; }
+      .rank-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+      .rank-item {
+        display: flex; align-items: center; gap: 10px;
+        background: var(--dance-card);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        padding: 10px 12px; cursor: pointer;
+        transition: border-color .15s cubic-bezier(.2,.8,.2,1), transform .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .rank-item:hover { border-color: var(--dance-primary); transform: translateY(-1px); }
+      .rank-item:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .rank-item.top1 { border-color: var(--dance-primary); }
+      .rank-num {
+        flex: none; width: 24px; height: 24px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+        background: var(--dance-surface-2); color: var(--dance-muted-foreground);
+      }
+      .rank-num.top { background: linear-gradient(135deg, var(--dance-primary), var(--dance-secondary)); color: var(--dance-primary-foreground); }
+      .rank-thumb {
+        position: relative; flex: none; width: 64px; height: 64px;
+        border-radius: var(--dance-radius-sm); overflow: hidden;
+        background: linear-gradient(135deg, var(--dance-primary-dark), var(--dance-card));
+        display: flex; align-items: center; justify-content: center;
+      }
+      .rank-thumb svg { width: 20px; height: 20px; color: var(--dance-primary); fill: var(--dance-primary); }
+      .thumb-dur {
+        position: absolute; right: 4px; bottom: 4px;
+        padding: 1px 5px; border-radius: 4px;
+        background: var(--dance-background); color: var(--dance-foreground);
+        font-size: 10px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums;
+      }
+      .rank-info { flex: 1; min-width: 0; }
+      .rank-info b {
+        display: block; font-size: 13px; font-weight: 700; color: var(--dance-foreground);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .rank-info span {
+        display: block; margin-top: 3px; font-size: 11px; color: var(--dance-muted-foreground);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .rank-like {
+        flex: none; display: flex; align-items: center; gap: 4px;
+        font-size: 12px; font-weight: 700; color: var(--dance-foreground);
+        font-variant-numeric: tabular-nums;
+      }
+      .rank-like svg { width: 15px; height: 15px; color: var(--dance-primary); fill: var(--dance-primary); }
+      .page-foot {
+        margin-top: 16px; padding: 16px 16px 148px;
+        border-top: 1px solid var(--dance-border);
+        text-align: center; font-size: 11px; color: var(--dance-text-tertiary);
+      }
+      .cta-dock {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+        max-width: 420px; margin: 0 auto;
+        background: var(--dance-card);
+        border-top: 1px solid var(--dance-border);
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+      .cta-btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; height: 48px; border-radius: var(--dance-radius-md);
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        color: var(--dance-primary-foreground);
+        font-size: 15px; font-weight: 800; text-decoration: none;
+        transition: filter .15s cubic-bezier(.2,.8,.2,1), transform .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .cta-btn svg { width: 18px; height: 18px; transition: transform .15s cubic-bezier(.2,.8,.2,1); }
+      .cta-btn:hover { filter: brightness(1.08); }
+      .cta-btn:hover svg { transform: translateY(-2px); }
+      .cta-btn:active { filter: brightness(.95); transform: translateY(1px); }
+      .cta-btn:focus-visible { outline: 2px solid var(--dance-ring); outline-offset: 2px; }
+      .cta-note { margin: 8px 0 0; text-align: center; font-size: 11px; color: var(--dance-muted-foreground); }
+      .app-toast {
+        position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 90;
+        max-width: 80%; padding: 10px 18px;
+        border-radius: var(--dance-radius-md);
+        background: var(--dance-surface-2); border: 1px solid var(--dance-border);
+        color: var(--dance-foreground); font-size: 13px; font-weight: 700; text-align: center;
+        box-shadow: var(--dance-shadow-float); pointer-events: none;
+        animation: toast-in .24s cubic-bezier(.3,0,0,1) both;
+      }
+      .app-toast.out { animation: toast-out .22s cubic-bezier(.3,0,0,1) both; }
+      @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+      @keyframes toast-out { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -8px); } }
+      @keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .rank-item { animation: rise-in .3s cubic-bezier(.3,0,0,1) both; }
+      .rank-list .rank-item:nth-child(2) { animation-delay: .05s; }
+      .rank-list .rank-item:nth-child(3) { animation-delay: .1s; }
+      .rank-list .rank-item:nth-child(4) { animation-delay: .15s; }
+      .rank-list .rank-item:nth-child(5) { animation-delay: .2s; }
+      .rank-list .rank-item:nth-child(6) { animation-delay: .25s; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: .01ms !important;
+        }
+      }
+    </style>
+    <style id="upload-sheet-style">
+      .upload-sheet-mask {
+        position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+        width: 100%; max-width: 420px; height: 100%;
+        z-index: 80; display: none; align-items: flex-end;
+        background: rgba(7, 7, 8, 0.72);
+      }
+      .upload-sheet-mask.show {
+        display: flex; animation: maskIn .2s ease both;
+      }
+      @keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+      .upload-sheet {
+        width: 100%; max-height: 88vh;
+        background: var(--dance-card);
+        border-radius: 16px 16px 0 0;
+        box-shadow: var(--dance-shadow-2);
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        animation: sheetUp .28s cubic-bezier(.3,0,0,1) both;
+      }
+      @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      .upload-grab {
+        width: 36px; height: 4px; border-radius: 2px;
+        margin: 8px auto 4px; background: var(--dance-border);
+      }
+      .upload-head {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 16px 12px;
+        border-bottom: 1px solid var(--dance-border);
+      }
+      .upload-head h3 { font-size: 17px; font-weight: 800; color: var(--dance-foreground); margin: 0; }
+      .upload-close {
+        flex: none; width: 34px; height: 34px; border-radius: 50%;
+        border: 1px solid var(--dance-border);
+        background: var(--dance-surface-2);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--dance-foreground); cursor: pointer;
+        transition: border-color .15s, transform .15s;
+      }
+      .upload-close svg { width: 16px; height: 16px; }
+      .upload-close:hover { border-color: var(--dance-primary); }
+      .upload-close:active { transform: scale(.94); }
+      .upload-body {
+        flex: 1; overflow-y: auto;
+        padding: 16px;
+        -ms-overflow-style: none; scrollbar-width: none;
+      }
+      .upload-body.no-scrollbar::-webkit-scrollbar { display: none; }
+      .upload-field { margin-bottom: 18px; }
+      .upload-label {
+        display: flex; align-items: center; gap: 2px;
+        font-size: 13px; font-weight: 700;
+        color: var(--dance-foreground);
+        margin-bottom: 8px;
+      }
+      .upload-label .req { color: var(--dance-primary); font-size: 14px; }
+      .upload-dropzone {
+        border: 2px dashed var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        padding: 28px 16px; text-align: center;
+        transition: border-color .15s; cursor: pointer;
+        background: var(--dance-surface);
+        display: flex; flex-direction: column; align-items: center;
+      }
+      .upload-dropzone:hover { border-color: var(--dance-primary); }
+      .upload-dropzone svg { width: 32px; height: 32px; color: var(--dance-primary); margin-bottom: 8px; }
+      .upload-dropzone b { display: block; font-size: 14px; font-weight: 700; color: var(--dance-foreground); }
+      .upload-dropzone small { display: block; margin-top: 4px; font-size: 11px; color: var(--dance-text-tertiary); }
+      .upload-file-tag {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 10px; padding: 10px 12px;
+        background: var(--dance-surface-2);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-sm);
+      }
+      .upload-file-tag svg.film { width: 18px; height: 18px; color: var(--dance-primary); flex: none; }
+      .upload-file-tag .fname {
+        flex: 1; font-size: 13px; font-weight: 600;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        color: var(--dance-foreground);
+      }
+      .upload-file-tag .fsize { font-size: 11px; color: var(--dance-text-tertiary); flex: none; }
+      .upload-file-tag .fdel {
+        flex: none; width: 24px; height: 24px; border-radius: 50%;
+        background: var(--dance-muted);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--dance-muted-foreground); cursor: pointer;
+        border: none; transition: background .15s, color .15s;
+      }
+      .upload-file-tag .fdel:hover { background: var(--dance-primary); color: var(--dance-primary-foreground); }
+      .upload-file-tag .fdel svg { width: 14px; height: 14px; }
+      .upload-input {
+        width: 100%; height: 44px; padding: 0 14px;
+        background: var(--dance-input);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-sm);
+        color: var(--dance-foreground);
+        font-size: 14px; font-family: inherit;
+        transition: border-color .15s;
+        box-sizing: border-box;
+      }
+      .upload-input:focus { outline: none; border-color: var(--dance-primary); }
+      .upload-input::placeholder { color: var(--dance-text-tertiary); }
+      .cover-picker {
+        display: flex; gap: 10px;
+        overflow-x: auto; padding: 2px 0;
+        -ms-overflow-style: none; scrollbar-width: none;
+      }
+      .cover-picker.no-scrollbar::-webkit-scrollbar { display: none; }
+      .cover-item {
+        flex: none; width: 96px; height: 72px;
+        border-radius: var(--dance-radius-sm);
+        border: 2px solid var(--dance-border);
+        position: relative; overflow: hidden;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: border-color .15s;
+      }
+      .cover-item.selected { border-color: var(--dance-primary); }
+      .cover-item svg { width: 24px; height: 24px; color: var(--dance-primary); }
+      .cover-item .check {
+        position: absolute; top: 4px; right: 4px;
+        width: 18px; height: 18px; border-radius: 50%;
+        background: var(--dance-primary);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .cover-item .check svg { width: 12px; height: 12px; color: var(--dance-primary-foreground); }
+      .cover-item.c1 { background: linear-gradient(135deg, var(--dance-primary-dark), var(--dance-card)); }
+      .cover-item.c2 { background: linear-gradient(135deg, #3a1d4a, var(--dance-card)); }
+      .cover-item.c3 { background: linear-gradient(135deg, #2a1d3a, var(--dance-card)); }
+      .cover-item.custom {
+        border-style: dashed;
+        flex-direction: column; gap: 4px;
+        background: var(--dance-surface);
+      }
+      .cover-item.custom svg { width: 20px; height: 20px; color: var(--dance-muted-foreground); }
+      .cover-item.custom span { font-size: 10px; color: var(--dance-text-tertiary); }
+      .upload-textarea {
+        width: 100%; min-height: 80px; padding: 12px 14px;
+        background: var(--dance-input);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-sm);
+        color: var(--dance-foreground);
+        font-size: 14px; font-family: inherit; line-height: 1.5;
+        resize: vertical; transition: border-color .15s;
+        box-sizing: border-box;
+      }
+      .upload-textarea:focus { outline: none; border-color: var(--dance-primary); }
+      .upload-textarea::placeholder { color: var(--dance-text-tertiary); }
+      .char-count {
+        text-align: right; margin-top: 4px;
+        font-size: 11px; color: var(--dance-text-tertiary);
+        font-variant-numeric: tabular-nums;
+      }
+      .upload-tips {
+        margin-bottom: 18px; padding: 12px 14px;
+        background: var(--dance-surface);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-sm);
+      }
+      .upload-tips p {
+        display: flex; align-items: flex-start; gap: 6px;
+        font-size: 11px; color: var(--dance-muted-foreground);
+        line-height: 1.6; margin: 0;
+      }
+      .upload-tips p + p { margin-top: 4px; }
+      .upload-tips svg {
+        width: 13px; height: 13px;
+        color: var(--dance-secondary);
+        flex: none; margin-top: 1px;
+      }
+      .upload-submit {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; height: 48px;
+        border: none; border-radius: var(--dance-radius-md);
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        color: var(--dance-primary-foreground);
+        font-size: 15px; font-weight: 800; cursor: pointer;
+        transition: transform .15s, filter .15s;
+        font-family: inherit;
+      }
+      .upload-submit:hover { filter: brightness(1.08); }
+      .upload-submit:active { transform: scale(.98); filter: brightness(.95); }
+      .upload-submit svg { width: 18px; height: 18px; }
+      .upload-submit-foot {
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+      }
+    </style>
+    <script>
+      (function () {
+        var toastEl = null;
+        var toastTimer = null;
+        function showToast(message) {
+          if (toastEl) { toastEl.remove(); clearTimeout(toastTimer); }
+          toastEl = document.createElement('div');
+          toastEl.className = 'app-toast';
+          toastEl.setAttribute('role', 'status');
+          toastEl.textContent = message;
+          document.body.appendChild(toastEl);
+          toastTimer = setTimeout(function () {
+            toastEl.classList.add('out');
+            setTimeout(function () {
+              if (toastEl) { toastEl.remove(); toastEl = null; }
+            }, 220);
+          }, 1600);
+        }
+        document.querySelectorAll('.rank-item').forEach(function (item) {
+          item.addEventListener('click', function () { showToast('视频播放演示'); });
+        });
+        document.querySelectorAll('a[data-dom-id]').forEach(function (link) {
+          link.addEventListener('click', function (event) { event.preventDefault(); });
+        });
+        window.__showToast = showToast;
+      })();
+    </script>
+    <script>lucide.createIcons();</script>
+
+    <!-- 上传视频弹层（底部 sheet · 已展开） -->
+    <div class="upload-sheet-mask show" id="uploadMask" role="dialog" aria-modal="true" aria-label="上传视频">
+      <div class="upload-sheet" id="uploadSheet">
+        <div class="upload-grab" aria-hidden="true"></div>
+        <div class="upload-head">
+          <h3>上传视频</h3>
+          <button class="upload-close" id="uploadClose" data-dom-id="uploadClose" type="button" aria-label="关闭弹层">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="upload-body no-scrollbar">
+
+          <!-- a) 视频上传区 -->
+          <div class="upload-field">
+            <label class="upload-label">选择视频<span class="req" aria-hidden="true">*</span></label>
+            <div class="upload-dropzone" role="button" tabindex="0" aria-label="上传视频">
+              <i data-lucide="upload-cloud"></i>
+              <b>点击或拖拽上传视频</b>
+              <small>支持 MP4/MOV，最大 500MB</small>
+            </div>
+            <div class="upload-file-tag" id="uploadFileTag">
+              <i data-lucide="film" class="film"></i>
+              <span class="fname">我的翻跳视频.mp4</span>
+              <span class="fsize">128MB</span>
+              <button class="fdel" type="button" aria-label="删除文件">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- b) 视频标题 -->
+          <div class="upload-field">
+            <label class="upload-label" for="uploadTitle">视频标题</label>
+            <input class="upload-input" id="uploadTitle" type="text" value="Pink Venom 翻跳" placeholder="给你的视频起个名字" />
+          </div>
+
+          <!-- c) 选择封面 -->
+          <div class="upload-field">
+            <label class="upload-label">选择封面</label>
+            <div class="cover-picker no-scrollbar" id="coverPicker">
+              <div class="cover-item c1 selected" data-cover="1" role="button" tabindex="0" aria-label="封面一">
+                <i data-lucide="play"></i>
+                <span class="check"><i data-lucide="check"></i></span>
+              </div>
+              <div class="cover-item c2" data-cover="2" role="button" tabindex="0" aria-label="封面二">
+                <i data-lucide="music"></i>
+              </div>
+              <div class="cover-item c3" data-cover="3" role="button" tabindex="0" aria-label="封面三">
+                <i data-lucide="video"></i>
+              </div>
+              <div class="cover-item custom" data-cover="custom" role="button" tabindex="0" aria-label="自定义上传封面">
+                <i data-lucide="plus"></i>
+                <span>自定义</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- d) 文案说明 -->
+          <div class="upload-field">
+            <label class="upload-label" for="uploadDesc">文案说明</label>
+            <textarea class="upload-textarea" id="uploadDesc" rows="3" maxlength="200" placeholder="说说你的舞蹈故事...">第一次翻跳 BLACKPINK，还有很多不足，大家多多点赞支持！</textarea>
+            <div class="char-count" id="charCount">36/200</div>
+          </div>
+
+          <!-- e) 投稿须知 -->
+          <div class="upload-tips">
+            <p><i data-lucide="info"></i>投稿视频经审核后展示在排行榜</p>
+            <p><i data-lucide="info"></i>获得点赞可累计积分，积分可兑换手办</p>
+            <p><i data-lucide="info"></i>请确保视频内容原创，无版权争议</p>
+          </div>
+
+          <!-- f) 提交按钮 -->
+          <div class="upload-submit-foot">
+            <button class="upload-submit" id="uploadSubmit" type="button">
+              <i data-lucide="send"></i>发布视频
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var mask = document.getElementById('uploadMask');
+        var sheet = document.getElementById('uploadSheet');
+        var closeBtn = document.getElementById('uploadClose');
+        var submitBtn = document.getElementById('uploadSubmit');
+        var fileTag = document.getElementById('uploadFileTag');
+        var coverPicker = document.getElementById('coverPicker');
+        var descEl = document.getElementById('uploadDesc');
+        var charCount = document.getElementById('charCount');
+        var showToast = window.__showToast || function () {};
+
+        function closeSheet() {
+          if (mask) { mask.classList.remove('show'); }
+        }
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function (e) { e.stopPropagation(); closeSheet(); });
+        }
+        // 点击遮罩关闭（点击 sheet 本身不关闭）
+        if (mask && sheet) {
+          mask.addEventListener('click', function (e) {
+            if (e.target === mask) { closeSheet(); }
+          });
+        }
+        // 提交
+        if (submitBtn) {
+          submitBtn.addEventListener('click', function () {
+            showToast('视频发布成功！等待审核');
+            closeSheet();
+          });
+        }
+        // 删除文件条目
+        if (fileTag) {
+          var delBtn = fileTag.querySelector('.fdel');
+          if (delBtn) {
+            delBtn.addEventListener('click', function () {
+              if (fileTag.parentNode) { fileTag.parentNode.removeChild(fileTag); }
+            });
+          }
+        }
+        // 封面选择切换
+        if (coverPicker) {
+          coverPicker.querySelectorAll('.cover-item').forEach(function (item) {
+            item.addEventListener('click', function () {
+              coverPicker.querySelectorAll('.cover-item').forEach(function (it) {
+                it.classList.remove('selected');
+                var chk = it.querySelector('.check');
+                if (chk) { chk.remove(); }
+              });
+              item.classList.add('selected');
+              if (!item.querySelector('.check')) {
+                var chk = document.createElement('span');
+                chk.className = 'check';
+                var ic = document.createElement('i');
+                ic.setAttribute('data-lucide', 'check');
+                chk.appendChild(ic);
+                item.appendChild(chk);
+              }
+              if (window.lucide) { lucide.createIcons(); }
+            });
+          });
+        }
+        // 字数统计
+        if (descEl && charCount) {
+          function updateCount() {
+            var len = descEl.value.length;
+            charCount.textContent = len + '/200';
+          }
+          descEl.addEventListener('input', updateCount);
+          updateCount();
+        }
+        // 重新渲染追加 DOM 中的 lucide 图标
+        if (window.lucide) { lucide.createIcons(); }
+      })();
+    </script>
+</body>
+</html>

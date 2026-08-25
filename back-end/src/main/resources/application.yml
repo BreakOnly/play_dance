@@ -1,0 +1,58 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: dance-studio
+  profiles:
+    active: dev
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml,classpath*:com/dance/studio/mapper/**/*.xml
+  type-aliases-package: com.dance.studio.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
+
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+# 业务级配置
+app:
+  jwt:
+    secret: ${JWT_SECRET:dance-studio-please-change-this-secret-key-32bytes-min}
+    # token 有效期（小时）
+    admin-expire-hours: 12
+    student-expire-hours: 168
+  storage:
+    type: ${STORAGE_TYPE:local}   # local | oss  —— 上线改成 oss
+    local-dir: ${STORAGE_DIR:./uploads}
+    base-url: ${STORAGE_BASE_URL:http://localhost:8080/files}
+    oss:
+      endpoint: ${OSS_ENDPOINT:}              # 如 oss-cn-shanghai.aliyuncs.com
+      bucket: ${OSS_BUCKET:}
+      access-key-id: ${OSS_AK:}
+      access-key-secret: ${OSS_SK:}
+      url-expire-seconds: ${OSS_URL_EXPIRE:3600}   # 私有资源(视频)签名URL有效期
+  wechat:
+    # 开发期 mock=true 时，用 code 直接当 openid，免真实 appid/secret
+    mock: ${WX_MOCK:true}
+    appid: ${WX_APPID:}
+    secret: ${WX_SECRET:}

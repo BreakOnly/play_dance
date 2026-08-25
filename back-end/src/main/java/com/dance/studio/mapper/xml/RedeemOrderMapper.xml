@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.RedeemOrderMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.RedeemOrder">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="source" property="source"/>
+        <result column="points_cost" property="pointsCost"/>
+        <result column="status" property="status"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="receiver_phone" property="receiverPhone"/>
+        <result column="address" property="address"/>
+        <result column="logistics_company" property="logisticsCompany"/>
+        <result column="logistics_no" property="logisticsNo"/>
+        <result column="audit_admin_id" property="auditAdminId"/>
+        <result column="audit_at" property="auditAt"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO redeem_order (store_id, student_id, goods_id, goods_name, source, points_cost, status)
+        VALUES (#{storeId}, #{studentId}, #{goodsId}, #{goodsName}, #{source}, #{pointsCost}, #{status})
+    </insert>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM redeem_order WHERE id = #{id}
+    </select>
+
+    <select id="list" resultMap="BaseMap">
+        SELECT * FROM redeem_order
+        WHERE store_id = #{storeId}
+        <if test="status != null and status != ''">AND status = #{status}</if>
+        <if test="source != null and source != ''">AND source = #{source}</if>
+        ORDER BY id DESC
+    </select>
+
+    <select id="listByStudent" resultMap="BaseMap">
+        SELECT * FROM redeem_order
+        WHERE student_id = #{studentId}
+        <if test="status != null and status != ''">AND status = #{status}</if>
+        ORDER BY id DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE redeem_order
+        SET status = #{status},
+            audit_admin_id = #{auditAdminId},
+            audit_at = NOW(),
+            reject_reason = #{rejectReason}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLogistics">
+        UPDATE redeem_order
+        SET logistics_company = #{company}, logistics_no = #{no}, status = 'shipping'
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateAddress">
+        UPDATE redeem_order
+        SET receiver_name = #{name}, receiver_phone = #{phone}, address = #{address}
+        WHERE id = #{id} AND student_id = #{studentId}
+    </update>
+</mapper>

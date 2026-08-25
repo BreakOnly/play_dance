@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.DanceTypeMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.DanceType">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="intro" property="intro"/>
+        <result column="sort" property="sort"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <select id="listByStore" resultMap="BaseMap">
+        SELECT * FROM dance_type
+        WHERE store_id = #{storeId}
+        <if test="onlyEnabled">AND status = 1</if>
+        ORDER BY sort, id
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM dance_type WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dance_type (store_id, name, intro, sort, status)
+        VALUES (#{storeId}, #{name}, #{intro}, COALESCE(#{sort},0), COALESCE(#{status},1))
+    </insert>
+
+    <update id="update">
+        UPDATE dance_type
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="intro != null">intro = #{intro},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM dance_type WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+</mapper>

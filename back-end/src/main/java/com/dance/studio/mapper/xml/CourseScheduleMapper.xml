@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.CourseScheduleMapper">
+
+    <resultMap id="EntityMap" type="com.dance.studio.entity.CourseSchedule">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="room" property="room"/>
+        <result column="song" property="song"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="capacity" property="capacity"/>
+        <result column="booked_count" property="bookedCount"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="VoMap" type="com.dance.studio.vo.ScheduleVo">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="store_name" property="storeName"/>
+        <result column="course_id" property="courseId"/>
+        <result column="course_name" property="courseName"/>
+        <result column="course_type" property="courseType"/>
+        <result column="dance_type_name" property="danceTypeName"/>
+        <result column="dance_type_id" property="danceTypeId"/>
+        <result column="dance_type_intro" property="danceTypeIntro"/>
+        <result column="level_name" property="levelName"/>
+        <result column="level_id" property="levelId"/>
+        <result column="level_sort" property="levelSort"/>
+        <result column="duration_min" property="durationMin"/>
+        <result column="cost_hours" property="costHours"/>
+        <result column="description" property="description"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_avatar" property="teacherAvatar"/>
+        <result column="teacher_intro" property="teacherIntro"/>
+        <result column="room" property="room"/>
+        <result column="song" property="song"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="capacity" property="capacity"/>
+        <result column="booked_count" property="bookedCount"/>
+        <result column="status" property="status"/>
+        <result column="my_booking_status" property="myBookingStatus"/>
+    </resultMap>
+
+    <sql id="voSelect">
+        SELECT s.id, s.store_id, st.name AS store_name,
+               s.course_id, c.name AS course_name, c.type AS course_type,
+               dt.id AS dance_type_id, dt.name AS dance_type_name, dt.intro AS dance_type_intro,
+               lv.id AS level_id, lv.name AS level_name, lv.sort AS level_sort, c.duration_min, c.cost_hours,
+               c.description,
+               s.teacher_id, t.name AS teacher_name, t.avatar AS teacher_avatar, t.intro AS teacher_intro,
+               s.room, s.song, s.start_time, s.end_time,
+               s.capacity, s.booked_count, s.status,
+               (SELECT b.status FROM booking b
+                 WHERE b.schedule_id = s.id AND b.student_id = #{studentId}
+                   AND b.status IN ('booked','checked','waitlist') LIMIT 1) AS my_booking_status
+        FROM course_schedule s
+        LEFT JOIN store st ON st.id = s.store_id
+        LEFT JOIN course c ON c.id = s.course_id
+        LEFT JOIN dance_type dt ON dt.id = c.dance_type_id
+        LEFT JOIN course_level lv ON lv.id = c.level_id
+        LEFT JOIN teacher t ON t.id = s.teacher_id
+    </sql>
+
+    <select id="list" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE s.store_id = #{storeId}
+        <if test="start != null">AND s.start_time &gt;= #{start}</if>
+        <if test="end != null">AND s.start_time &lt; #{end}</if>
+        <if test="courseId != null">AND s.course_id = #{courseId}</if>
+        <if test="teacherId != null">AND s.teacher_id = #{teacherId}</if>
+        ORDER BY s.start_time
+    </select>
+
+    <select id="listForMp" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE st.status = 1
+        <if test="start != null">AND s.start_time &gt;= #{start}</if>
+        <if test="end != null">AND s.start_time &lt; #{end}</if>
+        <if test="storeId != null">AND s.store_id = #{storeId}</if>
+        <if test="danceTypeId != null">AND c.dance_type_id = #{danceTypeId}</if>
+        <if test="levelId != null">AND c.level_id = #{levelId}</if>
+        <if test="keyword != null and keyword != ''">
+            AND (c.name LIKE CONCAT('%',#{keyword},'%')
+              OR t.name LIKE CONCAT('%',#{keyword},'%')
+              OR dt.name LIKE CONCAT('%',#{keyword},'%')
+              OR s.song LIKE CONCAT('%',#{keyword},'%'))
+        </if>
+        ORDER BY s.start_time
+    </select>
+
+    <select id="findVoById" resultMap="VoMap">
+        <include refid="voSelect"/>
+        WHERE s.id = #{id}
+    </select>
+
+    <select id="findById" resultMap="EntityMap">
+        SELECT * FROM course_schedule WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course_schedule (store_id, course_id, teacher_id, room, song, start_time, end_time,
+                                     capacity, booked_count, status)
+        VALUES (#{storeId}, #{courseId}, #{teacherId}, #{room}, #{song}, #{startTime}, #{endTime},
+                #{capacity}, 0, 'open')
+    </insert>
+
+    <update id="update">
+        UPDATE course_schedule
+        <set>
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="teacherId != null">teacher_id = #{teacherId},</if>
+            <if test="room != null">room = #{room},</if>
+            <if test="song != null">song = #{song},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="capacity != null">capacity = #{capacity},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE course_schedule SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="countConflict" resultType="int">
+        SELECT COUNT(*) FROM course_schedule
+        WHERE store_id = #{storeId}
+          AND status != 'cancelled'
+          AND start_time &lt; #{end} AND end_time &gt; #{start}
+          <if test="excludeId != null">AND id != #{excludeId}</if>
+          AND (
+            <choose>
+              <when test="teacherId != null and room != null and room != ''">
+                teacher_id = #{teacherId} OR room = #{room}
+              </when>
+              <when test="teacherId != null">teacher_id = #{teacherId}</when>
+              <when test="room != null and room != ''">room = #{room}</when>
+              <otherwise>1 = 0</otherwise>
+            </choose>
+          )
+    </select>
+
+    <update id="incrBooked">
+        UPDATE course_schedule SET booked_count = booked_count + 1
+        WHERE id = #{id} AND booked_count &lt; capacity AND status = 'open'
+    </update>
+
+    <update id="decrBooked">
+        UPDATE course_schedule SET booked_count = booked_count - 1
+        WHERE id = #{id} AND booked_count &gt; 0
+    </update>
+
+    <update id="finishExpired">
+        UPDATE course_schedule SET status = 'finished'
+        WHERE status IN ('open','full') AND end_time &lt; #{now}
+    </update>
+</mapper>

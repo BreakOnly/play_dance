@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程详情</title>
+    <style id="theme-vars">
+/* 玩舞街舞小程序 · 品牌样式（延续原型 BLACKPINK 黑粉潮酷基因） */
+
+:root {
+  /* 基础表面 */
+  --dance-background: #070708;
+  --dance-foreground: #ffffff;
+  --dance-card: #1a1a1d;
+  --dance-card-foreground: #ffffff;
+  --dance-popover: #1a1a1d;
+  --dance-popover-foreground: #ffffff;
+  --dance-muted: #2e2e33;
+  --dance-muted-foreground: #9a9aa2;
+  --dance-border: #2e2e33;
+  --dance-input: #1a1a1d;
+  --dance-surface: #141417;
+  --dance-surface-2: #222226;
+  --dance-text-tertiary: #6b6b73;
+
+  /* 品牌主色（唯一品牌色相：荧光粉） */
+  --dance-primary: #FF2D9B;
+  --dance-primary-foreground: #ffffff;
+  --dance-secondary: #FF6FB5;
+  --dance-primary-soft: rgba(255, 45, 155, 0.16);
+  --dance-primary-dark: #b3126b;
+  --dance-ring: #FF2D9B;
+
+  /* 语义状态色（仅状态使用） */
+  --dance-state-success: #3ecf8e;
+  --dance-state-success-soft: rgba(62, 207, 142, 0.14);
+  --dance-state-warning: #ffd166;
+  --dance-state-warning-bg: rgba(255, 209, 102, 0.1);
+  --dance-warning: #ffd166;
+  --dance-warning-bg: rgba(255, 209, 102, 0.1);
+
+  /* 圆角（克制层级） */
+  --dance-radius-sm: 8px;
+  --dance-radius-md: 12px;
+  --dance-radius-lg: 16px;
+  --dance-radius-xl: 20px;
+  --dance-radius-small: 8px;
+  --dance-radius-medium: 12px;
+  --dance-radius-large: 16px;
+
+  /* 阴影（静态表面以描边分层为主；深阴影仅用于浮动层） */
+  --dance-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --dance-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --dance-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--dance-background);
+  --color-foreground: var(--dance-foreground);
+  --color-card: var(--dance-card);
+  --color-card-foreground: var(--dance-card-foreground);
+  --color-popover: var(--dance-popover);
+  --color-popover-foreground: var(--dance-popover-foreground);
+  --color-primary: var(--dance-primary);
+  --color-primary-foreground: var(--dance-primary-foreground);
+  --color-secondary: var(--dance-secondary);
+  --color-muted: var(--dance-muted);
+  --color-muted-foreground: var(--dance-muted-foreground);
+  --color-border: var(--dance-border);
+  --color-input: var(--dance-input);
+  --color-ring: var(--dance-ring);
+  --radius-sm: var(--dance-radius-sm);
+  --radius-md: var(--dance-radius-md);
+  --radius-lg: var(--dance-radius-lg);
+  --radius-xl: var(--dance-radius-xl);
+}
+
+@layer base {
+  body {
+    background-color: var(--dance-background);
+    color: var(--dance-foreground);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--dance-background);
+    --color-foreground: var(--dance-foreground);
+    --color-card: var(--dance-card);
+    --color-card-foreground: var(--dance-card-foreground);
+    --color-popover: var(--dance-popover);
+    --color-popover-foreground: var(--dance-popover-foreground);
+    --color-primary: var(--dance-primary);
+    --color-primary-foreground: var(--dance-primary-foreground);
+    --color-secondary: var(--dance-secondary);
+    --color-muted: var(--dance-muted);
+    --color-muted-foreground: var(--dance-muted-foreground);
+    --color-border: var(--dance-border);
+    --color-input: var(--dance-input);
+    --color-ring: var(--dance-ring);
+    --radius-sm: var(--dance-radius-sm);
+    --radius-md: var(--dance-radius-md);
+    --radius-lg: var(--dance-radius-lg);
+    --radius-xl: var(--dance-radius-xl);
+  }
+  @layer base {
+    body { background: var(--dance-background); color: var(--dance-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--dance-background); }
+      .text-background { color: var(--dance-background); }
+      .border-background { border-color: var(--dance-background); }
+      .ring-background { --tw-ring-color: var(--dance-background); }
+      .bg-foreground { background-color: var(--dance-foreground); }
+      .text-foreground { color: var(--dance-foreground); }
+      .border-foreground { border-color: var(--dance-foreground); }
+      .ring-foreground { --tw-ring-color: var(--dance-foreground); }
+      .bg-card { background-color: var(--dance-card); }
+      .text-card { color: var(--dance-card); }
+      .border-card { border-color: var(--dance-card); }
+      .ring-card { --tw-ring-color: var(--dance-card); }
+      .bg-card-foreground { background-color: var(--dance-card-foreground); }
+      .text-card-foreground { color: var(--dance-card-foreground); }
+      .border-card-foreground { border-color: var(--dance-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--dance-card-foreground); }
+      .bg-popover { background-color: var(--dance-popover); }
+      .text-popover { color: var(--dance-popover); }
+      .border-popover { border-color: var(--dance-popover); }
+      .ring-popover { --tw-ring-color: var(--dance-popover); }
+      .bg-popover-foreground { background-color: var(--dance-popover-foreground); }
+      .text-popover-foreground { color: var(--dance-popover-foreground); }
+      .border-popover-foreground { border-color: var(--dance-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--dance-popover-foreground); }
+      .bg-primary { background-color: var(--dance-primary); }
+      .text-primary { color: var(--dance-primary); }
+      .border-primary { border-color: var(--dance-primary); }
+      .ring-primary { --tw-ring-color: var(--dance-primary); }
+      .bg-primary-foreground { background-color: var(--dance-primary-foreground); }
+      .text-primary-foreground { color: var(--dance-primary-foreground); }
+      .border-primary-foreground { border-color: var(--dance-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--dance-primary-foreground); }
+      .bg-secondary { background-color: var(--dance-secondary); }
+      .text-secondary { color: var(--dance-secondary); }
+      .border-secondary { border-color: var(--dance-secondary); }
+      .ring-secondary { --tw-ring-color: var(--dance-secondary); }
+      .bg-muted { background-color: var(--dance-muted); }
+      .text-muted { color: var(--dance-muted); }
+      .border-muted { border-color: var(--dance-muted); }
+      .ring-muted { --tw-ring-color: var(--dance-muted); }
+      .bg-muted-foreground { background-color: var(--dance-muted-foreground); }
+      .text-muted-foreground { color: var(--dance-muted-foreground); }
+      .border-muted-foreground { border-color: var(--dance-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--dance-muted-foreground); }
+      .bg-border { background-color: var(--dance-border); }
+      .text-border { color: var(--dance-border); }
+      .border-border { border-color: var(--dance-border); }
+      .ring-border { --tw-ring-color: var(--dance-border); }
+      .bg-input { background-color: var(--dance-input); }
+      .text-input { color: var(--dance-input); }
+      .border-input { border-color: var(--dance-input); }
+      .ring-input { --tw-ring-color: var(--dance-input); }
+      .bg-ring { background-color: var(--dance-ring); }
+      .text-ring { color: var(--dance-ring); }
+      .border-ring { border-color: var(--dance-ring); }
+      .ring-ring { --tw-ring-color: var(--dance-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+      <!-- 自定义导航头：返回圆钮 + 居中标题 + 右侧 32px 占位 -->
+      <header class="nav-head">
+        <a class="nav-back" href="booking.html" data-dom-id="back-booking" aria-label="返回课程预约">
+          <i data-lucide="chevron-left" class="ic-20"></i>
+        </a>
+        <span class="nav-title">课程详情</span>
+        <span class="nav-slot" aria-hidden="true"></span>
+      </header>
+
+      <!-- 媒体区 -->
+      <section class="media">
+        <img src="../assets/home-banner.jpg" alt="HIP-HOP 常规课课堂预览">
+        <span class="media-play" aria-hidden="true"><i data-lucide="play" class="ic-22"></i></span>
+      </section>
+
+      <!-- 课程信息 -->
+      <section class="content">
+        <div class="teacher">
+          <span class="avatar" aria-hidden="true">L</span>
+          <span class="teacher-info">
+            <span class="teacher-name">Lina</span>
+            <span class="teacher-role">Hip-Hop 导师</span>
+          </span>
+        </div>
+
+        <div class="course-block">
+          <h1 class="course-title">HIP-HOP 常规课</h1>
+          <div class="meta-row">
+            <span class="stars" role="img" aria-label="难度评分 3 / 5">
+              <i data-lucide="star" class="ic-14 fill"></i><i data-lucide="star" class="ic-14 fill"></i><i data-lucide="star" class="ic-14 fill"></i><i data-lucide="star" class="ic-14"></i><i data-lucide="star" class="ic-14"></i>
+            </span>
+            <span class="tag tag-pink">极易</span>
+            <span class="tag tag-neutral">零基础 / 成品舞</span>
+          </div>
+          <ul class="info-row">
+            <li><i data-lucide="clock" class="ic-14"></i>19:00–20:00 周五</li>
+            <li><i data-lucide="map-pin" class="ic-14"></i>A 教室 · 蒲黄榆NTP店</li>
+            <li><i data-lucide="users" class="ic-14"></i>剩余 6 席</li>
+          </ul>
+        </div>
+
+        <!-- 后台签到提示条：到店由工作人员后台确认签到并赠送积分 -->
+        <div class="checkin-tip">
+          <i data-lucide="sparkles" class="ic-20"></i>
+          <div class="tip-copy">
+            <p class="tip-main">到店免扫码 · 工作人员后台确认签到</p>
+            <p class="tip-sub">签到成功自动赠送 100 积分，可在手办商城兑换</p>
+          </div>
+        </div>
+
+        <!-- 课程内容分区 -->
+        <div class="body-block">
+          <h2 class="sec-title">课程内容</h2>
+          <article class="info-card">
+            <h3><i data-lucide="file-text" class="ic-16"></i>课程简介</h3>
+            <p>这节课练 hiphop 的 pimp walk 元素，主要涉及 rock 律动叠加 step 的链接，会在节奏和方向上做变化练习，欢迎来练习！</p>
+          </article>
+          <article class="info-card">
+            <h3><i data-lucide="user" class="ic-16"></i>教师简介</h3>
+            <p>拥有 8 年街舞教学经验，擅长 Hiphop 基础律动与编舞。课堂氛围轻松，注重动作拆解，适合零基础同学循序渐进。</p>
+          </article>
+          <article class="info-card">
+            <h3><i data-lucide="music" class="ic-16"></i>舞种介绍</h3>
+            <p>Hip-Hop 起源于街头文化，强调律动（Bounce）、节奏感和身体协调性。本节课从基础脚步、身体 Rock 到简单编舞片段，带你感受 freestyle 的乐趣。</p>
+          </article>
+          <article class="info-card">
+            <h3><i data-lucide="credit-card" class="ic-16"></i>支付规则</h3>
+            <p>约课成功后系统冻结 1 课时，课程结束后自动消耗。开课前 6 小时可免费取消，逾期取消或爽约将扣除已冻结课时。</p>
+          </article>
+          <article class="info-card">
+            <h3><i data-lucide="alert-circle" class="ic-16"></i>注意事项</h3>
+            <p>请提前 10 分钟到店；无需自行扫码签到，工作人员会为你确认并赠送积分；建议穿舒适运动服与平底鞋；身体不适请及时告知老师。</p>
+          </article>
+        </div>
+      </section>
+
+      <footer class="page-footer">XX 街舞工作室 · 玩舞小程序</footer>
+
+      <!-- 底部常驻约课 CTA -->
+      <div class="cta-bar">
+        <button class="cta-btn" type="button" id="openBooking">立即约课</button>
+      </div>
+
+      <!-- 约课确认弹层 -->
+      <div class="modal" id="bookingModal" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle" aria-hidden="true">
+        <div class="modal-mask" data-close></div>
+        <div class="modal-col">
+          <div class="modal-sheet">
+            <h3 id="bookingModalTitle">确定预约课程？</h3>
+            <p class="modal-desc">约课冻结 1 课时，课程结束后消耗；到店由工作人员签到并赠送 100 积分。</p>
+            <a class="cta-btn" href="my-bookings.html" data-dom-id="confirm-booking-ok">确 定</a>
+            <button class="ghost-btn" type="button" data-close>取 消</button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <style id="critical-layout">
+      /* 页面级静态布局：document-scroll 移动端视觉稿，420px 居中，无手机外框 */
+      html { background: var(--dance-background); }
+      body { max-width: 420px; margin-inline: auto; }
+
+      .ic-14 { width: 14px; height: 14px; }
+      .ic-16 { width: 16px; height: 16px; }
+      .ic-20 { width: 20px; height: 20px; }
+      .ic-22 { width: 22px; height: 22px; }
+      .fill { fill: currentColor; }
+      i[data-lucide], svg[class*="ic-"] { flex: none; }
+
+      /* 自定义导航头 */
+      .nav-head {
+        position: sticky; top: 0; z-index: 40;
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        height: 56px; padding: 0 16px;
+        background: var(--dance-background);
+        border-bottom: 1px solid var(--dance-border);
+      }
+      .nav-back {
+        width: 32px; height: 32px; border-radius: 999px;
+        background: var(--dance-surface-2); color: var(--dance-foreground);
+        display: flex; align-items: center; justify-content: center;
+        transition: background-color .15s cubic-bezier(.2,.8,.2,1), transform .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .nav-back:hover { background: var(--dance-muted); }
+      .nav-back:active { transform: scale(.94); }
+      .nav-title { font-size: 17px; font-weight: 800; color: var(--dance-foreground); }
+      .nav-slot { width: 32px; height: 32px; }
+
+      /* 媒体区 */
+      .media { position: relative; height: 200px; background: var(--dance-surface); }
+      .media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .media-play {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        width: 48px; height: 48px; border-radius: 999px;
+        background: var(--dance-primary-soft); border: 1px solid var(--dance-primary);
+        color: var(--dance-foreground);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .media-play svg { margin-left: 2px; }
+
+      /* 课程信息内容列 */
+      .content { display: flex; flex-direction: column; gap: 16px; padding: 16px 16px 8px; }
+      .teacher { display: flex; align-items: center; gap: 10px; }
+      .avatar {
+        width: 44px; height: 44px; border-radius: 999px; flex: none;
+        background: var(--dance-primary-soft); color: var(--dance-secondary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; font-weight: 800;
+      }
+      .teacher-info { display: flex; flex-direction: column; gap: 1px; }
+      .teacher-name { font-size: 15px; font-weight: 800; color: var(--dance-foreground); line-height: 1.3; }
+      .teacher-role { font-size: 12px; color: var(--dance-muted-foreground); line-height: 1.4; }
+
+      .course-title {
+        margin: 2px 0 8px; font-size: 18px; font-weight: 900;
+        color: var(--dance-foreground); line-height: 1.3;
+        text-wrap: balance; word-break: keep-all; overflow-wrap: break-word;
+      }
+      .meta-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+      .stars { display: flex; gap: 2px; color: var(--dance-warning); }
+      .tag {
+        font-size: 11px; font-weight: 700; line-height: 1.2;
+        padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+      }
+      .tag-pink {
+        background: var(--dance-primary-soft); color: var(--dance-secondary);
+        border: 1px solid var(--dance-primary);
+      }
+      .tag-neutral {
+        background: var(--dance-surface-2); color: var(--dance-muted-foreground);
+        border: 1px solid var(--dance-border);
+      }
+      .info-row { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 10px 0 0; padding: 0; list-style: none; }
+      .info-row li {
+        display: flex; align-items: center; gap: 5px;
+        font-size: 13px; color: var(--dance-muted-foreground); line-height: 1.5; white-space: nowrap;
+      }
+      .info-row .ic-14 { color: var(--dance-secondary); }
+
+      /* 后台签到提示条（品牌卡） */
+      .checkin-tip {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: var(--dance-primary-soft);
+        border: 1px solid var(--dance-primary);
+        border-radius: var(--dance-radius-md);
+        padding: 12px 14px;
+      }
+      .checkin-tip .ic-20 { color: var(--dance-primary); margin-top: 1px; }
+      .tip-copy { display: flex; flex-direction: column; gap: 3px; }
+      .tip-main { margin: 0; font-size: 13px; font-weight: 700; color: var(--dance-foreground); line-height: 1.45; }
+      .tip-sub { margin: 0; font-size: 11px; color: var(--dance-muted-foreground); line-height: 1.5; }
+
+      /* 课程内容分区卡 */
+      .sec-title {
+        display: flex; align-items: center; gap: 8px;
+        margin: 0 0 12px; font-size: 15px; font-weight: 800;
+        color: var(--dance-foreground); line-height: 1.3;
+      }
+      .sec-title::before {
+        content: ""; width: 4px; height: 14px; flex: none;
+        border-radius: 2px; background: var(--dance-primary);
+      }
+      .info-card {
+        background: var(--dance-surface);
+        border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        padding: 12px 14px;
+      }
+      .info-card + .info-card { margin-top: 10px; }
+      .info-card h3 {
+        display: flex; align-items: center; gap: 6px;
+        margin: 0 0 6px; font-size: 13px; font-weight: 800;
+        color: var(--dance-foreground); line-height: 1.3;
+      }
+      .info-card .ic-16 { color: var(--dance-secondary); }
+      .info-card p { margin: 0; font-size: 12px; color: var(--dance-muted-foreground); line-height: 1.7; }
+
+      /* 页脚（预留 CTA 上方呼吸空间 + 底部防遮挡余量） */
+      .page-footer {
+        padding: 8px 16px 24px;
+        text-align: center; font-size: 11px; line-height: 1.6;
+        color: var(--dance-text-tertiary);
+      }
+
+      /* 底部常驻约课 CTA：sticky 文档流内收尾，不遮挡内容 */
+      .cta-bar {
+        position: sticky; bottom: 0; z-index: 45;
+        background: var(--dance-card);
+        border-top: 1px solid var(--dance-border);
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+      .cta-btn {
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; padding: 13px; border: none; cursor: pointer;
+        background: linear-gradient(90deg, var(--dance-primary), var(--dance-secondary));
+        color: var(--dance-primary-foreground);
+        font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: 2px;
+        border-radius: var(--dance-radius-md);
+        transition: transform .15s cubic-bezier(.2,.8,.2,1), filter .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .cta-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+      .cta-btn:active { transform: scale(.98); }
+      .cta-btn:focus-visible, .nav-back:focus-visible, .ghost-btn:focus-visible {
+        outline: 2px solid var(--dance-ring); outline-offset: 2px;
+      }
+
+      /* 约课确认弹层 */
+      .modal {
+        position: fixed; inset: 0; z-index: 60;
+        display: flex; justify-content: center;
+        visibility: hidden; opacity: 0;
+        transition: opacity .24s cubic-bezier(.3,0,0,1), visibility .24s;
+      }
+      .modal.show { visibility: visible; opacity: 1; }
+      .modal-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, .7); }
+      .modal-col { position: relative; width: 100%; max-width: 420px; height: 100%; display: flex; align-items: flex-end; }
+      .modal-sheet {
+        position: relative; width: 100%;
+        background: var(--dance-card);
+        border-radius: var(--dance-radius-xl) var(--dance-radius-xl) 0 0;
+        padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+        box-shadow: var(--dance-shadow-2);
+        transform: translateY(100%);
+        transition: transform .28s cubic-bezier(.3,0,0,1);
+      }
+      .modal.show .modal-sheet { transform: translateY(0); }
+      .modal-sheet h3 {
+        margin: 0 0 8px; font-size: 17px; font-weight: 800;
+        color: var(--dance-foreground); text-align: center; line-height: 1.3;
+      }
+      .modal-desc {
+        margin: 0 0 20px; font-size: 13px; line-height: 1.6;
+        color: var(--dance-muted-foreground); text-align: center;
+      }
+      .ghost-btn {
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; margin-top: 8px; padding: 11px; cursor: pointer;
+        background: transparent; border: 1px solid var(--dance-border);
+        border-radius: var(--dance-radius-md);
+        color: var(--dance-muted-foreground);
+        font-family: inherit; font-size: 14px; font-weight: 700;
+        transition: background-color .15s cubic-bezier(.2,.8,.2,1), color .15s cubic-bezier(.2,.8,.2,1);
+      }
+      .ghost-btn:hover { background: var(--dance-surface-2); color: var(--dance-foreground); }
+
+      @media (prefers-reduced-motion: reduce) {
+        .nav-back, .cta-btn, .ghost-btn, .modal, .modal-sheet {
+          transition-duration: .01ms;
+        }
+        .cta-btn:hover { transform: none; }
+      }
+    </style>
+    <script>
+      (function () {
+        var modal = document.getElementById('bookingModal');
+        var openBtn = document.getElementById('openBooking');
+
+        function openModal() {
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+        }
+        function closeModal() {
+          modal.classList.remove('show');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+
+        openBtn.addEventListener('click', openModal);
+        modal.querySelectorAll('[data-close]').forEach(function (el) {
+          el.addEventListener('click', closeModal);
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeModal();
+        });
+      })();
+    </script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

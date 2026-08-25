@@ -1,0 +1,20 @@
+package com.dance.studio.entity;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+public class PointLog {
+    private Long id;
+    private Long studentId;
+    /** checkin/recharge/consume/redeem/manual/expire */
+    private String type;
+    private Integer amount;
+    private Integer balanceAfter;
+    private String refType;
+    private Long refId;
+    private Long operatorId;
+    private String remark;
+    private LocalDateTime createdAt;
+}
