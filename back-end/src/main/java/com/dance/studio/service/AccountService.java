@@ -128,6 +128,7 @@ public class AccountService {
     /** 约课锁定：可用课时 -cost、冻结 +cost。可用不足或已过期抛异常 */
     public void lockHours(Long studentId, int cost, Long bookingId) {
         Student s = studentMapper.findById(studentId);
+        if (s == null) throw new BizException(ResultCode.NOT_FOUND);
         // 原型 §3.1 约课校验"未过期"：剔除已过期(尚未销账)批次对应的课时再判断
         int expired = batchMapper.sumExpiredRemaining(studentId, LocalDateTime.now());
         int frozen = s.getFrozenHours() == null ? 0 : s.getFrozenHours();

@@ -24,6 +24,7 @@ export const api = {
   // 课表与约课（跨门店 + 关键字/舞种/难度/门店筛选）
   schedules: (params) => http.get('/api/mp/schedules', params),
   scheduleDetail: (id) => http.get('/api/mp/schedules/' + id),
+  scheduleFilters: () => http.get('/api/mp/schedules/filter-options'),
   book: (scheduleId) => http.post('/api/mp/bookings', { scheduleId }),
   myBookings: (status) => http.get('/api/mp/bookings', status ? { status } : {}),
   cancelBooking: (id) => http.post('/api/mp/bookings/' + id + '/cancel', {}),

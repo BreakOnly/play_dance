@@ -36,8 +36,6 @@ public class StudentService {
         s.setGender(req.getGender());
         s.setBirthday(req.getBirthday());
         s.setAvatar(req.getAvatar());
-        s.setStage(req.getStage());
-        s.setPreferDance(req.getPreferDance());
         s.setStatus(req.getStatus() == null ? 1 : req.getStatus());
         studentMapper.insert(s);
         return studentMapper.findById(s.getId());

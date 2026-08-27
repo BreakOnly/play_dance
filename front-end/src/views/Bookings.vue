@@ -62,7 +62,10 @@ function statusText(s) { return { booked: '待上课', checked: '已签到', wai
 function tagType(s) { return { booked: 'primary', checked: 'success', waitlist: 'warning' }[s] || 'info' }
 
 onMounted(() => {
-  scheduleApi.list({}).then((d) => schedules.value = d || [])
+  const n = new Date()
+  const p = (v) => String(v).padStart(2, '0')
+  const start = `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`
+  scheduleApi.list({ start }).then((d) => schedules.value = (d || []).filter((s) => s.status !== 'cancelled'))
   studentApi.list({ page: 1, size: 200 }).then((d) => students.value = d.list || [])
 })
 </script>

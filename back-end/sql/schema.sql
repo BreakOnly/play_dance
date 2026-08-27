@@ -263,7 +263,7 @@ CREATE TABLE `booking` (
   `created_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_student_schedule` (`student_id`,`schedule_id`),
+  KEY `idx_student_schedule` (`student_id`,`schedule_id`),
   KEY `idx_schedule` (`schedule_id`,`status`),
   KEY `idx_student` (`student_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='约课单';

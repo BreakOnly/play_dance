@@ -31,7 +31,7 @@
         <el-form-item label="教室"><el-input v-model="f.room" /></el-form-item>
         <el-form-item label="开始"><el-date-picker v-model="f.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
         <el-form-item label="结束"><el-date-picker v-model="f.endTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
-        <el-form-item label="容量"><el-input-number v-model="f.capacity" :min="1" /><span style="color:#909399;margin-left:8px">默认12</span></el-form-item>
+        <el-form-item label="容量"><el-input-number v-model="f.capacity" :min="1" placeholder="请输入容量" /></el-form-item>
       </el-form>
       <template #footer><el-button @click="visible=false">取消</el-button><el-button type="primary" @click="save">保存</el-button></template>
     </el-dialog>

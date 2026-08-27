@@ -30,9 +30,6 @@
     <view class="section-title">我的服务</view>
     <view class="services card">
       <view @tap="goBookings"><view class="service-icon">约</view><text>我的约课</text><text>{{ member.upcomingCount || 0 }} 节待上课</text><text>›</text></view>
-      <view @tap="goSchedule"><view class="service-icon">课</view><text>本周课表</text><text>选择喜欢的课程</text><text>›</text></view>
-      <view @tap="showHours"><view class="service-icon">时</view><text>课时余额</text><text>查看余额与冻结</text><text>›</text></view>
-      <view @tap="goConsult"><view class="service-icon">问</view><text>咨询问答</text><text>新人常见问题</text><text>›</text></view>
       <view @tap="showMessages"><view class="service-icon">信</view><text>消息通知</text><text>暂无新消息</text><text>›</text></view>
       <view @tap="showRule"><view class="service-icon">规</view><text>预约与取消规则</text><text></text><text>›</text></view>
       <view @tap="callStudio"><view class="service-icon">电</view><text>联系舞房</text><text>{{ servicePhone }}</text><text>›</text></view>
@@ -82,14 +79,6 @@ function callStudio() {
   uni.showModal({ title: '联系舞房', content: '请拨打电话：' + p, showCancel: false, confirmColor: '#ff2d9b' })
 }
 
-function showHours() {
-  uni.showModal({
-    title: '课时余额',
-    content: `可用 ${member.value.availableHours || 0} 课时，已冻结 ${member.value.frozenHours || 0} 课时。`,
-    showCancel: false, confirmColor: '#ff2d9b'
-  })
-}
-
 function showMessages() { uni.showToast({ title: '暂无新的系统消息', icon: 'none' }) }
 function showRule() {
   uni.showModal({
@@ -101,7 +90,6 @@ function showRule() {
 
 function goBookings() { uni.navigateTo({ url: '/pages/mybookings/mybookings' }) }
 function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
-function goConsult() { uni.switchTab({ url: '/pages/qa/qa' }) }
 </script>
 
 <style lang="scss" scoped>

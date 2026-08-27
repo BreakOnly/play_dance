@@ -61,7 +61,11 @@
         <el-form-item label="舞种"><el-select v-model="cf.danceTypeId"><el-option v-for="d in danceTypes" :key="d.id" :label="d.name" :value="d.id" /></el-select></el-form-item>
         <el-form-item label="难度"><el-select v-model="cf.levelId"><el-option v-for="l in levels" :key="l.id" :label="l.name" :value="l.id" /></el-select></el-form-item>
         <el-form-item label="时长(分)"><el-input-number v-model="cf.durationMin" :min="15" /></el-form-item>
-        <el-form-item label="价格"><el-input-number v-model="cf.price" :min="0" /></el-form-item>
+        <el-form-item label="价格(元)">
+          <el-input v-model="cf.price" placeholder="请输入价格" @input="onPriceInput">
+            <template #suffix>元</template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="耗课时"><el-input-number v-model="cf.costHours" :min="1" /></el-form-item>
       </el-form>
       <template #footer><el-button @click="courseVisible=false">取消</el-button><el-button type="primary" @click="saveCourse">保存</el-button></template>
@@ -86,7 +90,16 @@ function loadAll() {
 
 const courseVisible = ref(false); const cf = ref({})
 function openCourse(row) { cf.value = row ? { ...row } : { type: 'group', durationMin: 60, price: 0, costHours: 1 }; courseVisible.value = true }
-function saveCourse() { courseApi.saveCourse(cf.value).then(() => { ElMessage.success('已保存'); courseVisible.value = false; loadAll() }) }
+function onPriceInput(v) {
+  let s = String(v).replace(/[^\d.]/g, '')
+  const dot = s.indexOf('.')
+  if (dot !== -1) s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, '')
+  cf.value.price = s
+}
+function saveCourse() {
+  const data = { ...cf.value, price: Number(cf.value.price) || 0 }
+  courseApi.saveCourse(data).then(() => { ElMessage.success('已保存'); courseVisible.value = false; loadAll() })
+}
 function delCourse(row) { ElMessageBox.confirm('删除该课程？').then(() => courseApi.delCourse(row.id).then(() => { ElMessage.success('已删除'); loadAll() })).catch(() => {}) }
 
 function addDance() { if (!newDance.value) return; courseApi.saveDanceType({ name: newDance.value, sort: 0, status: 1 }).then(() => { newDance.value = ''; loadAll() }) }

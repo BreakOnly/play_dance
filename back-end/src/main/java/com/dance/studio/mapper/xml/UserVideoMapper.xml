@@ -47,10 +47,10 @@
                <if test="viewerId != null">
                EXISTS (SELECT 1 FROM like_record lr
                         WHERE lr.student_id = #{viewerId} AND lr.target_type = 'video'
-                          AND lr.target_id = v.id) AS liked,
+                          AND lr.target_id = v.id) AS liked
                </if>
                <if test="viewerId == null">
-               0 AS liked,
+               0 AS liked
                </if>
         FROM user_video v
         LEFT JOIN student s ON s.id = v.student_id

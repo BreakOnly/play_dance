@@ -1,11 +1,13 @@
 <template>
   <view class="schedule-page safe-top safe-bottom">
-    <view class="nav-row"><view class="round" @tap="goBookings">↗</view><view class="nav-title">约课</view><view class="round" @tap="goHome">⌂</view></view>
-    <view class="search-box"><text>🔍</text><input placeholder="搜索歌名、老师、舞种" v-model="query" @input="filterSchedules" /></view>
+    <view class="search-box">
+      <view class="search-icon"><view class="lens"></view><view class="handle"></view></view>
+      <input placeholder="搜索歌名、老师、舞种" v-model="query" @input="filterSchedules" />
+    </view>
 
     <view class="date-head">
       <view><text>{{ activeDateTitle }} ▸</text><view>{{ activeDateLabel }}</view></view>
-      <view class="studio-filter">玩舞尚志 <text>未来15天可约</text></view>
+      <text class="brand-text">玩舞尚志</text>
     </view>
 
     <view class="date-strip" :class="{ expanded: calendarExpanded }">
@@ -25,7 +27,9 @@
           <text>{{ d.week }}</text><view>{{ d.month }}/{{ d.day }}</view>
         </view>
       </view>
-      <view class="date-count" @tap="toggleCalendar">{{ calendarExpanded ? '⌃' : '⌄' }}<text>15天</text></view>
+      <view class="date-count filter-entry" :class="{ active: hasFilter }" @tap="openFilter">
+        <text>筛选</text><view class="funnel"></view>
+      </view>
     </view>
 
     <view class="teacher-overview">
@@ -35,12 +39,6 @@
       </block>
       <view v-else class="teacher-empty">当天暂未排课</view>
     </view>
-
-    <scroll-view class="dance-scroll" scroll-x enhanced :show-scrollbar="false">
-      <view class="dance-filters">
-        <view v-for="d in dances" :key="d" class="dance-filter" :class="{ active: d === activeDance }" @tap="selectDance(d)">{{ d }}</view>
-      </view>
-    </scroll-view>
 
     <view class="store-head"><view><text></text>玩舞尚志</view><text>{{ visibleSchedules.length }} 节课</text></view>
     <view v-if="loading" class="empty-card card">正在读取课表…</view>
@@ -61,29 +59,134 @@
         </view>
       </view>
     </view>
+
+    <!-- 筛选弹层 -->
+    <view class="flt-mask" v-if="fltVisible" @tap="closeFilter">
+      <view class="flt-panel" @tap.stop>
+        <view class="flt-tabs">
+          <view v-for="t in fltTabs" :key="t.key" class="flt-tab" :class="{ on: fltTab === t.key }" @tap="fltTab = t.key">{{ t.label }}</view>
+        </view>
+
+        <!-- 课程：左侧分类(舞种/难易/类型) + 右侧两列标签 -->
+        <view v-if="fltTab === 'course'" class="flt-body">
+          <scroll-view class="flt-side" scroll-y enhanced :show-scrollbar="false">
+            <view v-for="c in sideCats" :key="c.key" class="flt-side-item" :class="{ on: fltSide === c.key }" @tap="fltSide = c.key">{{ c.label }}</view>
+          </scroll-view>
+          <scroll-view class="flt-opts" scroll-y enhanced :show-scrollbar="false">
+            <view class="flt-grid">
+              <view v-for="o in sideOptions" :key="String(o.value)" class="flt-tag" :class="{ on: draft[fltSideKey].includes(o.value) }" @tap="pick(fltSideKey, o.value)">{{ o.label }}</view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <!-- 时段：固定选项 -->
+        <view v-else-if="fltTab === 'time'" class="flt-body">
+          <scroll-view class="flt-opts full" scroll-y enhanced :show-scrollbar="false">
+            <view class="flt-grid">
+              <view v-for="t in timeSlots" :key="t.value" class="flt-tag" :class="{ on: draft.time.includes(t.value) }" @tap="pick('time', t.value)">{{ t.label }}</view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <!-- 老师：后端接口返回 -->
+        <view v-else class="flt-body">
+          <scroll-view class="flt-opts full" scroll-y enhanced :show-scrollbar="false">
+            <view class="flt-grid">
+              <view v-for="t in fltData.teachers || []" :key="t.id" class="flt-tag" :class="{ on: draft.teacher.includes(t.id) }" @tap="pick('teacher', t.id)">{{ t.name }}</view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="flt-foot">
+          <view class="flt-reset" @tap="resetFilter">重置</view>
+          <view class="flt-ok" @tap="applyFilter">确认</view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { api } from '@/api'
 
 const emojis = ['🕺', '💃', '✨', '🔥']
 const badges = ['零基础友好', '热门课程', '身体开发', '进阶提升']
-const dances = ['全部', 'Hiphop', 'Kpop', 'Jazz', 'Urban', 'Breaking']
+
+// 固定时段（其余筛选项走后端接口）
+const timeSlots = [
+  { value: 'am', label: '上午 8:00-11:00', from: 8, to: 12 },
+  { value: 'noon', label: '中午12:00-14:00', from: 12, to: 15 },
+  { value: 'pm', label: '下午15:00-18:00', from: 15, to: 19 },
+  { value: 'eve', label: '晚上19:00-20:00', from: 19, to: 21 },
+  { value: 'night', label: '深夜21:00-23:00', from: 21, to: 24 }
+]
+const fltTabs = [
+  { key: 'course', label: '课程' },
+  { key: 'time', label: '时段' },
+  { key: 'teacher', label: '老师' }
+]
+const sideCats = [
+  { key: 'danceType', label: '舞种' },
+  { key: 'level', label: '难易' },
+  { key: 'courseType', label: '类型' }
+]
 
 const query = ref('')
 const activeDate = ref('')
 const activeDateTitle = ref('Today')
 const activeDateLabel = ref('')
-const activeDance = ref('全部')
 const calendarExpanded = ref(false)
 const loading = ref(true)
 const days = ref([])
 const allSchedules = ref([])
 const visibleSchedules = ref([])
 const teacherOverview = ref([])
+
+// ===== 筛选弹层（多选） =====
+const fltVisible = ref(false)
+const fltTab = ref('course')
+const fltSide = ref('danceType')
+const fltData = ref({})
+const fltLoaded = ref(false)
+const emptySel = () => ({ danceType: [], level: [], courseType: [], time: [], teacher: [] })
+const copySel = (sel) => ({ danceType: [...sel.danceType], level: [...sel.level], courseType: [...sel.courseType], time: [...sel.time], teacher: [...sel.teacher] })
+const draft = ref(emptySel())
+const applied = ref(emptySel())
+
+const fltSideKey = computed(() => fltSide.value)
+const sideOptions = computed(() => {
+  if (fltSide.value === 'danceType') return (fltData.value.danceTypes || []).map(d => ({ value: d.id, label: d.name }))
+  if (fltSide.value === 'level') return (fltData.value.levels || []).map(l => ({ value: l.id, label: l.name }))
+  return (fltData.value.courseTypes || []).map(t => ({ value: t.value, label: t.label }))
+})
+const hasFilter = computed(() => Object.values(applied.value).some(arr => arr.length > 0))
+
+function openFilter() {
+  draft.value = copySel(applied.value)
+  fltVisible.value = true
+  if (!fltLoaded.value) {
+    api.scheduleFilters().then((d) => { fltData.value = d || {}; fltLoaded.value = true }).catch(() => {})
+  }
+}
+function closeFilter() { fltVisible.value = false }
+function pick(key, value) {
+  const arr = draft.value[key]
+  const i = arr.indexOf(value)
+  if (i >= 0) arr.splice(i, 1)
+  else arr.push(value)
+}
+function resetFilter() {
+  draft.value = emptySel()
+  applied.value = emptySel()
+  filterSchedules()
+}
+function applyFilter() {
+  applied.value = copySel(draft.value)
+  fltVisible.value = false
+  filterSchedules()
+}
 
 function buildDays() {
   const weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -117,9 +220,6 @@ function loadAll() {
 function filterSchedules() {
   const dayList = allSchedules.value.filter(s => s.startTime && s.startTime.startsWith(activeDate.value))
   let filtered = dayList
-  if (activeDance.value !== '全部') {
-    filtered = filtered.filter(s => (s.danceTypeName || s.courseType || '') === activeDance.value)
-  }
   const q = query.value.trim().toLowerCase()
   if (q) {
     filtered = filtered.filter(s => {
@@ -127,6 +227,21 @@ function filterSchedules() {
       return txt.includes(q)
     })
   }
+
+  // 筛选面板条件（各组内多选，命中任一即可）
+  const f = applied.value
+  if (f.danceType.length) filtered = filtered.filter(s => f.danceType.includes(s.danceTypeId))
+  if (f.level.length) filtered = filtered.filter(s => f.level.includes(s.levelId))
+  if (f.courseType.length) filtered = filtered.filter(s => f.courseType.includes(s.courseType))
+  if (f.time.length) {
+    const slots = timeSlots.filter(t => f.time.includes(t.value))
+    filtered = filtered.filter(s => {
+      const h = parseInt((s.startTime || '').substring(11, 13), 10)
+      return slots.some(slot => h >= slot.from && h < slot.to)
+    })
+  }
+  if (f.teacher.length) filtered = filtered.filter(s => f.teacher.includes(s.teacherId))
+
   visibleSchedules.value = filtered
 
   // 老师概览
@@ -144,7 +259,6 @@ function filterSchedules() {
 }
 
 function selectDate(date) { activeDate.value = date; calendarExpanded.value = false; filterSchedules() }
-function selectDance(d) { activeDance.value = d; filterSchedules() }
 function toggleCalendar() { calendarExpanded.value = !calendarExpanded.value }
 
 function remaining(s) { return Math.max(0, (s.capacity || 0) - (s.bookedCount || 0)) }
@@ -174,8 +288,6 @@ function onBook(s) {
 function openCourse(s) { uni.navigateTo({ url: '/pages/booking/detail?id=' + s.id }) }
 
 function fmtTime(t) { if (!t) return ''; return t.substring(11, 16) }
-function goBookings() { uni.navigateTo({ url: '/pages/mybookings/mybookings' }) }
-function goHome() { uni.switchTab({ url: '/pages/home/home' }) }
 
 onShow(() => {
   buildDays()
@@ -191,16 +303,15 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .schedule-page { min-height: 100vh; background: #0e0e0e; }
-.nav-row { height: 88rpx; padding: 0 30rpx; display: flex; align-items: center; justify-content: space-between; }
-.round { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #222226; color: #fff; font-size: 25rpx; }
-.nav-title { font-size: 32rpx; font-weight: 900; }
 .search-box { height: 76rpx; margin: 3rpx 30rpx 0; padding: 0 28rpx; display: flex; align-items: center; gap: 14rpx; border: 1rpx solid #2e2e33; border-radius: 38rpx; background: #1a1a1d; color: #6b6b73; }
 .search-box input { min-width: 0; flex: 1; color: #fff; font-size: 23rpx; }
+.search-icon { position: relative; width: 30rpx; height: 30rpx; flex: none; }
+.search-icon .lens { position: absolute; left: 0; top: 0; width: 22rpx; height: 22rpx; border: 2rpx solid #6b6b73; border-radius: 50%; }
+.search-icon .handle { position: absolute; right: 0; bottom: 1rpx; width: 12rpx; height: 2rpx; background: #6b6b73; transform: rotate(45deg); }
 .date-head { padding: 34rpx 30rpx 15rpx; display: flex; align-items: flex-end; justify-content: space-between; }
 .date-head > view:first-child > text { color: #ff6fb5; font-size: 38rpx; font-weight: 900; }
 .date-head > view:first-child > view { margin-top: 5rpx; color: #fff; font-size: 23rpx; }
-.studio-filter { max-width: 250rpx; color: #9a9aa2; font-size: 21rpx; text-align: right; }
-.studio-filter text { margin-left: 8rpx; color: #ff6fb5; font-weight: 700; }
+.brand-text { color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 3rpx; text-shadow: 0 0 14rpx rgba(255,45,155,.5); }
 .date-strip { min-height: 128rpx; display: flex; align-items: stretch; border-bottom: 1rpx solid #2e2e33; }
 .date-strip.expanded { min-height: 430rpx; }
 .view-button { width: 116rpx; margin: 8rpx 10rpx 12rpx 24rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1rpx solid #2e2e33; border-radius: 25rpx; background: #222226; font-size: 22rpx; }
@@ -212,8 +323,32 @@ onShow(() => {
 .date-item view { margin-top: 7rpx; color: #9a9aa2; font-size: 31rpx; font-weight: 800; }
 .date-item.active, .date-item.active view { color: #ff6fb5; }
 .date-item.active::after { content: ''; position: absolute; bottom: 4rpx; width: 35rpx; height: 5rpx; border-radius: 4rpx; background: #ff2d9b; }
-.date-count { width: 58rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ff6fb5; font-size: 18rpx; }
-.date-count text { margin-top: 4rpx; }
+.filter-entry { margin: 8rpx 20rpx 12rpx 0; padding: 0 24rpx; height: 60rpx; display: flex; align-items: center; gap: 10rpx; border: 1rpx solid rgba(255,45,155,.4); border-radius: 14rpx; background: #1e1e22; color: #ff6fb5; font-size: 23rpx; font-weight: 700; }
+.filter-entry.active { border-color: #ff2d9b; background: rgba(255,45,155,.16); }
+.funnel { position: relative; width: 24rpx; height: 20rpx; }
+.funnel::before { content: ''; position: absolute; left: 0; top: 0; border-left: 12rpx solid transparent; border-right: 12rpx solid transparent; border-top: 13rpx solid currentColor; }
+.funnel::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 5rpx; height: 7rpx; margin-left: -2.5rpx; background: currentColor; }
+/* ===== 筛选弹层 ===== */
+.flt-mask { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; }
+.flt-panel { width: 100%; height: 78vh; border-radius: 32rpx 32rpx 0 0; background: #17171a; display: flex; flex-direction: column; animation: sheet-up .25s ease-out; overflow: hidden; }
+.flt-tabs { display: flex; border-bottom: 1rpx solid #29292e; }
+.flt-tab { flex: 1; height: 92rpx; display: flex; align-items: center; justify-content: center; color: #9a9aa2; font-size: 27rpx; position: relative; }
+.flt-tab.on { color: #ff6fb5; font-weight: 800; }
+.flt-tab.on::after { content: ''; position: absolute; bottom: 0; width: 56rpx; height: 6rpx; border-radius: 4rpx; background: linear-gradient(90deg,#ff2d9b,#ff6fb5); }
+.flt-body { min-height: 0; flex: 1; display: flex; }
+.flt-side { width: 176rpx; flex: none; background: #131316; }
+.flt-side-item { padding: 30rpx 24rpx; color: #9a9aa2; font-size: 23rpx; position: relative; }
+.flt-side-item.on { color: #ff6fb5; font-weight: 800; background: #17171a; }
+.flt-side-item.on::before { content: ''; position: absolute; left: 0; top: 26rpx; bottom: 26rpx; width: 6rpx; border-radius: 4rpx; background: #ff2d9b; }
+.flt-opts { min-width: 0; flex: 1; }
+.flt-opts.full { background: #17171a; }
+.flt-grid { padding: 26rpx; display: grid; grid-template-columns: repeat(2, 1fr); gap: 18rpx; }
+.flt-tag { min-height: 68rpx; padding: 0 16rpx; border: 1rpx solid #2e2e33; border-radius: 16rpx; background: #1c1c20; color: #c9c9d1; font-size: 22rpx; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.flt-tag.on { border-color: #ff2d9b; background: rgba(255,45,155,.16); color: #ff6fb5; font-weight: 700; }
+.flt-foot { padding: 20rpx 30rpx calc(24rpx + env(safe-area-inset-bottom)); display: flex; gap: 20rpx; border-top: 1rpx solid #29292e; }
+.flt-reset { width: 180rpx; height: 84rpx; border: 1rpx solid #2e2e33; border-radius: 42rpx; background: #222226; color: #c9c9d1; font-size: 26rpx; display: flex; align-items: center; justify-content: center; }
+.flt-ok { min-width: 0; flex: 1; height: 84rpx; border-radius: 42rpx; background: linear-gradient(90deg,#ff2d9b,#ff6fb5); box-shadow: 0 8rpx 26rpx rgba(255,45,155,.38); color: #fff; font-size: 28rpx; font-weight: 800; letter-spacing: 2rpx; display: flex; align-items: center; justify-content: center; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .calendar-grid { min-width: 0; flex: 1; padding: 13rpx 5rpx 16rpx; display: grid; grid-template-columns: repeat(5, 1fr); gap: 9rpx; }
 .calendar-day { min-height: 92rpx; border: 1rpx solid #29292e; border-radius: 18rpx; background: #18181b; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888891; }
 .calendar-day text { font-size: 18rpx; }
@@ -225,10 +360,6 @@ onShow(() => {
 .teacher-row > text { color: #ff6fb5; font-size: 21rpx; font-weight: 800; }
 .teacher-row > view { color: #aaaab2; font-size: 19rpx; line-height: 1.5; }
 .teacher-empty { color: #777780; font-size: 20rpx; }
-.dance-scroll { width: 100%; margin-top: 18rpx; }
-.dance-filters { display: flex; gap: 13rpx; padding: 0 30rpx; }
-.dance-filter { flex: none; padding: 10rpx 23rpx; border-radius: 99rpx; background: #1a1a1d; color: #787880; font-size: 21rpx; }
-.dance-filter.active { background: rgba(255,45,155,.14); color: #ff6fb5; }
 .store-head { padding: 31rpx 30rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
 .store-head > view { font-size: 29rpx; font-weight: 900; }
 .store-head > view > text { width: 28rpx; height: 28rpx; margin-right: 16rpx; display: inline-block; border-radius: 7rpx; background: #ff2d9b; transform: rotate(45deg); vertical-align: -4rpx; }

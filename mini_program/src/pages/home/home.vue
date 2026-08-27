@@ -20,7 +20,7 @@
         <text class="trial-title">新人5.8元试课两节</text>
         <text class="trial-copy">爵士 / K-POP / Hiphop 任选，点击联系舞房</text>
       </view>
-      <text class="trial-arrow">›</text>
+      <text class="trial-arrow" @tap.stop="openService">›</text>
     </view>
 
     <view class="guide-card card">
@@ -47,6 +47,15 @@
       <view><text>玩舞尚志</text><text>购课与新人试课请电话咨询</text></view>
       <text>{{ servicePhone }} ›</text>
     </view>
+
+    <!-- 试课联系客服底部弹窗 -->
+    <view class="sheet-mask" v-if="serviceSheet" @tap="serviceSheet = false">
+      <view class="sheet-panel" @tap.stop>
+        <view class="sheet-title">联系客服</view>
+        <view class="sheet-body">请拨打电话购买体验课：{{ servicePhone || '400-888-6688' }}</view>
+        <view class="sheet-btn" @tap="serviceSheet = false">我知道了</view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -60,6 +69,7 @@ const videos = ref([])
 const guide = ref({})
 const unreadCount = ref(0)
 const servicePhone = ref('')
+const serviceSheet = ref(false)
 
 onShow(() => {
   api.home().then((d) => {
@@ -86,6 +96,8 @@ function callStudio() {
 function showMessages() {
   uni.showToast({ title: '暂无新的消息', icon: 'none' })
 }
+
+function openService() { serviceSheet.value = true }
 
 function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 </script>
@@ -134,4 +146,10 @@ function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 .contact-strip view text:first-child { font-size: 25rpx; font-weight: 800; }
 .contact-strip view text:last-child { margin-top: 6rpx; font-size: 20rpx; color: #ff67b1; }
 .contact-strip > text { font-size: 21rpx; color: #fff; }
+.sheet-mask { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; }
+.sheet-panel { width: 100%; padding: 56rpx 40rpx calc(44rpx + env(safe-area-inset-bottom)); border-radius: 32rpx 32rpx 0 0; background: #2a2a2e; animation: sheet-up .25s ease-out; }
+.sheet-title { text-align: center; font-size: 32rpx; font-weight: 800; color: #fff; }
+.sheet-body { margin-top: 30rpx; text-align: center; font-size: 26rpx; color: #c9c9d1; }
+.sheet-btn { margin-top: 56rpx; height: 88rpx; border-radius: 44rpx; background: linear-gradient(90deg,#ff2d9b,#ff6fb5); color: #fff; font-size: 28rpx; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>
