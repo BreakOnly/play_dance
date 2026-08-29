@@ -2,3 +2,12 @@
 
 # 开发环境配置含数据库口令，仅保留在本地
 back-end/src/main/resources/application-dev.yml
+
+# Claude Code / IDE 本地配置
+.claude/
+.vscode/
+CLAUDE.md
+
+# 产品原型与本地文档
+原型/
+启动指南.md

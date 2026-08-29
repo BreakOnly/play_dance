@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dance.studio.mapper.RoomMapper">
+
+    <resultMap id="BaseMap" type="com.dance.studio.entity.Room">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="max_capacity" property="maxCapacity"/>
+        <result column="sort" property="sort"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <select id="listByStore" resultMap="BaseMap">
+        SELECT * FROM room
+        WHERE store_id = #{storeId}
+        <if test="onlyEnabled">AND status = 1</if>
+        ORDER BY sort, id
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM room WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO room (store_id, name, max_capacity, sort, status)
+        VALUES (#{storeId}, #{name}, COALESCE(#{maxCapacity},0), COALESCE(#{sort},0), COALESCE(#{status},1))
+    </insert>
+
+    <update id="update">
+        UPDATE room
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="maxCapacity != null">max_capacity = #{maxCapacity},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND store_id = #{storeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM room WHERE id = #{id} AND store_id = #{storeId}
+    </delete>
+</mapper>

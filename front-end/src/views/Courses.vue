@@ -50,6 +50,20 @@
           <el-table-column label="操作" width="100"><template #default="{row}"><el-button link type="danger" @click="delLevel(row.id)">删除</el-button></template></el-table-column>
         </el-table>
       </el-tab-pane>
+
+      <!-- 教室 -->
+      <el-tab-pane label="教室" name="room">
+        <div class="dict-add">
+          <el-input v-model="newRoom" placeholder="新增教室名称（如：A教室）" style="width:260px" />
+          <el-button type="primary" @click="addRoom">新增</el-button>
+        </div>
+        <el-table :data="rooms" border style="margin-top:12px">
+          <el-table-column label="名称"><template #default="{row}"><el-input v-model="row.name" @blur="saveRoom(row)" /></template></el-table-column>
+          <el-table-column label="最大容纳人数(0不限)" width="200"><template #default="{row}"><el-input-number v-model="row.maxCapacity" :min="0" @change="saveRoom(row)" /></template></el-table-column>
+          <el-table-column label="排序" width="180"><template #default="{row}"><el-input-number v-model="row.sort" :min="0" @change="saveRoom(row)" /></template></el-table-column>
+          <el-table-column label="操作" width="100"><template #default="{row}"><el-button link type="danger" @click="delRoom(row.id)">删除</el-button></template></el-table-column>
+        </el-table>
+      </el-tab-pane>
     </el-tabs>
 
     <el-dialog v-model="courseVisible" :title="cf.id?'编辑课程':'新增课程'" width="480px">
@@ -79,12 +93,16 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { courseApi } from '@/api'
 
 const tab = ref('course')
-const courses = ref([]); const danceTypes = ref([]); const levels = ref([])
-const newDance = ref(''); const newLevel = ref('')
+const courses = ref([]); const danceTypes = ref([]); const levels = ref([]); const rooms = ref([])
+const newDance = ref(''); const newLevel = ref(''); const newRoom = ref('')
 
+function refreshDanceTypes() { return courseApi.danceTypes().then((d) => danceTypes.value = d || []) }
+function refreshLevels() { return courseApi.levels().then((d) => levels.value = d || []) }
+function refreshRooms() { return courseApi.rooms().then((d) => rooms.value = d || []) }
 function loadAll() {
-  courseApi.danceTypes().then((d) => danceTypes.value = d || [])
-  courseApi.levels().then((d) => levels.value = d || [])
+  refreshDanceTypes()
+  refreshLevels()
+  refreshRooms()
   courseApi.courses().then((d) => courses.value = d || [])
 }
 
@@ -102,12 +120,38 @@ function saveCourse() {
 }
 function delCourse(row) { ElMessageBox.confirm('删除该课程？').then(() => courseApi.delCourse(row.id).then(() => { ElMessage.success('已删除'); loadAll() })).catch(() => {}) }
 
-function addDance() { if (!newDance.value) return; courseApi.saveDanceType({ name: newDance.value, sort: 0, status: 1 }).then(() => { newDance.value = ''; loadAll() }) }
-function saveDance(row) { courseApi.saveDanceType(row).then(() => {}) }
+// 新增舞种默认排在已有舞种之后
+function addDance() {
+  if (!newDance.value) return
+  const maxSort = danceTypes.value.reduce((m, d) => Math.max(m, d.sort), 0)
+  courseApi.saveDanceType({ name: newDance.value, sort: maxSort + 1, status: 1 })
+    .then(() => { newDance.value = ''; refreshDanceTypes() })
+}
+// 保存后重新拉取，按 sort 升序即时重排；失败时回滚为库里的值
+function saveDance(row) { courseApi.saveDanceType(row).then(refreshDanceTypes).catch(refreshDanceTypes) }
 function delDance(id) { courseApi.delDanceType(id).then(() => { ElMessage.success('已删除'); loadAll() }) }
-function addLevel() { if (!newLevel.value) return; courseApi.saveLevel({ name: newLevel.value, sort: 1, status: 1 }).then(() => { newLevel.value = ''; loadAll() }) }
-function saveLevel(row) { courseApi.saveLevel(row).then(() => {}) }
+// 新增星级默认取 1~5 中未被占用的最小星级
+function addLevel() {
+  if (!newLevel.value) return
+  const used = new Set(levels.value.map(l => l.sort))
+  let sort = 1
+  for (let i = 1; i <= 5; i++) { if (!used.has(i)) { sort = i; break } }
+  courseApi.saveLevel({ name: newLevel.value, sort, status: 1 })
+    .then(() => { newLevel.value = ''; refreshLevels() })
+}
+// 保存后重新拉取，按星级升序即时重排；星级冲突等校验失败时提示并回滚
+function saveLevel(row) { courseApi.saveLevel(row).then(refreshLevels).catch(refreshLevels) }
 function delLevel(id) { courseApi.delLevel(id).then(() => { ElMessage.success('已删除'); loadAll() }) }
+// 新增教室默认排在已有教室之后
+function addRoom() {
+  if (!newRoom.value) return
+  const maxSort = rooms.value.reduce((m, r) => Math.max(m, r.sort), 0)
+  courseApi.saveRoom({ name: newRoom.value, sort: maxSort + 1, status: 1 })
+    .then(() => { newRoom.value = ''; refreshRooms() })
+}
+// 保存后重新拉取，按 sort 升序即时重排；失败时回滚为库里的值
+function saveRoom(row) { courseApi.saveRoom(row).then(refreshRooms).catch(refreshRooms) }
+function delRoom(id) { courseApi.delRoom(id).then(() => { ElMessage.success('已删除'); refreshRooms() }) }
 
 onMounted(loadAll)
 </script>

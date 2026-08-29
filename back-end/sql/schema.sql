@@ -174,6 +174,19 @@ CREATE TABLE `dance_type` (
   KEY `idx_store` (`store_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='舞种分类';
 
+-- 教室字典（排课下拉选择）
+DROP TABLE IF EXISTS `room`;
+CREATE TABLE `room` (
+  `id`       BIGINT      NOT NULL AUTO_INCREMENT,
+  `store_id` BIGINT      NOT NULL,
+  `name`     VARCHAR(50) NOT NULL COMMENT '教室名',
+  `max_capacity` INT     NOT NULL DEFAULT 0 COMMENT '最大容纳人数(0=不限制)',
+  `sort`     INT         NOT NULL DEFAULT 0 COMMENT '排序',
+  `status`   TINYINT     NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_store` (`store_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教室字典';
+
 -- 难度等级（可配）
 DROP TABLE IF EXISTS `course_level`;
 CREATE TABLE `course_level` (
@@ -488,6 +501,8 @@ INSERT INTO `admin` (`id`,`store_id`,`username`,`password_hash`,`nickname`,`role
 
 -- 业务规则默认配置（store_id=1）
 INSERT INTO `config` (`store_id`,`config_key`,`config_value`,`remark`) VALUES
+  (1,'default_capacity_group','12','团课排课默认容量'),
+  (1,'default_capacity_private','1','私教排课默认容量'),
   (1,'lock_on_booking','1','约课锁定扣课时 1开0关'),
   (1,'cancel_free_hours','6','开课前N小时可免费取消'),
   (1,'book_ahead_days','7','可提前约课天数'),

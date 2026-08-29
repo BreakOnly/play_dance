@@ -5,6 +5,12 @@
       <el-button type="primary" @click="open()">新增教师</el-button>
     </div>
     <el-table :data="list" border>
+      <el-table-column label="头像" width="70" align="center">
+        <template #default="{row}">
+          <el-avatar v-if="row.avatar" :size="44" :src="row.avatar" />
+          <el-avatar v-else :size="44">{{ (row.name || 'T')[0] }}</el-avatar>
+        </template>
+      </el-table-column>
       <el-table-column prop="name" label="姓名" width="120" />
       <el-table-column prop="phone" label="电话" width="140" />
       <el-table-column prop="intro" label="简介" />
@@ -22,6 +28,12 @@
     <el-dialog v-model="visible" :title="f.id?'编辑教师':'新增教师'" width="440px">
       <el-form :model="f" label-width="90px">
         <el-form-item label="姓名"><el-input v-model="f.name" /></el-form-item>
+        <el-form-item label="头像">
+          <el-upload :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="onUploadSuccess" accept="image/*">
+            <el-image v-if="f.avatar" :src="f.avatar" style="width:80px;height:80px;border-radius:50%;border:1px solid var(--el-border-color)" fit="cover" />
+            <el-button v-else>上传头像</el-button>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="电话"><el-input v-model="f.phone" /></el-form-item>
         <el-form-item label="简介"><el-input v-model="f.intro" type="textarea" /></el-form-item>
         <el-form-item label="状态">
@@ -34,13 +46,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { teacherApi } from '@/api'
+import { teacherApi, uploadUrl } from '@/api'
 
 const list = ref([]); const visible = ref(false); const f = ref({})
 function load() { teacherApi.list().then((d) => list.value = d || []) }
 function open(row) { f.value = row ? { ...row } : { status: 1 }; visible.value = true }
+// 上传带 JWT 请求头（el-upload 自发请求，不走 axios 拦截器）
+const uploadHeaders = computed(() => ({
+  Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '')
+}))
+// 后端返回 {code:0,data:{url}}，取 data.url 存入表单
+function onUploadSuccess(res) {
+  const url = res && res.code === 0 && res.data ? res.data.url : (res && res.url)
+  if (url) f.value.avatar = url
+  else ElMessage.error('上传失败')
+}
 function save() {
   teacherApi.save(f.value).then(() => { ElMessage.success('已保存'); visible.value = false; load() })
 }

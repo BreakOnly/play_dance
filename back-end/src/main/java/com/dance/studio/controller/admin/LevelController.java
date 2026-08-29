@@ -1,7 +1,6 @@
 package com.dance.studio.controller.admin;
 
 import com.dance.studio.common.Result;
-import com.dance.studio.common.ResultCode;
 import com.dance.studio.entity.CourseLevel;
 import com.dance.studio.service.BasicDataService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,16 +24,11 @@ public class LevelController {
         return Result.success(service.listLevels(false));
     }
 
-    @Operation(summary = "新增(最多5个)")
+    @Operation(summary = "新增(1~5星各一条，最多5个)")
     @PostMapping
     public Result<CourseLevel> create(@RequestBody CourseLevel d) {
-        if (service.listLevels(false).size() >= 5) {
-            return Result.error(ResultCode.PARAM_ERROR);
-        }
+        // 数量、星级范围与唯一性校验在 BasicDataService.saveLevel 中统一处理
         d.setId(null);
-        if (d.getSort() == null || d.getSort() < 1 || d.getSort() > 5) {
-            d.setSort(1);
-        }
         return Result.success(service.saveLevel(d));
     }
 
@@ -42,9 +36,6 @@ public class LevelController {
     @PutMapping("/{id}")
     public Result<CourseLevel> update(@PathVariable Long id, @RequestBody CourseLevel d) {
         d.setId(id);
-        if (d.getSort() != null && (d.getSort() < 1 || d.getSort() > 5)) {
-            d.setSort(1);
-        }
         return Result.success(service.saveLevel(d));
     }
 

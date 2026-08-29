@@ -7,14 +7,17 @@ import com.dance.studio.dto.ScheduleSaveReq;
 import com.dance.studio.entity.Booking;
 import com.dance.studio.entity.Course;
 import com.dance.studio.entity.CourseSchedule;
+import com.dance.studio.entity.Room;
 import com.dance.studio.mapper.BookingMapper;
 import com.dance.studio.mapper.CourseMapper;
 import com.dance.studio.mapper.CourseScheduleMapper;
+import com.dance.studio.mapper.RoomMapper;
 import com.dance.studio.vo.ScheduleVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +27,7 @@ public class ScheduleService {
 
     private final CourseScheduleMapper scheduleMapper;
     private final CourseMapper courseMapper;
+    private final RoomMapper roomMapper;
     private final BookingMapper bookingMapper;
     private final AccountService accountService;
     private final ConfigService configService;
@@ -52,14 +56,43 @@ public class ScheduleService {
         if (req.getEndTime().isBefore(req.getStartTime()) || req.getEndTime().isEqual(req.getStartTime())) {
             throw new BizException("结束时间必须晚于开始时间");
         }
+        // 课程必须存在，课次时长必须与课程时长一致（时长属于课程定义，排课不可改）
+        Course course = courseMapper.findById(req.getCourseId());
+        if (course == null) {
+            throw new BizException(ResultCode.PARAM_ERROR.getCode(), "课程不存在");
+        }
+        long plannedMin = Duration.between(req.getStartTime(), req.getEndTime()).toMinutes();
+        if (plannedMin != course.getDurationMin()) {
+            throw new BizException(ResultCode.PARAM_ERROR.getCode(),
+                    "课次时长必须与课程时长一致(" + course.getDurationMin() + "分钟)，如需不同时长请新建课程");
+        }
+        // 教室必须来自字典（启用状态），避免手填写法不一致绕过冲突校验
+        Room room = null;
+        if (req.getRoom() != null && !req.getRoom().isBlank()) {
+            room = roomMapper.listByStore(store(), true).stream()
+                    .filter(r -> r.getName().equals(req.getRoom())).findFirst().orElse(null);
+            if (room == null) {
+                throw new BizException(ResultCode.PARAM_ERROR.getCode(), "教室不存在，请先在课程管理的教室字典中维护");
+            }
+        }
         // 冲突检测（同教师/同教室时间重叠）
         int conflict = scheduleMapper.countConflict(store(), req.getTeacherId(), req.getRoom(),
                 req.getStartTime(), req.getEndTime(), id);
         if (conflict > 0) {
             throw new BizException(ResultCode.SCHEDULE_CONFLICT);
         }
-        // 容量默认12
-        Integer capacity = req.getCapacity() == null ? 12 : req.getCapacity();
+        // 容量默认取系统设置中该课程类型的默认容量
+        Integer capacity = req.getCapacity();
+        if (capacity == null) {
+            String key = "private".equals(course.getType()) ? "default_capacity_private" : "default_capacity_group";
+            capacity = configService.getInt(store(), key, 12);
+        }
+        // 容量不得超过教室最大容纳人数(0=不限制)
+        if (room != null && room.getMaxCapacity() != null && room.getMaxCapacity() > 0
+                && capacity > room.getMaxCapacity()) {
+            throw new BizException(ResultCode.PARAM_ERROR.getCode(),
+                    "容量超过" + room.getName() + "最大容纳人数(" + room.getMaxCapacity() + ")");
+        }
         CourseSchedule s = new CourseSchedule();
         s.setId(id);
         s.setStoreId(store());

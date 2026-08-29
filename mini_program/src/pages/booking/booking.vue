@@ -10,9 +10,9 @@
       <text class="brand-text">玩舞尚志</text>
     </view>
 
-    <view class="date-strip" :class="{ expanded: calendarExpanded }">
-      <view class="view-button" @tap="toggleCalendar">课表<text>{{ calendarExpanded ? '收起日历' : '展开日历' }}</text></view>
-      <scroll-view v-if="!calendarExpanded" class="date-scroll" scroll-x enhanced :show-scrollbar="false"
+    <view class="date-strip">
+      <view class="view-entry" @tap="goScheduleView"><text>课表</text><text>视图</text></view>
+      <scroll-view class="date-scroll" scroll-x enhanced :show-scrollbar="false"
         :scroll-into-view="'day-' + activeDate">
         <view class="dates">
           <view v-for="d in days" :key="d.date" :id="'day-' + d.date" class="date-item"
@@ -21,12 +21,6 @@
           </view>
         </view>
       </scroll-view>
-      <view v-else class="calendar-grid">
-        <view v-for="d in days" :key="d.date" class="calendar-day"
-          :class="{ active: d.date === activeDate }" @tap="selectDate(d.date)">
-          <text>{{ d.week }}</text><view>{{ d.month }}/{{ d.day }}</view>
-        </view>
-      </view>
       <view class="date-count filter-entry" :class="{ active: hasFilter }" @tap="openFilter">
         <text>筛选</text><view class="funnel"></view>
       </view>
@@ -35,7 +29,14 @@
     <view class="teacher-overview">
       <view class="overview-title">当天老师与课程</view>
       <block v-if="teacherOverview.length">
-        <view class="teacher-row" v-for="t in teacherOverview" :key="t.name"><text>{{ t.name }}</text><view>{{ t.courses }}</view></view>
+        <view class="teacher-row" v-for="t in teacherOverview" :key="t.name">
+          <view class="ov-teacher">
+            <image v-if="t.avatar" :src="fileUrl(t.avatar)" class="ov-avatar" mode="aspectFill" />
+            <view v-else class="ov-avatar ph">{{ (t.name || 'T')[0] }}</view>
+            <text>{{ t.name }}</text>
+          </view>
+          <view>{{ t.courses }}</view>
+        </view>
       </block>
       <view v-else class="teacher-empty">当天暂未排课</view>
     </view>
@@ -48,7 +49,12 @@
         <view class="course-thumb"><text>{{ emojis[i % emojis.length] }}</text><view>{{ badges[i % badges.length] }}</view></view>
         <view class="schedule-body">
           <view class="schedule-title">{{ s.courseName }} <text>（{{ s.levelName }}）</text></view>
-          <view class="teacher-line"><text>{{ s.teacherName }}</text> {{ fmtTime(s.startTime) }}–{{ fmtTime(s.endTime) }}</view>
+          <view class="teacher-line">
+            <image v-if="s.teacherAvatar" :src="fileUrl(s.teacherAvatar)" class="t-avatar" mode="aspectFill" />
+            <view v-else class="t-avatar ph">{{ (s.teacherName || 'T')[0] }}</view>
+            <text class="t-name">{{ s.teacherName }}</text>
+            <text class="t-time">{{ fmtTime(s.startTime) }}–{{ fmtTime(s.endTime) }}</text>
+          </view>
           <view class="room-line">{{ s.room || '待定' }} · {{ s.durationMin || 60 }} 分钟</view>
           <view v-if="s.song" class="song-line">♫ {{ s.song }}</view>
           <view class="desc-line"><text>❗</text>{{ s.description || '基础律动和 step 连接练习' }}</view>
@@ -109,7 +115,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { api } from '@/api'
+import { api, fileUrl } from '@/api'
 
 const emojis = ['🕺', '💃', '✨', '🔥']
 const badges = ['零基础友好', '热门课程', '身体开发', '进阶提升']
@@ -137,7 +143,6 @@ const query = ref('')
 const activeDate = ref('')
 const activeDateTitle = ref('Today')
 const activeDateLabel = ref('')
-const calendarExpanded = ref(false)
 const loading = ref(true)
 const days = ref([])
 const allSchedules = ref([])
@@ -244,22 +249,24 @@ function filterSchedules() {
 
   visibleSchedules.value = filtered
 
-  // 老师概览
+  // 老师概览（同一老师取第一个非空头像）
   const map = {}
   dayList.forEach(s => {
     const name = s.teacherName || '老师'
-    if (!map[name]) map[name] = []
-    map[name].push(`${fmtTime(s.startTime)} ${s.courseName}`)
+    if (!map[name]) map[name] = { courses: [], avatar: '' }
+    if (!map[name].avatar && s.teacherAvatar) map[name].avatar = s.teacherAvatar
+    map[name].courses.push(`${fmtTime(s.startTime)} ${s.courseName}`)
   })
-  teacherOverview.value = Object.keys(map).map(name => ({ name, courses: map[name].join(' · ') }))
+  teacherOverview.value = Object.keys(map).map(name => ({ name, avatar: map[name].avatar, courses: map[name].courses.join(' · ') }))
 
   const idx = days.value.findIndex(d => d.date === activeDate.value)
   activeDateTitle.value = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : 'Class Day'
   activeDateLabel.value = activeDate.value ? activeDate.value.substring(5, 7).replace(/^0/, '') + '月' + activeDate.value.substring(8, 10).replace(/^0/, '') + '日' : ''
 }
 
-function selectDate(date) { activeDate.value = date; calendarExpanded.value = false; filterSchedules() }
-function toggleCalendar() { calendarExpanded.value = !calendarExpanded.value }
+function selectDate(date) { activeDate.value = date; filterSchedules() }
+// 进入课表视图（日/周视图切换页）
+function goScheduleView() { uni.navigateTo({ url: '/pages/scheduleview/scheduleview' }) }
 
 function remaining(s) { return Math.max(0, (s.capacity || 0) - (s.bookedCount || 0)) }
 function isFull(s) { return remaining(s) === 0 }
@@ -313,9 +320,8 @@ onShow(() => {
 .date-head > view:first-child > view { margin-top: 5rpx; color: #fff; font-size: 23rpx; }
 .brand-text { color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 3rpx; text-shadow: 0 0 14rpx rgba(255,45,155,.5); }
 .date-strip { min-height: 128rpx; display: flex; align-items: stretch; border-bottom: 1rpx solid #2e2e33; }
-.date-strip.expanded { min-height: 430rpx; }
-.view-button { width: 116rpx; margin: 8rpx 10rpx 12rpx 24rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1rpx solid #2e2e33; border-radius: 25rpx; background: #222226; font-size: 22rpx; }
-.view-button text { display: block; color: #ff6fb5; }
+/* 课表视图入口（Blackpink 风：黑底 + 荧光粉） */
+.view-entry { width: 116rpx; margin: 8rpx 10rpx 12rpx 24rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rpx; border: 1rpx solid rgba(255,45,155,.55); border-radius: 25rpx; background: linear-gradient(135deg,#2b1322,#1a1a1e); box-shadow: 0 0 18rpx rgba(255,45,155,.22); color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 2rpx; text-shadow: 0 0 12rpx rgba(255,45,155,.5); }
 .date-scroll { min-width: 0; flex: 1; }
 .dates { height: 100%; display: flex; }
 .date-item { position: relative; flex: 0 0 95rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9a9aa2; }
@@ -349,15 +355,13 @@ onShow(() => {
 .flt-reset { width: 180rpx; height: 84rpx; border: 1rpx solid #2e2e33; border-radius: 42rpx; background: #222226; color: #c9c9d1; font-size: 26rpx; display: flex; align-items: center; justify-content: center; }
 .flt-ok { min-width: 0; flex: 1; height: 84rpx; border-radius: 42rpx; background: linear-gradient(90deg,#ff2d9b,#ff6fb5); box-shadow: 0 8rpx 26rpx rgba(255,45,155,.38); color: #fff; font-size: 28rpx; font-weight: 800; letter-spacing: 2rpx; display: flex; align-items: center; justify-content: center; }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.calendar-grid { min-width: 0; flex: 1; padding: 13rpx 5rpx 16rpx; display: grid; grid-template-columns: repeat(5, 1fr); gap: 9rpx; }
-.calendar-day { min-height: 92rpx; border: 1rpx solid #29292e; border-radius: 18rpx; background: #18181b; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888891; }
-.calendar-day text { font-size: 18rpx; }
-.calendar-day view { margin-top: 5rpx; font-size: 22rpx; font-weight: 800; }
-.calendar-day.active { border-color: #ff2d9b; background: rgba(255,45,155,.14); color: #ff6fb5; }
 .teacher-overview { margin: 18rpx 30rpx 0; padding: 20rpx 22rpx; border: 1rpx solid #34343a; border-radius: 24rpx; background: #17171a; }
 .overview-title { margin-bottom: 12rpx; color: #fff; font-size: 23rpx; font-weight: 800; }
-.teacher-row { display: grid; grid-template-columns: 125rpx 1fr; gap: 12rpx; padding: 9rpx 0; border-top: 1rpx solid #29292e; align-items: center; }
-.teacher-row > text { color: #ff6fb5; font-size: 21rpx; font-weight: 800; }
+.teacher-row { display: grid; grid-template-columns: 200rpx 1fr; gap: 12rpx; padding: 9rpx 0; border-top: 1rpx solid #29292e; align-items: center; }
+.ov-teacher { display: flex; align-items: center; gap: 10rpx; }
+.ov-teacher > text { color: #ff6fb5; font-size: 21rpx; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-avatar { width: 52rpx; height: 52rpx; border-radius: 50%; flex: none; background: #26262b; }
+.ov-avatar.ph { display: flex; align-items: center; justify-content: center; color: #ff6fb5; font-size: 22rpx; font-weight: 800; }
 .teacher-row > view { color: #aaaab2; font-size: 19rpx; line-height: 1.5; }
 .teacher-empty { color: #777780; font-size: 20rpx; }
 .store-head { padding: 31rpx 30rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
@@ -372,8 +376,10 @@ onShow(() => {
 .schedule-body { min-width: 0; flex: 1; padding: 24rpx; }
 .schedule-title { color: #fff; font-size: 27rpx; font-weight: 900; }
 .schedule-title text { color: #ff6fb5; }
-.teacher-line { margin-top: 11rpx; color: #fff; font-size: 22rpx; }
-.teacher-line text { margin-right: 10rpx; color: #ff6fb5; font-weight: 800; }
+.teacher-line { margin-top: 11rpx; display: flex; align-items: center; color: #fff; font-size: 22rpx; }
+.t-avatar { width: 40rpx; height: 40rpx; margin-right: 10rpx; border-radius: 50%; flex: none; background: #26262b; }
+.t-avatar.ph { display: flex; align-items: center; justify-content: center; color: #ff6fb5; font-size: 20rpx; font-weight: 800; }
+.teacher-line .t-name { margin-right: 10rpx; color: #ff6fb5; font-weight: 800; }
 .room-line { margin-top: 5rpx; color: #9a9aa2; font-size: 20rpx; }
 .song-line { margin-top: 11rpx; color: #b3a0ff; font-size: 20rpx; }
 .desc-line { margin-top: 11rpx; overflow: hidden; display: -webkit-box; color: #9a9aa2; font-size: 20rpx; line-height: 1.45; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }

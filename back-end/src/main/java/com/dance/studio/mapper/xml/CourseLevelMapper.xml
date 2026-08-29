@@ -18,6 +18,13 @@
         ORDER BY sort, id
     </select>
 
+    <!-- 校验星级唯一性：同门店下同一星级只允许一条 -->
+    <select id="countBySort" resultType="int">
+        SELECT COUNT(*) FROM course_level
+        WHERE store_id = #{storeId} AND sort = #{sort}
+        <if test="excludeId != null">AND id != #{excludeId}</if>
+    </select>
+
     <select id="findById" resultMap="BaseMap">
         SELECT * FROM course_level WHERE id = #{id}
     </select>

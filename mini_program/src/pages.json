@@ -3,6 +3,7 @@
     { "path": "pages/home/home", "style": { "navigationBarTitleText": "玩舞首页" } },
     { "path": "pages/booking/booking", "style": { "navigationBarTitleText": "课程" } },
     { "path": "pages/booking/detail", "style": { "navigationBarTitleText": "课程详情" } },
+    { "path": "pages/scheduleview/scheduleview", "style": { "navigationBarTitleText": "课表视图" } },
     { "path": "pages/qa/qa", "style": { "navigationBarTitleText": "咨询问答" } },
     { "path": "pages/qa/ranking", "style": { "navigationBarTitleText": "点赞排行" } },
     { "path": "pages/qa/detail", "style": { "navigationBarTitleText": "问题详情" } },
