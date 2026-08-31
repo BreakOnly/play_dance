@@ -2,9 +2,17 @@
   <div class="page-card">
     <div class="page-toolbar">
       <span class="page-title">排课管理</span>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <el-select v-model="queryCourseId" filterable clearable placeholder="课程" style="width:170px">
+          <el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" />
+        </el-select>
+        <el-select v-model="queryTeacherId" filterable clearable placeholder="教师" style="width:120px">
+          <el-option v-for="t in teachers" :key="t.id" :label="t.name" :value="t.id" />
+        </el-select>
         <el-date-picker v-model="range" type="datetimerange" value-format="YYYY-MM-DDTHH:mm:ss"
-          start-placeholder="开始" end-placeholder="结束" @change="load" />
+          start-placeholder="开始" end-placeholder="结束" />
+        <el-button type="primary" @click="load">查询</el-button>
+        <el-button @click="reset">重置</el-button>
         <el-button type="primary" @click="open()">新增排课</el-button>
       </div>
     </div>
@@ -44,13 +52,31 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { scheduleApi, courseApi, teacherApi, configApi } from '@/api'
 
 const list = ref([]); const courses = ref([]); const teachers = ref([]); const rooms = ref([]); const configs = ref([])
-const range = ref([])
+const range = ref([nowStr(), null])
+const queryCourseId = ref(null); const queryTeacherId = ref(null)
 const visible = ref(false); const f = ref({})
+
+// 当前时间字符串（YYYY-MM-DDTHH:mm:ss），用作开始时间默认值
+function nowStr() {
+  const d = new Date(); const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+}
 
 function load() {
   const params = {}
-  if (range.value && range.value.length === 2) { params.start = range.value[0]; params.end = range.value[1] }
+  if (range.value && range.value[0]) params.start = range.value[0]
+  if (range.value && range.value[1]) params.end = range.value[1]
+  if (queryCourseId.value) params.courseId = queryCourseId.value
+  if (queryTeacherId.value) params.teacherId = queryTeacherId.value
   scheduleApi.list(params).then((d) => list.value = d || [])
+}
+
+// 重置查询条件：开始时间恢复为当前时间
+function reset() {
+  queryCourseId.value = null
+  queryTeacherId.value = null
+  range.value = [nowStr(), null]
+  load()
 }
 function open() { f.value = { capacity: undefined }; visible.value = true }
 function save() {

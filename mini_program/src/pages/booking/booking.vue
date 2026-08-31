@@ -13,32 +13,29 @@
     <view class="date-strip">
       <view class="view-entry" @tap="goScheduleView"><text>课表</text><text>视图</text></view>
       <scroll-view class="date-scroll" scroll-x enhanced :show-scrollbar="false"
-        :scroll-into-view="'day-' + activeDate">
+        :scroll-left="stripLeft" scroll-with-animation @scroll="onStripScroll">
         <view class="dates">
-          <view v-for="d in days" :key="d.date" :id="'day-' + d.date" class="date-item"
+          <view v-for="d in days" :key="d.date" class="date-item"
             :class="{ active: d.date === activeDate }" @tap="selectDate(d.date)">
             <text>{{ d.week }}</text><view>{{ d.day }}</view>
           </view>
         </view>
       </scroll-view>
       <view class="date-count filter-entry" :class="{ active: hasFilter }" @tap="openFilter">
-        <text>筛选</text><view class="funnel"></view>
+        <view class="funnel"></view>
       </view>
     </view>
 
-    <view class="teacher-overview">
+    <view class="teacher-overview" v-if="teacherOverview.length">
       <view class="overview-title">当天老师与课程</view>
-      <block v-if="teacherOverview.length">
-        <view class="teacher-row" v-for="t in teacherOverview" :key="t.name">
-          <view class="ov-teacher">
-            <image v-if="t.avatar" :src="fileUrl(t.avatar)" class="ov-avatar" mode="aspectFill" />
-            <view v-else class="ov-avatar ph">{{ (t.name || 'T')[0] }}</view>
-            <text>{{ t.name }}</text>
-          </view>
-          <view>{{ t.courses }}</view>
+      <view class="teacher-row" v-for="t in teacherOverview" :key="t.name">
+        <view class="ov-teacher">
+          <image v-if="t.avatar" :src="fileUrl(t.avatar)" class="ov-avatar" mode="aspectFill" />
+          <view v-else class="ov-avatar ph">{{ (t.name || 'T')[0] }}</view>
+          <text>{{ t.name }}</text>
         </view>
-      </block>
-      <view v-else class="teacher-empty">当天暂未排课</view>
+        <view>{{ t.courses }}</view>
+      </view>
     </view>
 
     <view class="store-head"><view><text></text>玩舞尚志</view><text>{{ visibleSchedules.length }} 节课</text></view>
@@ -114,11 +111,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onReady } from '@dcloudio/uni-app'
 import { api, fileUrl } from '@/api'
 
 const emojis = ['🕺', '💃', '✨', '🔥']
 const badges = ['零基础友好', '热门课程', '身体开发', '进阶提升']
+// 中文星期（左上角日期标签用）
+const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
 // 固定时段（其余筛选项走后端接口）
 const timeSlots = [
@@ -260,11 +259,38 @@ function filterSchedules() {
   teacherOverview.value = Object.keys(map).map(name => ({ name, avatar: map[name].avatar, courses: map[name].courses.join(' · ') }))
 
   const idx = days.value.findIndex(d => d.date === activeDate.value)
-  activeDateTitle.value = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : 'Class Day'
-  activeDateLabel.value = activeDate.value ? activeDate.value.substring(5, 7).replace(/^0/, '') + '月' + activeDate.value.substring(8, 10).replace(/^0/, '') + '日' : ''
+  const weekCn = activeDate.value ? WEEK_CN[new Date(activeDate.value + 'T00:00:00').getDay()] : ''
+  // 左上角：仅今天显示 Today，其余显示当前年份；下行 日期 + 周几
+  activeDateTitle.value = idx === 0 ? 'Today' : String(new Date().getFullYear())
+  activeDateLabel.value = activeDate.value ? (activeDate.value.substring(5, 7).replace(/^0/, '') + '月' + activeDate.value.substring(8, 10).replace(/^0/, '') + '日') + ' ' + weekCn : ''
 }
 
-function selectDate(date) { activeDate.value = date; filterSchedules() }
+function selectDate(date) {
+  activeDate.value = date
+  // 点击可视区最后两个日期时，日期条向右平移一天；其余情况不滚动
+  const itemW = uni.upx2px(95)
+  if (stripWidth > 0 && itemW > 0) {
+    const idx = days.value.findIndex(d => d.date === date)
+    const firstVisible = Math.round(stripRealLeft / itemW)
+    const visibleCount = Math.max(3, Math.floor(stripWidth / itemW))
+    if (idx - firstVisible >= visibleCount - 2) {
+      const max = Math.max(0, days.value.length * itemW - stripWidth)
+      stripLeft.value = Math.min(stripRealLeft + itemW, max)
+    }
+  }
+  filterSchedules()
+}
+
+// ===== 日期条滚动（点击右侧日期时整体右移一天，不做定位跳转） =====
+const stripLeft = ref(0)      // 绑定 scroll-left（仅程序赋值，带动画）
+let stripRealLeft = 0         // 用户手势实时位置
+let stripWidth = 0            // 日期条可视宽度
+
+function onStripScroll(e) { stripRealLeft = e.detail.scrollLeft }
+
+function measureStrip() {
+  uni.createSelectorQuery().select('.date-scroll').boundingClientRect((r) => { if (r) stripWidth = r.width }).exec()
+}
 // 进入课表视图（日/周视图切换页）
 function goScheduleView() { uni.navigateTo({ url: '/pages/scheduleview/scheduleview' }) }
 
@@ -296,7 +322,9 @@ function openCourse(s) { uni.navigateTo({ url: '/pages/booking/detail?id=' + s.i
 
 function fmtTime(t) { if (!t) return ''; return t.substring(11, 16) }
 
+onReady(measureStrip)
 onShow(() => {
+  measureStrip()
   buildDays()
   const first = days.value[0], last = days.value[days.value.length - 1]
   const end = new Date(last.date); end.setDate(end.getDate() + 1)
@@ -324,12 +352,13 @@ onShow(() => {
 .view-entry { width: 116rpx; margin: 8rpx 10rpx 12rpx 24rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rpx; border: 1rpx solid rgba(255,45,155,.55); border-radius: 25rpx; background: linear-gradient(135deg,#2b1322,#1a1a1e); box-shadow: 0 0 18rpx rgba(255,45,155,.22); color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 2rpx; text-shadow: 0 0 12rpx rgba(255,45,155,.5); }
 .date-scroll { min-width: 0; flex: 1; }
 .dates { height: 100%; display: flex; }
-.date-item { position: relative; flex: 0 0 95rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9a9aa2; }
+.date-item { position: relative; flex: 0 0 95rpx; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 18rpx 0 30rpx; color: #9a9aa2; }
 .date-item text { font-size: 20rpx; }
 .date-item view { margin-top: 7rpx; color: #9a9aa2; font-size: 31rpx; font-weight: 800; }
 .date-item.active, .date-item.active view { color: #ff6fb5; }
-.date-item.active::after { content: ''; position: absolute; bottom: 4rpx; width: 35rpx; height: 5rpx; border-radius: 4rpx; background: #ff2d9b; }
-.filter-entry { margin: 8rpx 20rpx 12rpx 0; padding: 0 24rpx; height: 60rpx; display: flex; align-items: center; gap: 10rpx; border: 1rpx solid rgba(255,45,155,.4); border-radius: 14rpx; background: #1e1e22; color: #ff6fb5; font-size: 23rpx; font-weight: 700; }
+.date-item.active::after { content: ''; position: absolute; bottom: 12rpx; width: 35rpx; height: 5rpx; border-radius: 4rpx; background: #ff2d9b; }
+/* 筛选按钮：仅漏斗图标；底色与日期区一致（透明），靠描边辨识 */
+.filter-entry { margin: 8rpx 20rpx 12rpx 0; padding: 0 40rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid #34343a; border-radius: 25rpx; background: transparent; color: #ff6fb5; }
 .filter-entry.active { border-color: #ff2d9b; background: rgba(255,45,155,.16); }
 .funnel { position: relative; width: 24rpx; height: 20rpx; }
 .funnel::before { content: ''; position: absolute; left: 0; top: 0; border-left: 12rpx solid transparent; border-right: 12rpx solid transparent; border-top: 13rpx solid currentColor; }
@@ -363,7 +392,6 @@ onShow(() => {
 .ov-avatar { width: 52rpx; height: 52rpx; border-radius: 50%; flex: none; background: #26262b; }
 .ov-avatar.ph { display: flex; align-items: center; justify-content: center; color: #ff6fb5; font-size: 22rpx; font-weight: 800; }
 .teacher-row > view { color: #aaaab2; font-size: 19rpx; line-height: 1.5; }
-.teacher-empty { color: #777780; font-size: 20rpx; }
 .store-head { padding: 31rpx 30rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
 .store-head > view { font-size: 29rpx; font-weight: 900; }
 .store-head > view > text { width: 28rpx; height: 28rpx; margin-right: 16rpx; display: inline-block; border-radius: 7rpx; background: #ff2d9b; transform: rotate(45deg); vertical-align: -4rpx; }

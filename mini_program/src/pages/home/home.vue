@@ -14,21 +14,27 @@
       <text class="hot-label">🔥 本周热门</text>
     </view>
 
-    <view class="trial-card" @tap="callStudio">
-      <view>
-        <text class="trial-en">NEW MEMBER</text>
-        <text class="trial-title">新人5.8元试课两节</text>
-        <text class="trial-copy">爵士 / K-POP / Hiphop 任选，点击联系舞房</text>
+    <!-- 新人体验课卡片（标题/副标题/价格/原价 均从 config 字典读取，后台可改） -->
+    <view class="trial-card" @tap="openService">
+      <view class="trial-copy-wrap">
+        <text class="trial-title">{{ trial.title || '新人体验课 2 节' }}</text>
+        <text class="trial-copy">{{ trial.subtitle || '爵士 / K-POP / Hiphop 任选' }}</text>
       </view>
-      <text class="trial-arrow" @tap.stop="openService">›</text>
+      <view class="trial-right">
+        <view class="trial-price-box">
+          <text class="trial-price"><text class="trial-rmb">¥</text>{{ trial.price || '9.9' }}</text>
+          <text class="trial-origin">原价 ¥{{ trial.originPrice || '199' }}</text>
+        </view>
+        <text class="trial-arrow">›</text>
+      </view>
     </view>
 
     <view class="guide-card card">
       <view class="guide-head"><text>新手指南</text><text>3 步开启街舞之旅</text></view>
       <view class="steps">
-        <view class="step" :class="{ done: guide.step1Done }"><view class="step-number">1</view><text>电话咨询</text></view>
-        <view class="step" :class="{ done: guide.step2Done }"><view class="step-number">2</view><text>选择课程</text></view>
-        <view class="step" :class="{ done: guide.step3Done }"><view class="step-number">3</view><text>到店试课</text></view>
+        <view class="step"><view class="step-number">1</view><text>购买体验课</text></view>
+        <view class="step"><view class="step-number">2</view><text>选择课程</text></view>
+        <view class="step off"><view class="step-number">3</view><text>到店试课</text></view>
       </view>
     </view>
 
@@ -65,6 +71,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { api, fileUrl } from '@/api'
 
 const member = ref({})
+const trial = ref({})
 const videos = ref([])
 const guide = ref({})
 const unreadCount = ref(0)
@@ -74,6 +81,7 @@ const serviceSheet = ref(false)
 onShow(() => {
   api.home().then((d) => {
     member.value = d.account || {}
+    trial.value = d.trial || {}
     videos.value = d.videos || []
     guide.value = d.guide || {}
     unreadCount.value = d.unreadCount || 0
@@ -115,21 +123,30 @@ function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 .brand-copy text:last-child { font-size: 19rpx; color: #b9b5c1; }
 .hot-label { position: absolute; left: 26rpx; top: 24rpx; padding: 10rpx 19rpx; border: 1rpx solid #424249; border-radius: 22rpx; background: rgba(8,8,10,.82); font-size: 20rpx; }
 .trial-card { min-height: 168rpx; margin: 24rpx 0; padding: 25rpx 30rpx; border-radius: 32rpx; background: linear-gradient(120deg,#ff2495,#b10f64 74%,#641042); box-shadow: 0 18rpx 45rpx rgba(255,28,139,.24); display: flex; align-items: center; justify-content: space-between; }
-.trial-card > view { display: flex; flex-direction: column; }
-.trial-en { font-size: 20rpx; letter-spacing: 2rpx; color: rgba(255,255,255,.78); }
-.trial-title { margin-top: 8rpx; font-size: 34rpx; font-weight: 900; }
+.trial-copy-wrap { min-width: 0; display: flex; flex-direction: column; }
+.trial-title { font-size: 34rpx; font-weight: 900; }
 .trial-copy { margin-top: 8rpx; font-size: 21rpx; color: rgba(255,255,255,.82); }
+.trial-right { flex: none; margin-left: 16rpx; display: flex; align-items: center; gap: 18rpx; }
+.trial-price-box { display: flex; flex-direction: column; align-items: flex-end; }
+.trial-price { line-height: 1; color: #fff; font-size: 46rpx; font-weight: 900; }
+.trial-price .trial-rmb { margin-right: 4rpx; font-size: 26rpx; font-weight: 900; }
+.trial-origin { margin-top: 10rpx; color: rgba(255,255,255,.66); font-size: 19rpx; text-decoration: line-through; }
 .trial-arrow { width: 58rpx; height: 58rpx; border-radius: 50%; background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; font-size: 44rpx; }
 .guide-card { padding: 28rpx 26rpx 24rpx; }
 .guide-head { display: flex; justify-content: space-between; align-items: center; }
-.guide-head text:first-child { font-size: 28rpx; font-weight: 800; }
+/* 标题前 Blackpink 粉色圆头竖条 */
+.guide-head text:first-child { position: relative; padding-left: 18rpx; font-size: 28rpx; font-weight: 800; }
+.guide-head text:first-child::before { content: ''; position: absolute; left: 0; top: 4rpx; width: 7rpx; height: 28rpx; border-radius: 5rpx; background: linear-gradient(180deg,#ff2d9b,#ff6fb5); }
 .guide-head text:last-child { font-size: 20rpx; color: #a5a5ad; }
 .steps { margin-top: 46rpx; display: flex; position: relative; }
 .steps::before { content: ''; position: absolute; left: 15%; right: 15%; top: 19rpx; height: 4rpx; background: #ff2796; }
 .step { flex: 1; text-align: center; position: relative; z-index: 1; }
-.step-number { width: 39rpx; height: 39rpx; margin: auto; border: 4rpx solid #ff2796; border-radius: 50%; background: #202024; font-size: 20rpx; display: flex; align-items: center; justify-content: center; }
-.step.done .step-number { background: #ff3b9e; }
-.step text { display: block; margin-top: 13rpx; font-size: 21rpx; }
+/* 1、2 常亮：粉色渐变填满 + 白色数字（照设计稿固定） */
+.step-number { width: 39rpx; height: 39rpx; margin: auto; border-radius: 50%; background: linear-gradient(135deg,#ff2d9b,#ff6fb5); color: #fff; font-size: 20rpx; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+/* 第 3 步：黑灰空心 —— 灰描边、透明填充、灰数字 */
+.step-number.off { border: 2rpx solid #4a4a52; background: transparent; color: #777780; }
+.step text { display: block; margin-top: 13rpx; font-size: 21rpx; color: #fff; }
+.step.off text { color: #777780; }
 .section-title { height: 84rpx; display: flex; align-items: center; justify-content: space-between; }
 .section-title view { padding-left: 18rpx; position: relative; font-size: 29rpx; font-weight: 800; }
 .section-title view::before { content: ''; position: absolute; left: 0; top: 4rpx; width: 7rpx; height: 28rpx; border-radius: 5rpx; background: #ff2694; }
