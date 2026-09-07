@@ -17,12 +17,12 @@ public interface VideoMapper {
                           @Param("date") LocalDate date);
 
     /** 学员可见视频 */
-    List<Video> listForStudent(@Param("storeId") Long storeId, @Param("studentId") Long studentId);
+    List<Video> listForUser(@Param("storeId") Long storeId, @Param("userId") Long userId);
 
     /** 学员是否可见某视频 */
-    int canAccess(@Param("videoId") Long videoId, @Param("studentId") Long studentId);
+    int canAccess(@Param("videoId") Long videoId, @Param("userId") Long userId);
 
     // 自定义可见名单
-    int insertVisible(@Param("videoId") Long videoId, @Param("studentId") Long studentId);
+    int insertVisible(@Param("videoId") Long videoId, @Param("userId") Long userId);
     int deleteVisible(@Param("videoId") Long videoId);
 }

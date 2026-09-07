@@ -1,26 +1,26 @@
 package com.dance.studio.mapper;
 
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-public interface StudentMapper {
+public interface UserMapper {
 
-    Student findById(@Param("id") Long id);
+    User findById(@Param("id") Long id);
 
-    Student findByOpenid(@Param("openid") String openid);
+    User findByOpenid(@Param("openid") String openid);
 
-    int insert(Student student);
+    int insert(User user);
 
-    int updateProfile(Student student);
+    int updateProfile(User user);
 
     // ---- 后台管理 ----
-    List<Student> list(@Param("storeId") Long storeId,
+    List<User> list(@Param("storeId") Long storeId,
                        @Param("keyword") String keyword,
                        @Param("status") Integer status);
 
-    int adminUpdate(Student student);
+    int adminUpdate(User user);
 
     // ---- 余额变更（带条件保证不为负）----
     int addCourseBalance(@Param("id") Long id, @Param("delta") int delta);

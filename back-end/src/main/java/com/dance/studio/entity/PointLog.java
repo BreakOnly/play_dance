@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class PointLog {
     private Long id;
-    private Long studentId;
+    private Long userId;
     /** checkin/recharge/consume/redeem/manual/expire */
     private String type;
     private Integer amount;

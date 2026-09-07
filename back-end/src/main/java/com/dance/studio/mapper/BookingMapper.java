@@ -13,7 +13,7 @@ public interface BookingMapper {
 
     Booking findById(@Param("id") Long id);
 
-    Booking findActiveByStudentSchedule(@Param("studentId") Long studentId, @Param("scheduleId") Long scheduleId);
+    Booking findActiveByUserSchedule(@Param("userId") Long userId, @Param("scheduleId") Long scheduleId);
 
     /** 条件更新状态：仅当前状态为 expectStatus 时生效，返回影响行数（防并发重复流转） */
     int updateStatusIf(@Param("id") Long id, @Param("status") String status, @Param("expectStatus") String expectStatus);
@@ -33,7 +33,7 @@ public interface BookingMapper {
     int promote(@Param("id") Long id);
 
     /** 我的约课（按状态可选过滤） */
-    List<BookingVo> listByStudent(@Param("studentId") Long studentId, @Param("status") String status);
+    List<BookingVo> listByUser(@Param("userId") Long userId, @Param("status") String status);
 
     /** 后台：按课次查约课（含候补） */
     List<BookingVo> listBySchedule(@Param("scheduleId") Long scheduleId);
@@ -42,7 +42,7 @@ public interface BookingMapper {
     List<Booking> listNoShowCandidates(@Param("now") LocalDateTime now);
 
     /** 找该学员在某时刻可签到的待上课预约（按门店 + 时间窗，由 service 计算窗口） */
-    List<Booking> listCheckinable(@Param("studentId") Long studentId,
+    List<Booking> listCheckinable(@Param("userId") Long userId,
                                   @Param("storeId") Long storeId,
                                   @Param("from") LocalDateTime from,
                                   @Param("to") LocalDateTime to);

@@ -5,15 +5,15 @@ export const authApi = {
   info: () => http.get('/api/admin/auth/info')
 }
 
-export const studentApi = {
-  list: (params) => http.get('/api/admin/students', { params }),
-  detail: (id) => http.get(`/api/admin/students/${id}`),
-  create: (data) => http.post('/api/admin/students', data),
-  update: (id, data) => http.put(`/api/admin/students/${id}`, data),
-  recharge: (id, data) => http.post(`/api/admin/students/${id}/recharge`, data),
-  adjustPoints: (id, data) => http.post(`/api/admin/students/${id}/points`, data),
-  hourLogs: (id) => http.get(`/api/admin/students/${id}/hour-logs`),
-  pointLogs: (id) => http.get(`/api/admin/students/${id}/point-logs`)
+export const userApi = {
+  list: (params) => http.get('/api/admin/users', { params }),
+  detail: (id) => http.get(`/api/admin/users/${id}`),
+  create: (data) => http.post('/api/admin/users', data),
+  update: (id, data) => http.put(`/api/admin/users/${id}`, data),
+  recharge: (id, data) => http.post(`/api/admin/users/${id}/recharge`, data),
+  adjustPoints: (id, data) => http.post(`/api/admin/users/${id}/points`, data),
+  hourLogs: (id) => http.get(`/api/admin/users/${id}/hour-logs`),
+  pointLogs: (id) => http.get(`/api/admin/users/${id}/point-logs`)
 }
 
 export const courseApi = {

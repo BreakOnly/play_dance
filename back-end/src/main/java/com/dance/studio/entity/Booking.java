@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class Booking {
     private Long id;
     private Long storeId;
-    private Long studentId;
+    private Long userId;
     private Long scheduleId;
     /** booked待上课 checked已签到 cancelled已取消 noshow爽约 waitlist候补中 */
     private String status;

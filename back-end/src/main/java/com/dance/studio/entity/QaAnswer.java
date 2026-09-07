@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class QaAnswer {
     private Long id;
     private Long questionId;
-    private Long studentId;
+    private Long userId;
     private Long teacherId;
     private Integer isTeacher;
     private String content;

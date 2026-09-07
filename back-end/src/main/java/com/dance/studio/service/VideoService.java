@@ -24,11 +24,11 @@ public class VideoService {
 
     // ---------- 后台 ----------
     @Transactional(rollbackFor = Exception.class)
-    public Video save(Video v, List<Long> visibleStudentIds) {
+    public Video save(Video v, List<Long> visibleUserIds) {
         v.setStoreId(store());
         videoMapper.insert(v);
-        if ("custom".equals(v.getScopeType()) && visibleStudentIds != null) {
-            for (Long sid : visibleStudentIds) videoMapper.insertVisible(v.getId(), sid);
+        if ("custom".equals(v.getScopeType()) && visibleUserIds != null) {
+            for (Long sid : visibleUserIds) videoMapper.insertVisible(v.getId(), sid);
         }
         return videoMapper.findById(v.getId());
     }
@@ -42,13 +42,13 @@ public class VideoService {
     }
 
     // ---------- 小程序 ----------
-    public List<Video> listForStudent(Long studentId) {
-        return videoMapper.listForStudent(store(), studentId);
+    public List<Video> listForUser(Long userId) {
+        return videoMapper.listForUser(store(), userId);
     }
 
     /** 鉴权后返回带时效的播放地址 */
-    public String playUrl(Long videoId, Long studentId) {
-        if (videoMapper.canAccess(videoId, studentId) == 0) {
+    public String playUrl(Long videoId, Long userId) {
+        if (videoMapper.canAccess(videoId, userId) == 0) {
             throw new BizException(ResultCode.VIDEO_NO_PERMISSION);
         }
         Video v = videoMapper.findById(videoId);

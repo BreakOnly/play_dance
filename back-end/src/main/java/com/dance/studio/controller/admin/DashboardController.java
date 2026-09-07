@@ -36,8 +36,8 @@ public class DashboardController {
         Long storeId = ContextHolder.storeId();
         int lowThreshold = configService.getInt(storeId, "low_hours_threshold", 2);
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("lowHours", dashboardMapper.lowHoursStudents(storeId, lowThreshold));
-        data.put("inactive", dashboardMapper.inactiveStudents(storeId, LocalDateTime.now().minusDays(inactiveDays)));
+        data.put("lowHours", dashboardMapper.lowHoursUsers(storeId, lowThreshold));
+        data.put("inactive", dashboardMapper.inactiveUsers(storeId, LocalDateTime.now().minusDays(inactiveDays)));
         return Result.success(data);
     }
 }

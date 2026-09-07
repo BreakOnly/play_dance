@@ -7,9 +7,9 @@ const routes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/students',
+    redirect: '/users',
     children: [
-      { path: 'students', name: '学员管理', component: () => import('@/views/Students.vue'), meta: { icon: 'User' } },
+      { path: 'users', name: '用户管理', component: () => import('@/views/Users.vue'), meta: { icon: 'User' } },
       { path: 'courses', name: '课程管理', component: () => import('@/views/Courses.vue'), meta: { icon: 'Reading' } },
       { path: 'teachers', name: '教师管理', component: () => import('@/views/Teachers.vue'), meta: { icon: 'Avatar' } },
       { path: 'schedules', name: '排课管理', component: () => import('@/views/Schedules.vue'), meta: { icon: 'Calendar' } },

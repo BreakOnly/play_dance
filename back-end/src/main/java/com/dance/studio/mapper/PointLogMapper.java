@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface PointLogMapper {
     int insert(PointLog log);
-    List<PointLog> listByStudent(@Param("studentId") Long studentId);
+    List<PointLog> listByUser(@Param("userId") Long userId);
 }

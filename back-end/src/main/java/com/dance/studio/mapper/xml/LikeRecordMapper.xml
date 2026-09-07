@@ -4,12 +4,12 @@
 <mapper namespace="com.dance.studio.mapper.LikeRecordMapper">
 
     <insert id="insert">
-        INSERT IGNORE INTO like_record (student_id, target_type, target_id)
-        VALUES (#{studentId}, #{targetType}, #{targetId})
+        INSERT IGNORE INTO like_record (user_id, target_type, target_id)
+        VALUES (#{userId}, #{targetType}, #{targetId})
     </insert>
 
     <delete id="delete">
         DELETE FROM like_record
-        WHERE student_id = #{studentId} AND target_type = #{targetType} AND target_id = #{targetId}
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
     </delete>
 </mapper>

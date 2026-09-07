@@ -4,9 +4,9 @@
 <mapper namespace="com.dance.studio.mapper.RechargeOrderMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO recharge_order (store_id, student_id, hours, gift_hours, amount,
+        INSERT INTO recharge_order (store_id, user_id, hours, gift_hours, amount,
                                     points_gain, validity_days, operator_id, remark)
-        VALUES (#{storeId}, #{studentId}, #{hours}, COALESCE(#{giftHours},0), COALESCE(#{amount},0),
+        VALUES (#{storeId}, #{userId}, #{hours}, COALESCE(#{giftHours},0), COALESCE(#{amount},0),
                 COALESCE(#{pointsGain},0), #{validityDays}, #{operatorId}, #{remark})
     </insert>
 </mapper>

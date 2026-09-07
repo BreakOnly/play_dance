@@ -64,12 +64,13 @@ CREATE TABLE `config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统配置/业务规则';
 
 -- ============================================================
--- 2. 学员
+-- 2. 用户
 -- ============================================================
-DROP TABLE IF EXISTS `student`;
-CREATE TABLE `student` (
-  `id`             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '学员ID',
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `id`             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `store_id`       BIGINT       NOT NULL COMMENT '所属门店',
+  `role`           VARCHAR(20)  NOT NULL DEFAULT 'student' COMMENT '角色：student用户 teacher教师(预留)',
   `openid`         VARCHAR(64)  DEFAULT NULL COMMENT '微信openid',
   `unionid`        VARCHAR(64)  DEFAULT NULL COMMENT '微信unionid',
   `name`           VARCHAR(50)  DEFAULT NULL COMMENT '姓名',
@@ -87,13 +88,13 @@ CREATE TABLE `student` (
   UNIQUE KEY `uk_openid` (`openid`),
   KEY `idx_store` (`store_id`),
   KEY `idx_phone` (`phone`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学员';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户';
 
 -- 课时充值批次（用于有效期 FIFO 消耗）
 DROP TABLE IF EXISTS `course_hour_batch`;
 CREATE TABLE `course_hour_batch` (
   `id`         BIGINT   NOT NULL AUTO_INCREMENT,
-  `student_id` BIGINT   NOT NULL COMMENT '学员ID',
+  `user_id` BIGINT   NOT NULL COMMENT '用户ID',
   `total`      INT      NOT NULL COMMENT '本批课时总数',
   `remaining`  INT      NOT NULL COMMENT '本批剩余课时',
   `source`     VARCHAR(20) NOT NULL DEFAULT 'recharge' COMMENT '来源 recharge充值 gift赠送',
@@ -101,7 +102,7 @@ CREATE TABLE `course_hour_batch` (
   `expire_at`  DATETIME DEFAULT NULL COMMENT '过期时间(NULL=永久)',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student` (`student_id`),
+  KEY `idx_user` (`user_id`),
   KEY `idx_expire` (`expire_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时充值批次(有效期管理)';
 
@@ -110,7 +111,7 @@ DROP TABLE IF EXISTS `recharge_order`;
 CREATE TABLE `recharge_order` (
   `id`          BIGINT        NOT NULL AUTO_INCREMENT,
   `store_id`    BIGINT        NOT NULL,
-  `student_id`  BIGINT        NOT NULL,
+  `user_id`  BIGINT        NOT NULL,
   `hours`       INT           NOT NULL COMMENT '充值课时',
   `gift_hours`  INT           NOT NULL DEFAULT 0 COMMENT '赠送课时',
   `amount`      DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '实付金额',
@@ -120,14 +121,14 @@ CREATE TABLE `recharge_order` (
   `remark`      VARCHAR(255)  DEFAULT NULL,
   `created_at`  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student` (`student_id`)
+  KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时充值订单';
 
 -- 课时流水
 DROP TABLE IF EXISTS `hour_log`;
 CREATE TABLE `hour_log` (
   `id`            BIGINT      NOT NULL AUTO_INCREMENT,
-  `student_id`    BIGINT      NOT NULL,
+  `user_id`    BIGINT      NOT NULL,
   `type`          VARCHAR(20) NOT NULL COMMENT 'recharge充值/gift赠送/lock约课锁定/deduct签到扣减/refund取消退回/noshow爽约扣减/expire过期',
   `amount`        INT         NOT NULL COMMENT '变动(正负)',
   `balance_after` INT         NOT NULL COMMENT '变动后可用课时',
@@ -137,14 +138,14 @@ CREATE TABLE `hour_log` (
   `remark`        VARCHAR(255) DEFAULT NULL,
   `created_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student` (`student_id`,`created_at`)
+  KEY `idx_user` (`user_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时流水';
 
 -- 积分流水
 DROP TABLE IF EXISTS `point_log`;
 CREATE TABLE `point_log` (
   `id`            BIGINT      NOT NULL AUTO_INCREMENT,
-  `student_id`    BIGINT      NOT NULL,
+  `user_id`    BIGINT      NOT NULL,
   `type`          VARCHAR(20) NOT NULL COMMENT 'checkin签到/recharge充值/consume消费/redeem兑换扣减/manual手动/expire过期',
   `amount`        INT         NOT NULL COMMENT '变动(正负)',
   `balance_after` INT         NOT NULL COMMENT '变动后积分',
@@ -154,7 +155,7 @@ CREATE TABLE `point_log` (
   `remark`        VARCHAR(255) DEFAULT NULL,
   `created_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student` (`student_id`,`created_at`)
+  KEY `idx_user` (`user_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分流水';
 
 -- ============================================================
@@ -265,7 +266,7 @@ DROP TABLE IF EXISTS `booking`;
 CREATE TABLE `booking` (
   `id`            BIGINT      NOT NULL AUTO_INCREMENT,
   `store_id`      BIGINT      NOT NULL,
-  `student_id`    BIGINT      NOT NULL,
+  `user_id`    BIGINT      NOT NULL,
   `schedule_id`   BIGINT      NOT NULL,
   `status`        VARCHAR(12) NOT NULL DEFAULT 'booked' COMMENT 'booked待上课 checked已签到 cancelled已取消 noshow爽约 waitlist候补中',
   `locked_hours`  INT         NOT NULL DEFAULT 1 COMMENT '冻结课时',
@@ -276,9 +277,9 @@ CREATE TABLE `booking` (
   `created_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student_schedule` (`student_id`,`schedule_id`),
+  KEY `idx_user_schedule` (`user_id`,`schedule_id`),
   KEY `idx_schedule` (`schedule_id`,`status`),
-  KEY `idx_student` (`student_id`,`status`)
+  KEY `idx_user` (`user_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='约课单';
 
 DROP TABLE IF EXISTS `checkin`;
@@ -286,7 +287,7 @@ CREATE TABLE `checkin` (
   `id`          BIGINT      NOT NULL AUTO_INCREMENT,
   `store_id`    BIGINT      NOT NULL,
   `booking_id`  BIGINT      NOT NULL,
-  `student_id`  BIGINT      NOT NULL,
+  `user_id`  BIGINT      NOT NULL,
   `schedule_id` BIGINT      NOT NULL,
   `check_time`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '签到时间',
   `method`      VARCHAR(10) NOT NULL DEFAULT 'scan' COMMENT 'scan扫码 manual代签',
@@ -294,7 +295,7 @@ CREATE TABLE `checkin` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_booking` (`booking_id`),
   KEY `idx_schedule` (`schedule_id`),
-  KEY `idx_student` (`student_id`)
+  KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='签到记录';
 
 -- ============================================================
@@ -323,7 +324,7 @@ DROP TABLE IF EXISTS `redeem_order`;
 CREATE TABLE `redeem_order` (
   `id`                BIGINT       NOT NULL AUTO_INCREMENT,
   `store_id`          BIGINT       NOT NULL,
-  `student_id`        BIGINT       NOT NULL,
+  `user_id`        BIGINT       NOT NULL,
   `goods_id`          BIGINT       NOT NULL,
   `goods_name`        VARCHAR(100) DEFAULT NULL COMMENT '冗余快照',
   `source`            VARCHAR(10)  NOT NULL DEFAULT 'redeem' COMMENT 'claw抓取 redeem兑换',
@@ -340,7 +341,7 @@ CREATE TABLE `redeem_order` (
   `created_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student` (`student_id`,`status`),
+  KEY `idx_user` (`user_id`,`status`),
   KEY `idx_store_status` (`store_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='兑换/发放单';
 
@@ -367,22 +368,22 @@ CREATE TABLE `video` (
   KEY `idx_store_date` (`store_id`,`video_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课堂视频';
 
--- 视频可见学员（scope_type=custom 时使用；其余可运行时按签到/约课计算）
+-- 视频可见用户（scope_type=custom 时使用；其余可运行时按签到/约课计算）
 DROP TABLE IF EXISTS `video_visible`;
 CREATE TABLE `video_visible` (
   `id`         BIGINT NOT NULL AUTO_INCREMENT,
   `video_id`   BIGINT NOT NULL,
-  `student_id` BIGINT NOT NULL,
+  `user_id` BIGINT NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_video_student` (`video_id`,`student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频可见学员名单';
+  UNIQUE KEY `uk_video_user` (`video_id`,`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频可见用户名单';
 
--- 学员投稿视频（公开排行榜，区别于课堂视频）
+-- 用户投稿视频（公开排行榜，区别于课堂视频）
 DROP TABLE IF EXISTS `user_video`;
 CREATE TABLE `user_video` (
   `id`              BIGINT       NOT NULL AUTO_INCREMENT,
   `store_id`        BIGINT       NOT NULL,
-  `student_id`      BIGINT       NOT NULL COMMENT '投稿学员',
+  `user_id`      BIGINT       NOT NULL COMMENT '投稿用户',
   `title`           VARCHAR(100) NOT NULL COMMENT '视频标题',
   `file_url`        VARCHAR(255) NOT NULL COMMENT '视频地址(私有,需签名)',
   `cover_url`       VARCHAR(255) DEFAULT NULL COMMENT '封面(预设或自定义)',
@@ -399,16 +400,16 @@ CREATE TABLE `user_video` (
   `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_status_like` (`status`,`like_count`),
-  KEY `idx_student` (`student_id`),
+  KEY `idx_user` (`user_id`),
   KEY `idx_store` (`store_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学员投稿视频(点赞排行)';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户投稿视频(点赞排行)';
 
 -- 问答-问题
 DROP TABLE IF EXISTS `qa_question`;
 CREATE TABLE `qa_question` (
   `id`           BIGINT       NOT NULL AUTO_INCREMENT,
   `store_id`     BIGINT       NOT NULL,
-  `student_id`   BIGINT       NOT NULL COMMENT '提问学员',
+  `user_id`   BIGINT       NOT NULL COMMENT '提问用户',
   `content`      VARCHAR(500) NOT NULL COMMENT '问题内容',
   `images`       JSON         DEFAULT NULL COMMENT '配图URL数组',
   `answer_count` INT          NOT NULL DEFAULT 0,
@@ -419,12 +420,12 @@ CREATE TABLE `qa_question` (
   KEY `idx_store_time` (`store_id`,`status`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='问答-问题';
 
--- 问答-回答（学员或老师）
+-- 问答-回答（用户或老师）
 DROP TABLE IF EXISTS `qa_answer`;
 CREATE TABLE `qa_answer` (
   `id`          BIGINT       NOT NULL AUTO_INCREMENT,
   `question_id` BIGINT       NOT NULL,
-  `student_id`  BIGINT       NOT NULL COMMENT '回答学员',
+  `user_id`  BIGINT       NOT NULL COMMENT '回答用户',
   `teacher_id`  BIGINT       DEFAULT NULL COMMENT '老师回答时关联teacher',
   `is_teacher`  TINYINT      NOT NULL DEFAULT 0 COMMENT '1老师回答',
   `content`     VARCHAR(500) NOT NULL,
@@ -439,12 +440,12 @@ CREATE TABLE `qa_answer` (
 DROP TABLE IF EXISTS `like_record`;
 CREATE TABLE `like_record` (
   `id`          BIGINT      NOT NULL AUTO_INCREMENT,
-  `student_id`  BIGINT      NOT NULL,
+  `user_id`  BIGINT      NOT NULL,
   `target_type` VARCHAR(10) NOT NULL COMMENT 'question/answer/video',
   `target_id`   BIGINT      NOT NULL,
   `created_at`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_like` (`student_id`,`target_type`,`target_id`)
+  UNIQUE KEY `uk_like` (`user_id`,`target_type`,`target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='点赞记录';
 
 -- ============================================================
@@ -472,7 +473,7 @@ CREATE TABLE `banner` (
 -- ============================================================
 DROP TABLE IF EXISTS `notification`;CREATE TABLE `notification` (
   `id`         BIGINT       NOT NULL AUTO_INCREMENT,
-  `student_id` BIGINT       NOT NULL,
+  `user_id` BIGINT       NOT NULL,
   `type`       VARCHAR(20)  NOT NULL COMMENT 'booking约课 checkin签到 redeem兑换 remind提醒 system系统',
   `title`      VARCHAR(100) NOT NULL,
   `content`    VARCHAR(500) DEFAULT NULL,
@@ -481,7 +482,7 @@ DROP TABLE IF EXISTS `notification`;CREATE TABLE `notification` (
   `is_read`    TINYINT      NOT NULL DEFAULT 0 COMMENT '0未读 1已读',
   `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_student_read` (`student_id`,`is_read`)
+  KEY `idx_user_read` (`user_id`,`is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='站内消息通知';
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -534,5 +535,5 @@ INSERT INTO `course_level` (`store_id`,`name`,`sort`) VALUES
   (1,'入门',1),(1,'进阶',2),(1,'高级',3);
 
 -- ============================================================
--- 完成。后续余额变动务必：流水(*_log) 与 缓存(student.*) 在同一事务内更新。
+-- 完成。后续余额变动务必：流水(*_log) 与 缓存(`user`.*) 在同一事务内更新。
 -- ============================================================

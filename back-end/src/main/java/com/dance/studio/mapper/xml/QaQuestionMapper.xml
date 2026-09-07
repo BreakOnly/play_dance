@@ -6,7 +6,7 @@
     <resultMap id="BaseMap" type="com.dance.studio.entity.QaQuestion">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
         <result column="images" property="images"/>
         <result column="answer_count" property="answerCount"/>
@@ -17,7 +17,7 @@
 
     <resultMap id="VoMap" type="com.dance.studio.vo.QaQuestionVo">
         <id column="id" property="id"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
         <result column="answer_count" property="answerCount"/>
         <result column="like_count" property="likeCount"/>
@@ -29,23 +29,23 @@
     </resultMap>
 
     <sql id="voSelect">
-        SELECT q.id, q.student_id, q.content, q.answer_count, q.like_count, q.status, q.created_at,
+        SELECT q.id, q.user_id, q.content, q.answer_count, q.like_count, q.status, q.created_at,
                s.name AS author_name, s.avatar AS author_avatar,
                <if test="viewerId != null">
                EXISTS (SELECT 1 FROM like_record lr
-                        WHERE lr.student_id = #{viewerId} AND lr.target_type = 'question'
+                        WHERE lr.user_id = #{viewerId} AND lr.target_type = 'question'
                           AND lr.target_id = q.id) AS liked,
                </if>
                <if test="viewerId == null">
                0 AS liked,
                </if>
         FROM qa_question q
-        LEFT JOIN student s ON s.id = q.student_id
+        LEFT JOIN `user` s ON s.id = q.user_id
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO qa_question (store_id, student_id, content, images, status)
-        VALUES (#{storeId}, #{studentId}, #{content}, #{images}, 1)
+        INSERT INTO qa_question (store_id, user_id, content, images, status)
+        VALUES (#{storeId}, #{userId}, #{content}, #{images}, 1)
     </insert>
 
     <select id="findById" resultMap="BaseMap">

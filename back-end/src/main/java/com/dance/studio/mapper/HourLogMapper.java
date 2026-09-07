@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface HourLogMapper {
     int insert(HourLog log);
-    List<HourLog> listByStudent(@Param("studentId") Long studentId);
+    List<HourLog> listByUser(@Param("userId") Long userId);
 }

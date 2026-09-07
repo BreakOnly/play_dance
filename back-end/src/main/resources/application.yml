@@ -40,7 +40,7 @@ app:
     secret: ${JWT_SECRET:dance-studio-please-change-this-secret-key-32bytes-min}
     # token 有效期（小时）
     admin-expire-hours: 12
-    student-expire-hours: 168
+    user-expire-hours: 720
   storage:
     type: ${STORAGE_TYPE:local}   # local | oss  —— 上线改成 oss
     local-dir: ${STORAGE_DIR:./uploads}

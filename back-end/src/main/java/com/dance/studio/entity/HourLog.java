@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class HourLog {
     private Long id;
-    private Long studentId;
+    private Long userId;
     /** recharge/gift/lock/deduct/refund/noshow/expire */
     private String type;
     private Integer amount;

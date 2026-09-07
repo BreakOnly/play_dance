@@ -5,7 +5,7 @@
 
     <resultMap id="BaseMap" type="com.dance.studio.entity.Notification">
         <id column="id" property="id"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="type" property="type"/>
         <result column="title" property="title"/>
         <result column="content" property="content"/>
@@ -16,23 +16,23 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO notification (student_id, type, title, content, ref_type, ref_id, is_read)
-        VALUES (#{studentId}, #{type}, #{title}, #{content}, #{refType}, #{refId}, 0)
+        INSERT INTO notification (user_id, type, title, content, ref_type, ref_id, is_read)
+        VALUES (#{userId}, #{type}, #{title}, #{content}, #{refType}, #{refId}, 0)
     </insert>
 
-    <select id="listByStudent" resultMap="BaseMap">
-        SELECT * FROM notification WHERE student_id = #{studentId} ORDER BY id DESC
+    <select id="listByUser" resultMap="BaseMap">
+        SELECT * FROM notification WHERE user_id = #{userId} ORDER BY id DESC
     </select>
 
     <select id="countUnread" resultType="int">
-        SELECT COUNT(*) FROM notification WHERE student_id = #{studentId} AND is_read = 0
+        SELECT COUNT(*) FROM notification WHERE user_id = #{userId} AND is_read = 0
     </select>
 
     <update id="markRead">
-        UPDATE notification SET is_read = 1 WHERE id = #{id} AND student_id = #{studentId}
+        UPDATE notification SET is_read = 1 WHERE id = #{id} AND user_id = #{userId}
     </update>
 
     <update id="markAllRead">
-        UPDATE notification SET is_read = 1 WHERE student_id = #{studentId} AND is_read = 0
+        UPDATE notification SET is_read = 1 WHERE user_id = #{userId} AND is_read = 0
     </update>
 </mapper>

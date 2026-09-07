@@ -9,9 +9,9 @@ import com.dance.studio.dto.AdminLoginReq;
 import com.dance.studio.dto.MpLoginReq;
 import com.dance.studio.dto.ProfileUpdateReq;
 import com.dance.studio.entity.Admin;
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import com.dance.studio.mapper.AdminMapper;
-import com.dance.studio.mapper.StudentMapper;
+import com.dance.studio.mapper.UserMapper;
 import com.dance.studio.vo.LoginVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final AdminMapper adminMapper;
-    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
     private final WechatService wechatService;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -50,33 +50,51 @@ public class AuthService {
 
     // ---------- 小程序登录 ----------
     public LoginVo mpLogin(MpLoginReq req) {
-        String openid = wechatService.code2openid(req.getCode());
-        Student student = studentMapper.findByOpenid(openid);
-        if (student == null) {
-            // 首次登录自动建档
-            student = new Student();
-            student.setStoreId(DEFAULT_STORE_ID);
-            student.setOpenid(openid);
-            student.setStatus(1);
-            studentMapper.insert(student);
+        WechatService.WxSession session = wechatService.code2session(req.getCode());
+        User user = userMapper.findByOpenid(session.openid());
+        if (user == null) {
+            // 首次登录自动建档（openid/unionid 落库）
+            user = new User();
+            user.setStoreId(DEFAULT_STORE_ID);
+            user.setOpenid(session.openid());
+            user.setUnionid(session.unionid());
+            user.setStatus(1);
+            userMapper.insert(user);
+        } else if (session.unionid() != null && !session.unionid().equals(user.getUnionid())) {
+            // 老用户回填 unionid（后绑定开放平台/历史数据）
+            user.setUnionid(session.unionid());
+            User patch = new User();
+            patch.setId(user.getId());
+            patch.setUnionid(session.unionid());
+            userMapper.updateProfile(patch);
         }
-        String token = jwtUtil.generate(new LoginUser(student.getId(), student.getStoreId(), LoginUser.TYPE_STUDENT));
-        return new LoginVo(token, student.getId(), student.getName());
+        String token = jwtUtil.generate(new LoginUser(user.getId(), user.getStoreId(), LoginUser.TYPE_USER));
+        return new LoginVo(token, user.getId(), user.getName());
     }
 
-    public Student mpProfile() {
-        return studentMapper.findById(ContextHolder.userId());
+    /** 微信手机号授权：code 换手机号并绑定当前用户 */
+    public String bindPhone(String code) {
+        String phone = wechatService.phoneNumber(code);
+        User patch = new User();
+        patch.setId(ContextHolder.userId());
+        patch.setPhone(phone);
+        userMapper.updateProfile(patch);
+        return phone;
     }
 
-    public Student updateProfile(ProfileUpdateReq req) {
-        Student s = new Student();
+    public User mpProfile() {
+        return userMapper.findById(ContextHolder.userId());
+    }
+
+    public User updateProfile(ProfileUpdateReq req) {
+        User s = new User();
         s.setId(ContextHolder.userId());
         s.setName(req.getName());
         s.setPhone(req.getPhone());
         s.setGender(req.getGender());
         s.setBirthday(req.getBirthday());
         s.setAvatar(req.getAvatar());
-        studentMapper.updateProfile(s);
-        return studentMapper.findById(s.getId());
+        userMapper.updateProfile(s);
+        return userMapper.findById(s.getId());
     }
 }

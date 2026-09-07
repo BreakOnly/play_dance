@@ -9,7 +9,7 @@ public class Checkin {
     private Long id;
     private Long storeId;
     private Long bookingId;
-    private Long studentId;
+    private Long userId;
     private Long scheduleId;
     private LocalDateTime checkTime;
     /** scan扫码 manual代签 */

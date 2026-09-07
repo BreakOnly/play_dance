@@ -12,13 +12,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginUser {
 
-    /** 用户ID（admin.id 或 student.id） */
+    /** 用户ID（admin.id 或 user.id） */
     private Long userId;
     /** 门店ID */
     private Long storeId;
-    /** 类型：admin / student */
+    /** 类型：admin / user */
     private String type;
 
     public static final String TYPE_ADMIN = "admin";
-    public static final String TYPE_STUDENT = "student";
+    public static final String TYPE_USER = "user";
 }

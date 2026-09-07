@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 public class BookingVo {
     private Long id;
     private Long scheduleId;
-    private Long studentId;
-    private String studentName;
+    private Long userId;
+    private String userName;
     private String courseName;
     private String courseType;
     private String teacherName;

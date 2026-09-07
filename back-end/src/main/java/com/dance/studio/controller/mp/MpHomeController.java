@@ -2,9 +2,9 @@ package com.dance.studio.controller.mp;
 
 import com.dance.studio.common.Result;
 import com.dance.studio.common.context.ContextHolder;
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import com.dance.studio.mapper.CourseHourBatchMapper;
-import com.dance.studio.mapper.StudentMapper;
+import com.dance.studio.mapper.UserMapper;
 import com.dance.studio.service.AccountService;
 import com.dance.studio.service.BannerService;
 import com.dance.studio.service.BookingService;
@@ -32,7 +32,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MpHomeController {
 
-    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
     private final CourseHourBatchMapper batchMapper;
     private final BookingService bookingService;
     private final AccountService accountService;
@@ -46,7 +46,7 @@ public class MpHomeController {
     public Result<Map<String, Object>> home() {
         Long sid = ContextHolder.userId();
         Long storeId = ContextHolder.storeId();
-        Student stu = studentMapper.findById(sid);
+        User stu = userMapper.findById(sid);
 
         int available = (stu.getCourseBalance() == null ? 0 : stu.getCourseBalance());
         int frozen = (stu.getFrozenHours() == null ? 0 : stu.getFrozenHours());

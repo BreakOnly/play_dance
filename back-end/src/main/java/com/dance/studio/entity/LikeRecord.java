@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class LikeRecord {
     private Long id;
-    private Long studentId;
+    private Long userId;
     /** question/answer/video */
     private String targetType;
     private Long targetId;

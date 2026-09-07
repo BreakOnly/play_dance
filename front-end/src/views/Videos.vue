@@ -20,8 +20,8 @@
         <el-form-item label="课堂日期"><el-date-picker v-model="f.videoDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
         <el-form-item label="可见范围">
           <el-select v-model="f.scopeType">
-            <el-option label="该课已签到学员" value="checked_in" />
-            <el-option label="该课已约课学员" value="booked" />
+            <el-option label="该课已签到用户" value="checked_in" />
+            <el-option label="该课已约课用户" value="booked" />
           </el-select>
         </el-form-item>
         <el-form-item label="视频文件">
@@ -53,6 +53,6 @@ function save() {
   videoApi.create(f.value).then(() => { ElMessage.success('已保存'); visible.value = false; load() })
 }
 function del(row) { ElMessageBox.confirm('删除该视频？').then(() => videoApi.del(row.id).then(() => { ElMessage.success('已删除'); load() })).catch(() => {}) }
-function scopeText(s) { return { checked_in: '已签到学员', booked: '已约课学员', custom: '指定学员' }[s] || s }
+function scopeText(s) { return { checked_in: '已签到用户', booked: '已约课用户', custom: '指定用户' }[s] || s }
 onMounted(() => { courseApi.courses().then((d) => courses.value = d || []); load() })
 </script>

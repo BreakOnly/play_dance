@@ -53,7 +53,7 @@ public class MpScheduleController {
     @Operation(summary = "课次详情")
     @GetMapping("/{id}")
     public Result<ScheduleVo> detail(@PathVariable Long id) {
-        return Result.success(scheduleService.detailForStudent(id, ContextHolder.userId()));
+        return Result.success(scheduleService.detailForUser(id, ContextHolder.userId()));
     }
 
     @Operation(summary = "约课筛选项(舞种/难易/类型/老师/课程,时段由前端固定)")

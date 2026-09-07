@@ -23,6 +23,9 @@
       <el-table-column label="时间" min-width="220">
         <template #default="{row}">{{ fmt(row.startTime) }} ~ {{ row.endTime ? row.endTime.substring(11,16) : '' }}</template>
       </el-table-column>
+      <el-table-column prop="song" label="曲目" min-width="150" show-overflow-tooltip>
+        <template #default="{row}">{{ row.song || '—' }}</template>
+      </el-table-column>
       <el-table-column label="约课" width="100"><template #default="{row}">{{ row.bookedCount }}/{{ row.capacity }}</template></el-table-column>
       <el-table-column label="状态" width="90"><template #default="{row}"><el-tag>{{ statusText(row.status) }}</el-tag></template></el-table-column>
       <el-table-column label="操作" width="120">
@@ -40,6 +43,7 @@
         <el-form-item label="开始"><el-date-picker v-model="f.startTime" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" @change="autoFillEnd" /></el-form-item>
         <el-form-item label="结束"><el-input :model-value="fmt(f.endTime)" disabled placeholder="选课程与开始时间后自动生成" /></el-form-item>
         <el-form-item label="容量"><el-input-number v-model="f.capacity" :min="1" placeholder="留空按课程类型默认" /></el-form-item>
+        <el-form-item label="曲目"><el-input v-model="f.song" maxlength="100" placeholder="选填，如：Ditto - NewJeans；基本功等可留空" clearable /></el-form-item>
       </el-form>
       <template #footer><el-button @click="visible=false">取消</el-button><el-button type="primary" @click="save">保存</el-button></template>
     </el-dialog>

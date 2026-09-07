@@ -1,9 +1,10 @@
 import { BASE_URL } from './config'
-import { getToken, clearToken } from './auth'
+import { getToken, clearToken, setToken, setUser } from './auth'
 
 /**
  * 统一请求封装：自动带 token，解析后端 Result{code,message,data}。
- * 成功(code=0) resolve(data)；失败 reject 并 toast；未登录(1002) 跳登录。
+ * 成功(code=0) resolve(data)；失败 reject 并 toast。
+ * token 缺失/过期(401/1002)：先静默重登一次并自动重放原请求，重登也失败才踢登录页。
  */
 export function request(options) {
   const { url, method = 'GET', data = {}, showLoading = false, silent = false } = options
@@ -20,6 +21,16 @@ export function request(options) {
       success(res) {
         const body = res.data || {}
         if (res.statusCode === 401 || body.code === 1002) {
+          if (!options._retried) {
+            silentLogin().then(() => {
+              request({ ...options, _retried: true }).then(resolve).catch(reject)
+            }).catch(() => {
+              clearToken()
+              uni.reLaunch({ url: '/pages/login/login' })
+              reject(body)
+            })
+            return
+          }
           clearToken()
           uni.reLaunch({ url: '/pages/login/login' })
           reject(body)
@@ -41,6 +52,36 @@ export function request(options) {
       }
     })
   })
+}
+
+/**
+ * 静默登录：微信一键授权拿 code 换 token 并缓存，全程无感。
+ * 单飞锁：并发调用只真正登录一次，共享同一个 Promise。
+ */
+let silentLoginPromise = null
+export function silentLogin() {
+  if (silentLoginPromise) return silentLoginPromise
+  silentLoginPromise = new Promise((resolve, reject) => {
+    // #ifdef MP-WEIXIN
+    uni.login({
+      provider: 'weixin',
+      success: (res) => exchange(res.code, resolve, reject),
+      fail: reject
+    })
+    // #endif
+    // #ifndef MP-WEIXIN
+    exchange('devcode_001', resolve, reject)
+    // #endif
+  }).finally(() => { silentLoginPromise = null })
+  return silentLoginPromise
+}
+
+function exchange(code, resolve, reject) {
+  http.post('/api/mp/auth/login', { code }, { silent: true }).then((data) => {
+    setToken(data.token)
+    setUser({ id: data.userId, name: data.name })
+    resolve(data)
+  }).catch(reject)
 }
 
 export const http = {

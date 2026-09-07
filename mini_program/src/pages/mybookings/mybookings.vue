@@ -102,7 +102,8 @@ function dayNum(t) { return t ? t.substring(8, 10) : '' }
 function weekCn(t) {
   if (!t) return ''
   const wk = ['日', '一', '二', '三', '四', '五', '六']
-  return '周' + wk[new Date(t.replace(/-/g, '/').replace('T', ' ')).getDay()]
+  const month = Number(t.substring(5, 7))
+  return month + '月·周' + wk[new Date(t.replace(/-/g, '/').replace('T', ' ')).getDay()]
 }
 function fmtTime(t) { return t ? t.substring(11, 16) : '' }
 function storeName(b) { return b.storeName || '' }

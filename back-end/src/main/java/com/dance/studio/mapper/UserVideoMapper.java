@@ -23,7 +23,7 @@ public interface UserVideoMapper {
                                   @Param("limit") Integer limit);
 
     /** 我的投稿 */
-    List<UserVideoVo> myVideos(@Param("studentId") Long studentId);
+    List<UserVideoVo> myVideos(@Param("userId") Long userId);
 
     /** 后台列表 */
     List<UserVideoVo> listAdmin(@Param("storeId") Long storeId, @Param("status") String status);

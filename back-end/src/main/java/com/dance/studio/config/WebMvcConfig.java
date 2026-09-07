@@ -2,9 +2,9 @@ package com.dance.studio.config;
 
 import com.dance.studio.common.context.LoginUser;
 import com.dance.studio.common.util.JwtUtil;
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import com.dance.studio.interceptor.AuthInterceptor;
-import com.dance.studio.mapper.StudentMapper;
+import com.dance.studio.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final JwtUtil jwtUtil;
-    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
 
     @Value("${app.storage.local-dir:./uploads}")
     private String localDir;
@@ -30,13 +30,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/admin/**")
                 .excludePathPatterns("/api/admin/auth/login");
         // 小程序接口：token 有效还需学员记录存在且未停用（防重置库后旧 token 引发 NPE）
-        registry.addInterceptor(new AuthInterceptor(jwtUtil, LoginUser.TYPE_STUDENT, this::studentExists))
+        registry.addInterceptor(new AuthInterceptor(jwtUtil, LoginUser.TYPE_USER, this::userExists))
                 .addPathPatterns("/api/mp/**")
                 .excludePathPatterns("/api/mp/auth/login");
     }
 
-    private boolean studentExists(Long studentId) {
-        Student s = studentMapper.findById(studentId);
+    private boolean userExists(Long userId) {
+        User s = userMapper.findById(userId);
         return s != null && (s.getStatus() == null || s.getStatus() == 1);
     }
 

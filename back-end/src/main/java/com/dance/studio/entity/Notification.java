@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class Notification {
     private Long id;
-    private Long studentId;
+    private Long userId;
     /** booking/checkin/redeem/remind/system */
     private String type;
     private String title;

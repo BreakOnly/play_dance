@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class QaQuestionVo {
     private Long id;
-    private Long studentId;
+    private Long userId;
     private String content;
     /** 配图URL数组 */
     private List<String> images;

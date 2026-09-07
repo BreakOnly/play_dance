@@ -6,7 +6,7 @@
     <resultMap id="EntityMap" type="com.dance.studio.entity.Booking">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="schedule_id" property="scheduleId"/>
         <result column="status" property="status"/>
         <result column="locked_hours" property="lockedHours"/>
@@ -21,8 +21,8 @@
     <resultMap id="VoMap" type="com.dance.studio.vo.BookingVo">
         <id column="id" property="id"/>
         <result column="schedule_id" property="scheduleId"/>
-        <result column="student_id" property="studentId"/>
-        <result column="student_name" property="studentName"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
         <result column="course_name" property="courseName"/>
         <result column="course_type" property="courseType"/>
         <result column="teacher_name" property="teacherName"/>
@@ -37,7 +37,7 @@
     </resultMap>
 
     <sql id="voSelect">
-        SELECT b.id, b.schedule_id, b.student_id, stu.name AS student_name,
+        SELECT b.id, b.schedule_id, b.user_id, stu.name AS user_name,
                c.name AS course_name, c.type AS course_type, t.name AS teacher_name,
                s.room, st.name AS store_name, s.start_time, s.end_time, b.status, b.waitlist_no, b.locked_hours, b.created_at
         FROM booking b
@@ -45,12 +45,12 @@
         LEFT JOIN store st ON st.id = s.store_id
         LEFT JOIN course c ON c.id = s.course_id
         LEFT JOIN teacher t ON t.id = s.teacher_id
-        LEFT JOIN student stu ON stu.id = b.student_id
+        LEFT JOIN `user` stu ON stu.id = b.user_id
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO booking (store_id, student_id, schedule_id, status, locked_hours, waitlist_no, is_admin)
-        VALUES (#{storeId}, #{studentId}, #{scheduleId}, #{status}, COALESCE(#{lockedHours},1),
+        INSERT INTO booking (store_id, user_id, schedule_id, status, locked_hours, waitlist_no, is_admin)
+        VALUES (#{storeId}, #{userId}, #{scheduleId}, #{status}, COALESCE(#{lockedHours},1),
                 #{waitlistNo}, COALESCE(#{isAdmin},0))
     </insert>
 
@@ -58,9 +58,9 @@
         SELECT * FROM booking WHERE id = #{id}
     </select>
 
-    <select id="findActiveByStudentSchedule" resultMap="EntityMap">
+    <select id="findActiveByUserSchedule" resultMap="EntityMap">
         SELECT * FROM booking
-        WHERE student_id = #{studentId} AND schedule_id = #{scheduleId}
+        WHERE user_id = #{userId} AND schedule_id = #{scheduleId}
           AND status IN ('booked','checked','waitlist') LIMIT 1
     </select>
 
@@ -95,18 +95,28 @@
         WHERE id = #{id} AND status = 'waitlist'
     </update>
 
-    <select id="listByStudent" resultMap="VoMap">
+    <select id="listByUser" resultMap="VoMap">
         <include refid="voSelect"/>
-        WHERE b.student_id = #{studentId}
+        WHERE b.user_id = #{userId}
         <if test="status != null and status != ''">AND b.status = #{status}</if>
         ORDER BY s.start_time DESC
     </select>
 
     <select id="listBySchedule" resultMap="VoMap">
         <include refid="voSelect"/>
-        WHERE b.schedule_id = #{scheduleId}
-          AND b.status IN ('booked','checked','waitlist')
-        ORDER BY FIELD(b.status,'checked','booked','waitlist'), b.waitlist_no, b.id
+        <where>
+            <if test="scheduleId != null">b.schedule_id = #{scheduleId}</if>
+            <if test="scheduleId == null">s.status NOT IN ('finished','cancelled')</if>
+            AND b.status IN ('booked','checked','waitlist')
+        </where>
+        <choose>
+            <when test="scheduleId != null">
+                ORDER BY FIELD(b.status,'checked','booked','waitlist'), b.waitlist_no, b.id
+            </when>
+            <otherwise>
+                ORDER BY s.start_time, FIELD(b.status,'checked','booked','waitlist'), b.waitlist_no, b.id
+            </otherwise>
+        </choose>
     </select>
 
     <select id="listNoShowCandidates" resultMap="EntityMap">
@@ -118,7 +128,7 @@
     <select id="listCheckinable" resultMap="EntityMap">
         SELECT b.* FROM booking b
         JOIN course_schedule s ON s.id = b.schedule_id
-        WHERE b.student_id = #{studentId} AND b.store_id = #{storeId}
+        WHERE b.user_id = #{userId} AND b.store_id = #{storeId}
           AND b.status = 'booked'
           AND s.start_time &gt;= #{from} AND s.start_time &lt;= #{to}
         ORDER BY s.start_time LIMIT 1

@@ -5,5 +5,5 @@
 export const BASE_URL = ''
 // #endif
 // #ifndef H5
-export const BASE_URL = 'http://192.168.1.93:8080'
+export const BASE_URL = 'http://192.168.31.147:8080'
 // #endif

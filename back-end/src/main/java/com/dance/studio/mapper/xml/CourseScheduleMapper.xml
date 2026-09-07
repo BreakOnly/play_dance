@@ -59,7 +59,7 @@
                s.room, s.song, s.start_time, s.end_time,
                s.capacity, s.booked_count, s.status,
                (SELECT b.status FROM booking b
-                 WHERE b.schedule_id = s.id AND b.student_id = #{studentId}
+                 WHERE b.schedule_id = s.id AND b.user_id = #{userId}
                    AND b.status IN ('booked','checked','waitlist') LIMIT 1) AS my_booking_status
         FROM course_schedule s
         LEFT JOIN store st ON st.id = s.store_id

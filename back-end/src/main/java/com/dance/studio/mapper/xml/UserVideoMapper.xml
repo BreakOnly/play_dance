@@ -6,7 +6,7 @@
     <resultMap id="BaseMap" type="com.dance.studio.entity.UserVideo">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="title" property="title"/>
         <result column="file_url" property="fileUrl"/>
         <result column="cover_url" property="coverUrl"/>
@@ -25,7 +25,7 @@
 
     <resultMap id="VoMap" type="com.dance.studio.vo.UserVideoVo">
         <id column="id" property="id"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="title" property="title"/>
         <result column="cover_url" property="coverUrl"/>
         <result column="description" property="description"/>
@@ -41,25 +41,25 @@
     </resultMap>
 
     <sql id="voSelect">
-        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+        SELECT v.id, v.user_id, v.title, v.cover_url, v.description, v.duration,
                v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
                s.name AS author_name, s.avatar AS author_avatar,
                <if test="viewerId != null">
                EXISTS (SELECT 1 FROM like_record lr
-                        WHERE lr.student_id = #{viewerId} AND lr.target_type = 'video'
+                        WHERE lr.user_id = #{viewerId} AND lr.target_type = 'video'
                           AND lr.target_id = v.id) AS liked
                </if>
                <if test="viewerId == null">
                0 AS liked
                </if>
         FROM user_video v
-        LEFT JOIN student s ON s.id = v.student_id
+        LEFT JOIN `user` s ON s.id = v.user_id
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user_video (store_id, student_id, title, file_url, cover_url,
+        INSERT INTO user_video (store_id, user_id, title, file_url, cover_url,
                                 description, duration, file_size, status)
-        VALUES (#{storeId}, #{studentId}, #{title}, #{fileUrl}, #{coverUrl},
+        VALUES (#{storeId}, #{userId}, #{title}, #{fileUrl}, #{coverUrl},
                 #{description}, #{duration}, #{fileSize}, 'pending')
     </insert>
 
@@ -86,21 +86,21 @@
     </select>
 
     <select id="myVideos" resultMap="VoMap">
-        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+        SELECT v.id, v.user_id, v.title, v.cover_url, v.description, v.duration,
                v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
                s.name AS author_name, s.avatar AS author_avatar, 0 AS liked
         FROM user_video v
-        LEFT JOIN student s ON s.id = v.student_id
-        WHERE v.student_id = #{studentId}
+        LEFT JOIN `user` s ON s.id = v.user_id
+        WHERE v.user_id = #{userId}
         ORDER BY v.id DESC
     </select>
 
     <select id="listAdmin" resultMap="VoMap">
-        SELECT v.id, v.student_id, v.title, v.cover_url, v.description, v.duration,
+        SELECT v.id, v.user_id, v.title, v.cover_url, v.description, v.duration,
                v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
                s.name AS author_name, s.avatar AS author_avatar, 0 AS liked
         FROM user_video v
-        LEFT JOIN student s ON s.id = v.student_id
+        LEFT JOIN `user` s ON s.id = v.user_id
         WHERE v.store_id = #{storeId}
         <if test="status != null and status != ''">AND v.status = #{status}</if>
         ORDER BY FIELD(v.status,'pending','approved','rejected'), v.id DESC

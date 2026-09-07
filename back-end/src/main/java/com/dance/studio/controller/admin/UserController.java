@@ -5,12 +5,12 @@ import com.dance.studio.common.Result;
 import com.dance.studio.common.context.ContextHolder;
 import com.dance.studio.dto.PointAdjustReq;
 import com.dance.studio.dto.RechargeReq;
-import com.dance.studio.dto.StudentSaveReq;
+import com.dance.studio.dto.UserSaveReq;
 import com.dance.studio.entity.HourLog;
 import com.dance.studio.entity.PointLog;
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import com.dance.studio.service.AccountService;
-import com.dance.studio.service.StudentService;
+import com.dance.studio.service.UserService;
 import com.github.pagehelper.PageHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,54 +22,54 @@ import java.util.List;
 
 @Tag(name = "后台-学员管理")
 @RestController
-@RequestMapping("/api/admin/students")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-public class StudentController {
+public class UserController {
 
-    private final StudentService studentService;
+    private final UserService userService;
     private final AccountService accountService;
 
     @Operation(summary = "学员列表(分页/搜索/状态)")
     @GetMapping
-    public Result<PageResult<Student>> list(@RequestParam(required = false) String keyword,
+    public Result<PageResult<User>> list(@RequestParam(required = false) String keyword,
                                             @RequestParam(required = false) Integer status,
                                             @RequestParam(defaultValue = "1") int page,
                                             @RequestParam(defaultValue = "10") int size) {
         PageHelper.startPage(page, size);
-        List<Student> list = studentService.list(keyword, status);
+        List<User> list = userService.list(keyword, status);
         return Result.success(PageResult.of(list));
     }
 
     @Operation(summary = "学员详情")
     @GetMapping("/{id}")
-    public Result<Student> detail(@PathVariable Long id) {
-        return Result.success(studentService.detail(id));
+    public Result<User> detail(@PathVariable Long id) {
+        return Result.success(userService.detail(id));
     }
 
     @Operation(summary = "新增学员")
     @PostMapping
-    public Result<Student> create(@RequestBody StudentSaveReq req) {
-        return Result.success(studentService.create(req));
+    public Result<User> create(@RequestBody UserSaveReq req) {
+        return Result.success(userService.create(req));
     }
 
     @Operation(summary = "编辑学员")
     @PutMapping("/{id}")
-    public Result<Student> update(@PathVariable Long id, @RequestBody StudentSaveReq req) {
-        return Result.success(studentService.update(id, req));
+    public Result<User> update(@PathVariable Long id, @RequestBody UserSaveReq req) {
+        return Result.success(userService.update(id, req));
     }
 
     @Operation(summary = "课时充值")
     @PostMapping("/{id}/recharge")
-    public Result<Student> recharge(@PathVariable Long id, @Valid @RequestBody RechargeReq req) {
+    public Result<User> recharge(@PathVariable Long id, @Valid @RequestBody RechargeReq req) {
         accountService.recharge(id, req, ContextHolder.userId());
-        return Result.success(studentService.detail(id));
+        return Result.success(userService.detail(id));
     }
 
     @Operation(summary = "积分手动增减")
     @PostMapping("/{id}/points")
-    public Result<Student> adjustPoints(@PathVariable Long id, @Valid @RequestBody PointAdjustReq req) {
+    public Result<User> adjustPoints(@PathVariable Long id, @Valid @RequestBody PointAdjustReq req) {
         accountService.adjustPoints(id, req.getDelta(), req.getReason(), ContextHolder.userId());
-        return Result.success(studentService.detail(id));
+        return Result.success(userService.detail(id));
     }
 
     @Operation(summary = "课时流水")

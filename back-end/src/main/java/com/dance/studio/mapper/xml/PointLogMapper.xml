@@ -5,7 +5,7 @@
 
     <resultMap id="BaseMap" type="com.dance.studio.entity.PointLog">
         <id column="id" property="id"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="type" property="type"/>
         <result column="amount" property="amount"/>
         <result column="balance_after" property="balanceAfter"/>
@@ -17,11 +17,11 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO point_log (student_id, type, amount, balance_after, ref_type, ref_id, operator_id, remark)
-        VALUES (#{studentId}, #{type}, #{amount}, #{balanceAfter}, #{refType}, #{refId}, #{operatorId}, #{remark})
+        INSERT INTO point_log (user_id, type, amount, balance_after, ref_type, ref_id, operator_id, remark)
+        VALUES (#{userId}, #{type}, #{amount}, #{balanceAfter}, #{refType}, #{refId}, #{operatorId}, #{remark})
     </insert>
 
-    <select id="listByStudent" resultMap="BaseMap">
-        SELECT * FROM point_log WHERE student_id = #{studentId} ORDER BY id DESC
+    <select id="listByUser" resultMap="BaseMap">
+        SELECT * FROM point_log WHERE user_id = #{userId} ORDER BY id DESC
     </select>
 </mapper>

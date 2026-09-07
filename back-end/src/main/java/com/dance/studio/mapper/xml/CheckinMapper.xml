@@ -7,7 +7,7 @@
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
         <result column="booking_id" property="bookingId"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="schedule_id" property="scheduleId"/>
         <result column="check_time" property="checkTime"/>
         <result column="method" property="method"/>
@@ -15,8 +15,8 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO checkin (store_id, booking_id, student_id, schedule_id, check_time, method, operator_id)
-        VALUES (#{storeId}, #{bookingId}, #{studentId}, #{scheduleId}, COALESCE(#{checkTime},NOW()), #{method}, #{operatorId})
+        INSERT INTO checkin (store_id, booking_id, user_id, schedule_id, check_time, method, operator_id)
+        VALUES (#{storeId}, #{bookingId}, #{userId}, #{scheduleId}, COALESCE(#{checkTime},NOW()), #{method}, #{operatorId})
     </insert>
 
     <select id="findByBooking" resultMap="EntityMap">
@@ -25,9 +25,9 @@
 
     <select id="listRecords" resultType="java.util.LinkedHashMap">
         SELECT ck.id, ck.check_time AS checkTime, ck.method,
-               stu.name AS studentName, c.name AS courseName, s.start_time AS startTime
+               stu.name AS userName, c.name AS courseName, s.start_time AS startTime
         FROM checkin ck
-        LEFT JOIN student stu ON stu.id = ck.student_id
+        LEFT JOIN `user` stu ON stu.id = ck.user_id
         LEFT JOIN course_schedule s ON s.id = ck.schedule_id
         LEFT JOIN course c ON c.id = s.course_id
         WHERE ck.store_id = #{storeId}

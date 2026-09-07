@@ -23,7 +23,7 @@ public class MpVideoController {
     @Operation(summary = "我可见的视频")
     @GetMapping
     public Result<List<Video>> list() {
-        return Result.success(videoService.listForStudent(ContextHolder.userId()));
+        return Result.success(videoService.listForUser(ContextHolder.userId()));
     }
 
     @Operation(summary = "取签名播放地址(鉴权)")

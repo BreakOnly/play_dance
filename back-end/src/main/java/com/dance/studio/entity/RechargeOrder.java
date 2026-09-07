@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class RechargeOrder {
     private Long id;
     private Long storeId;
-    private Long studentId;
+    private Long userId;
     private Integer hours;
     private Integer giftHours;
     private BigDecimal amount;

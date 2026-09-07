@@ -32,7 +32,7 @@ public class VideoController {
         private Integer duration;
         private Long fileSize;
         private String scopeType;
-        private List<Long> visibleStudentIds;
+        private List<Long> visibleUserIds;
     }
 
     @Operation(summary = "列表")
@@ -55,7 +55,7 @@ public class VideoController {
         v.setDuration(req.getDuration());
         v.setFileSize(req.getFileSize());
         v.setScopeType(req.getScopeType());
-        return Result.success(videoService.save(v, req.getVisibleStudentIds()));
+        return Result.success(videoService.save(v, req.getVisibleUserIds()));
     }
 
     @Operation(summary = "删除")

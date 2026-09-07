@@ -45,16 +45,16 @@
     <sql id="visibleCond">
         v.status = 1 AND (
             (v.scope_type = 'checked_in' AND EXISTS (
-                SELECT 1 FROM checkin ck WHERE ck.schedule_id = v.schedule_id AND ck.student_id = #{studentId}))
+                SELECT 1 FROM checkin ck WHERE ck.schedule_id = v.schedule_id AND ck.user_id = #{userId}))
          OR (v.scope_type = 'booked' AND EXISTS (
-                SELECT 1 FROM booking b WHERE b.schedule_id = v.schedule_id AND b.student_id = #{studentId}
+                SELECT 1 FROM booking b WHERE b.schedule_id = v.schedule_id AND b.user_id = #{userId}
                   AND b.status IN ('booked','checked')))
          OR (v.scope_type = 'custom' AND EXISTS (
-                SELECT 1 FROM video_visible vv WHERE vv.video_id = v.id AND vv.student_id = #{studentId}))
+                SELECT 1 FROM video_visible vv WHERE vv.video_id = v.id AND vv.user_id = #{userId}))
         )
     </sql>
 
-    <select id="listForStudent" resultMap="BaseMap">
+    <select id="listForUser" resultMap="BaseMap">
         SELECT v.* FROM video v
         WHERE v.store_id = #{storeId} AND <include refid="visibleCond"/>
         ORDER BY v.video_date DESC, v.id DESC
@@ -65,7 +65,7 @@
     </select>
 
     <insert id="insertVisible">
-        INSERT IGNORE INTO video_visible (video_id, student_id) VALUES (#{videoId}, #{studentId})
+        INSERT IGNORE INTO video_visible (video_id, user_id) VALUES (#{videoId}, #{userId})
     </insert>
 
     <delete id="deleteVisible">

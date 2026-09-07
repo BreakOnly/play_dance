@@ -16,7 +16,7 @@
     </el-row>
 
     <el-table :data="list" border>
-      <el-table-column prop="studentName" label="学员" width="140" />
+      <el-table-column prop="userName" label="用户" width="140" />
       <el-table-column prop="courseName" label="课程" />
       <el-table-column label="方式" width="90"><template #default="{row}">{{ row.method==='manual'?'代签':'扫码' }}</template></el-table-column>
       <el-table-column prop="checkTime" label="签到时间" width="180" />
@@ -29,9 +29,9 @@
             <el-option v-for="s in schedules" :key="s.id" :label="optLabel(s)" :value="s.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="学员">
-          <el-select v-model="mBooking" placeholder="选择待上课学员" style="width:100%">
-            <el-option v-for="b in bookedList" :key="b.id" :label="b.studentName" :value="b.id" />
+        <el-form-item label="用户">
+          <el-select v-model="mBooking" placeholder="选择待上课用户" style="width:100%">
+            <el-option v-for="b in bookedList" :key="b.id" :label="b.userName" :value="b.id" />
           </el-select>
         </el-form-item>
       </el-form>

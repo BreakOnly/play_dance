@@ -1,6 +1,6 @@
-import { http } from '@/utils/request'
+import { http, silentLogin } from '@/utils/request'
 import { BASE_URL } from '@/utils/config'
-import { getToken } from '@/utils/auth'
+import { getToken, clearToken } from '@/utils/auth'
 
 /** 相对路径补全为后端文件地址 */
 export function fileUrl(u) {
@@ -11,6 +11,7 @@ export function fileUrl(u) {
 export const api = {
   // 鉴权与资料
   login: (code) => http.post('/api/mp/auth/login', { code }),
+  bindPhone: (code) => http.post('/api/mp/auth/phone', { code }),
   profile: () => http.get('/api/mp/profile'),
   updateProfile: (data) => http.put('/api/mp/profile', data),
 
@@ -63,8 +64,8 @@ export const api = {
   fillAddress: (id, name, phone, address) => http.put('/api/mp/redeem-orders/' + id + '/address', { name, phone, address })
 }
 
-/** 上传文件（视频/图片），返回服务器相对路径 */
-export function uploadFile(filePath, kind) {
+/** 上传文件（视频/图片），返回服务器相对路径。token 过期时静默重登一次并重试 */
+export function uploadFile(filePath, kind, _retried) {
   return new Promise((resolve, reject) => {
     uni.uploadFile({
       url: BASE_URL + '/api/mp/upload/' + (kind === 'video' ? 'video' : 'image'),
@@ -74,6 +75,22 @@ export function uploadFile(filePath, kind) {
       success(res) {
         try {
           const body = JSON.parse(res.data)
+          if (res.statusCode === 401 || body.code === 1002) {
+            if (!_retried) {
+              silentLogin().then(() => {
+                uploadFile(filePath, kind, true).then(resolve).catch(reject)
+              }).catch(() => {
+                clearToken()
+                uni.reLaunch({ url: '/pages/login/login' })
+                reject(body)
+              })
+              return
+            }
+            clearToken()
+            uni.reLaunch({ url: '/pages/login/login' })
+            reject(body)
+            return
+          }
           if (body.code === 0) resolve(body.data.url)
           else { uni.showToast({ title: body.message || '上传失败', icon: 'none' }); reject(body) }
         } catch (e) { reject(e) }

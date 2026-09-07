@@ -8,6 +8,7 @@
       <view class="f">
         <text class="lb">手机号</text>
         <input class="ipt" v-model="form.phone" type="number" placeholder="请输入手机号" placeholder-class="ph" />
+        <button class="wx-phone" open-type="getPhoneNumber" @getphonenumber="onGetPhone">一键绑定</button>
       </view>
       <view class="f">
         <text class="lb">性别</text>
@@ -44,6 +45,19 @@ onLoad(() => {
   })
 })
 function onDate(e) { form.value.birthday = e.detail.value }
+// 微信手机号授权（企业主体小程序生效；用户允许后 code 交后端换手机号）
+function onGetPhone(e) {
+  const d = e.detail || {}
+  if (!d.code) {
+    const denied = (d.errMsg || '').includes('deny')
+    uni.showToast({ title: denied ? '已取消授权' : '当前环境不支持，请手动填写', icon: 'none' })
+    return
+  }
+  api.bindPhone(d.code).then((phone) => {
+    form.value.phone = phone
+    uni.showToast({ title: '已绑定', icon: 'success' })
+  }).catch(() => {})
+}
 function save() {
   api.updateProfile(form.value).then((p) => {
     const u = getUser(); u.name = p.name; setUser(u)
@@ -65,5 +79,6 @@ function save() {
 .genders { display: flex; gap: 20rpx; }
 .g { padding: 10rpx 36rpx; border: 1rpx solid $line; border-radius: 30rpx; color: $txt2; font-size: 26rpx; }
 .g.on { border-color: $pink; color: $pink2; }
+.wx-phone { margin: 0; padding: 0 26rpx; height: 62rpx; line-height: 62rpx; flex-shrink: 0; border: 1rpx solid rgba(237,90,154,.55); border-radius: 31rpx; background: rgba(237,90,154,.08); color: #f484b4; font-size: 24rpx; font-weight: 600; }
 .save { margin-top: 40rpx; background: linear-gradient(90deg, $pink, $pink2); color: #fff; font-size: 32rpx; font-weight: 700; border-radius: 20rpx; padding: 20rpx 0; }
 </style>

@@ -6,7 +6,7 @@
     <resultMap id="BaseMap" type="com.dance.studio.entity.RedeemOrder">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="goods_id" property="goodsId"/>
         <result column="goods_name" property="goodsName"/>
         <result column="source" property="source"/>
@@ -25,8 +25,8 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO redeem_order (store_id, student_id, goods_id, goods_name, source, points_cost, status)
-        VALUES (#{storeId}, #{studentId}, #{goodsId}, #{goodsName}, #{source}, #{pointsCost}, #{status})
+        INSERT INTO redeem_order (store_id, user_id, goods_id, goods_name, source, points_cost, status)
+        VALUES (#{storeId}, #{userId}, #{goodsId}, #{goodsName}, #{source}, #{pointsCost}, #{status})
     </insert>
 
     <select id="findById" resultMap="BaseMap">
@@ -41,9 +41,9 @@
         ORDER BY id DESC
     </select>
 
-    <select id="listByStudent" resultMap="BaseMap">
+    <select id="listByUser" resultMap="BaseMap">
         SELECT * FROM redeem_order
-        WHERE student_id = #{studentId}
+        WHERE user_id = #{userId}
         <if test="status != null and status != ''">AND status = #{status}</if>
         ORDER BY id DESC
     </select>
@@ -66,6 +66,6 @@
     <update id="updateAddress">
         UPDATE redeem_order
         SET receiver_name = #{name}, receiver_phone = #{phone}, address = #{address}
-        WHERE id = #{id} AND student_id = #{studentId}
+        WHERE id = #{id} AND user_id = #{userId}
     </update>
 </mapper>

@@ -3,10 +3,10 @@ package com.dance.studio.controller.mp;
 import com.dance.studio.common.Result;
 import com.dance.studio.common.ResultCode;
 import com.dance.studio.common.context.ContextHolder;
-import com.dance.studio.entity.Student;
+import com.dance.studio.entity.User;
 import com.dance.studio.mapper.BookingMapper;
 import com.dance.studio.mapper.CourseHourBatchMapper;
-import com.dance.studio.mapper.StudentMapper;
+import com.dance.studio.mapper.UserMapper;
 import com.dance.studio.service.BookingService;
 import com.dance.studio.vo.BookingVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MpMemberController {
 
-    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
     private final CourseHourBatchMapper batchMapper;
     private final BookingService bookingService;
 
@@ -36,7 +36,7 @@ public class MpMemberController {
     @GetMapping
     public Result<Map<String, Object>> member() {
         Long sid = ContextHolder.userId();
-        Student stu = studentMapper.findById(sid);
+        User stu = userMapper.findById(sid);
 
         int available = stu.getCourseBalance() == null ? 0 : stu.getCourseBalance();
         int frozen = stu.getFrozenHours() == null ? 0 : stu.getFrozenHours();
@@ -80,10 +80,10 @@ public class MpMemberController {
         if (name == null || name.trim().isEmpty()) {
             return Result.error(ResultCode.PARAM_ERROR);
         }
-        Student stu = new Student();
+        User stu = new User();
         stu.setId(ContextHolder.userId());
         stu.setName(name.trim());
-        studentMapper.updateProfile(stu);
+        userMapper.updateProfile(stu);
         return Result.success();
     }
 }

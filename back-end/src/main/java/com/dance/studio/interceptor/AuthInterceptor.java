@@ -13,7 +13,7 @@ import java.util.function.LongPredicate;
 
 /**
  * 鉴权拦截器：解析 Bearer token，校验类型，写入上下文。
- * 同一个类实例化两个 Bean（admin/student），构造时指定所需类型。
+ * 同一个类实例化两个 Bean（admin/user），构造时指定所需类型。
  * userExists 可空：提供时额外校验 token 主体（如学员记录）仍存在且有效，
  * 避免开发期重置数据库后旧 token 指向已删除记录，业务层解引用出 NPE 变成"系统异常"。
  */

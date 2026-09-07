@@ -25,7 +25,7 @@ PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 CREATE TABLE IF NOT EXISTS `user_video` (
   `id`              BIGINT       NOT NULL AUTO_INCREMENT,
   `store_id`        BIGINT       NOT NULL,
-  `student_id`      BIGINT       NOT NULL COMMENT '投稿学员',
+  `user_id`      BIGINT       NOT NULL COMMENT '投稿用户',
   `title`           VARCHAR(100) NOT NULL COMMENT '视频标题',
   `file_url`        VARCHAR(255) NOT NULL COMMENT '视频地址(私有,需签名)',
   `cover_url`       VARCHAR(255) DEFAULT NULL COMMENT '封面(预设或自定义)',
@@ -42,15 +42,15 @@ CREATE TABLE IF NOT EXISTS `user_video` (
   `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_status_like` (`status`,`like_count`),
-  KEY `idx_student` (`student_id`),
+  KEY `idx_user` (`user_id`),
   KEY `idx_store` (`store_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学员投稿视频(点赞排行)';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户投稿视频(点赞排行)';
 
 -- 3. 问答-问题
 CREATE TABLE IF NOT EXISTS `qa_question` (
   `id`           BIGINT       NOT NULL AUTO_INCREMENT,
   `store_id`     BIGINT       NOT NULL,
-  `student_id`   BIGINT       NOT NULL COMMENT '提问学员',
+  `user_id`   BIGINT       NOT NULL COMMENT '提问用户',
   `content`      VARCHAR(500) NOT NULL COMMENT '问题内容',
   `images`       JSON         DEFAULT NULL COMMENT '配图URL数组',
   `answer_count` INT          NOT NULL DEFAULT 0,
@@ -61,11 +61,11 @@ CREATE TABLE IF NOT EXISTS `qa_question` (
   KEY `idx_store_time` (`store_id`,`status`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='问答-问题';
 
--- 4. 问答-回答（学员或老师）
+-- 4. 问答-回答（用户或老师）
 CREATE TABLE IF NOT EXISTS `qa_answer` (
   `id`          BIGINT       NOT NULL AUTO_INCREMENT,
   `question_id` BIGINT       NOT NULL,
-  `student_id`  BIGINT       NOT NULL COMMENT '回答学员(老师也以学员身份关联)',
+  `user_id`  BIGINT       NOT NULL COMMENT '回答用户(老师也以用户身份关联)',
   `teacher_id`  BIGINT       DEFAULT NULL COMMENT '老师回答时关联teacher',
   `is_teacher`  TINYINT      NOT NULL DEFAULT 0 COMMENT '1老师回答',
   `content`     VARCHAR(500) NOT NULL,
@@ -79,12 +79,12 @@ CREATE TABLE IF NOT EXISTS `qa_answer` (
 -- 5. 点赞记录（问题/回答/投稿视频 统一去重）
 CREATE TABLE IF NOT EXISTS `like_record` (
   `id`          BIGINT      NOT NULL AUTO_INCREMENT,
-  `student_id`  BIGINT      NOT NULL,
+  `user_id`  BIGINT      NOT NULL,
   `target_type` VARCHAR(10) NOT NULL COMMENT 'question/answer/video',
   `target_id`   BIGINT      NOT NULL,
   `created_at`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_like` (`student_id`,`target_type`,`target_id`)
+  UNIQUE KEY `uk_like` (`user_id`,`target_type`,`target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='点赞记录';
 
 -- 6. config 新增配置项（体验课/客服/获赞积分）
@@ -131,23 +131,23 @@ UPDATE course_schedule SET song='Ditto - NewJeans' WHERE id=104 AND song IS NULL
 
 -- 8.3 投稿视频（榜单6条 + 待审1条）
 DELETE FROM user_video WHERE id < 100;
-INSERT INTO user_video (id, store_id, student_id, title, file_url, cover_url, description, duration, status, is_recommended, like_count, audited_at) VALUES
-  (1, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'Smart - LE SSERAFIM',        '/video/smart.mp4',        NULL, '重点动作教学 · 10 分钟', 587, 'approved', 1, 3200, NOW()),
-  (2, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'Pink Venom - BLACKPINK',     '/video/pinkvenom.mp4',    NULL, '副歌翻跳 · 12 分钟',     723, 'approved', 1, 2800, NOW()),
-  (3, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'Standing Next to You - Jung Kook', '/video/sny.mp4',   NULL, 'Jung Kook 翻跳 · 14 分钟', 838, 'approved', 0, 2100, NOW()),
-  (4, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'How You Like That - BLACKPINK', '/video/hylt.mp4',     NULL, '完整版教学 · 18 分钟',  1042, 'approved', 0, 1500, NOW()),
-  (5, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'Anti-Hero',                  '/video/antihero.mp4',     NULL, '副歌翻跳 · 13 分钟',     776, 'approved', 0, 1200, NOW()),
-  (6, 1, (SELECT id FROM student ORDER BY id LIMIT 1), 'Ditto - NewJeans',           '/video/ditto.mp4',        NULL, '手势舞 · 9 分钟',        521, 'approved', 0, 980,  NOW()),
-  (7, 1, (SELECT id FROM student ORDER BY id LIMIT 1), '我的翻跳视频',               '/video/mine.mp4',         NULL, '第一次投稿，求点赞',     300, 'pending',  0, 0,    NULL);
+INSERT INTO user_video (id, store_id, user_id, title, file_url, cover_url, description, duration, status, is_recommended, like_count, audited_at) VALUES
+  (1, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'Smart - LE SSERAFIM',        '/video/smart.mp4',        NULL, '重点动作教学 · 10 分钟', 587, 'approved', 1, 3200, NOW()),
+  (2, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'Pink Venom - BLACKPINK',     '/video/pinkvenom.mp4',    NULL, '副歌翻跳 · 12 分钟',     723, 'approved', 1, 2800, NOW()),
+  (3, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'Standing Next to You - Jung Kook', '/video/sny.mp4',   NULL, 'Jung Kook 翻跳 · 14 分钟', 838, 'approved', 0, 2100, NOW()),
+  (4, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'How You Like That - BLACKPINK', '/video/hylt.mp4',     NULL, '完整版教学 · 18 分钟',  1042, 'approved', 0, 1500, NOW()),
+  (5, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'Anti-Hero',                  '/video/antihero.mp4',     NULL, '副歌翻跳 · 13 分钟',     776, 'approved', 0, 1200, NOW()),
+  (6, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 'Ditto - NewJeans',           '/video/ditto.mp4',        NULL, '手势舞 · 9 分钟',        521, 'approved', 0, 980,  NOW()),
+  (7, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), '我的翻跳视频',               '/video/mine.mp4',         NULL, '第一次投稿，求点赞',     300, 'pending',  0, 0,    NULL);
 
 -- 8.4 问答测试数据
 DELETE FROM qa_answer WHERE question_id < 100;
 DELETE FROM qa_question WHERE id < 100;
-INSERT INTO qa_question (id, store_id, student_id, content, answer_count, like_count, created_at) VALUES
-  (1, 1, (SELECT id FROM student ORDER BY id LIMIT 1), '零基础想学 K-pop 成品舞，请问需要先练基本功吗？大概多久能跟上一支完整舞？', 2, 12, DATE_SUB(NOW(), INTERVAL 2 HOUR));
-INSERT INTO qa_answer (question_id, student_id, teacher_id, is_teacher, content, like_count, created_at) VALUES
-  (1, (SELECT id FROM student ORDER BY id LIMIT 1), 3, 1, '建议先上 2-4 节 HIP-HOP 基础课，把律动和 isolation 练熟，之后跟成品舞会快很多。零基础也能直接来，老师会分层教学。', 5, DATE_SUB(NOW(), INTERVAL 100 MINUTE)),
-  (1, (SELECT id FROM student ORDER BY id LIMIT 1), NULL, 0, '我也是零基础开始的，一个月就能跳完一整支啦，加油！', 2, DATE_SUB(NOW(), INTERVAL 60 MINUTE));
+INSERT INTO qa_question (id, store_id, user_id, content, answer_count, like_count, created_at) VALUES
+  (1, 1, (SELECT id FROM `user` ORDER BY id LIMIT 1), '零基础想学 K-pop 成品舞，请问需要先练基本功吗？大概多久能跟上一支完整舞？', 2, 12, DATE_SUB(NOW(), INTERVAL 2 HOUR));
+INSERT INTO qa_answer (question_id, user_id, teacher_id, is_teacher, content, like_count, created_at) VALUES
+  (1, (SELECT id FROM `user` ORDER BY id LIMIT 1), 3, 1, '建议先上 2-4 节 HIP-HOP 基础课，把律动和 isolation 练熟，之后跟成品舞会快很多。零基础也能直接来，老师会分层教学。', 5, DATE_SUB(NOW(), INTERVAL 100 MINUTE)),
+  (1, (SELECT id FROM `user` ORDER BY id LIMIT 1), NULL, 0, '我也是零基础开始的，一个月就能跳完一整支啦，加油！', 2, DATE_SUB(NOW(), INTERVAL 60 MINUTE));
 
 -- 8.5 兑换商品（原型4件）
 INSERT INTO goods (id, store_id, name, images, description, category, points_required, stock, status, sort) VALUES

@@ -32,7 +32,7 @@ public class BookingService {
      * 约课。返回结果含状态（booked 成功 / waitlist 候补）。
      */
     @Transactional(rollbackFor = Exception.class)
-    public BookingVo book(Long studentId, Long scheduleId, boolean isAdmin) {
+    public BookingVo book(Long userId, Long scheduleId, boolean isAdmin) {
         CourseSchedule sch = scheduleMapper.findById(scheduleId);
         if (sch == null) throw new BizException(ResultCode.NOT_FOUND);
         if ("finished".equals(sch.getStatus()) || "cancelled".equals(sch.getStatus())) {
@@ -41,7 +41,7 @@ public class BookingService {
         Long storeId = sch.getStoreId();
 
         // 重复约课
-        if (bookingMapper.findActiveByStudentSchedule(studentId, scheduleId) != null) {
+        if (bookingMapper.findActiveByUserSchedule(userId, scheduleId) != null) {
             throw new BizException(ResultCode.BOOK_DUPLICATE);
         }
 
@@ -77,7 +77,7 @@ public class BookingService {
 
         Booking b = new Booking();
         b.setStoreId(storeId);
-        b.setStudentId(studentId);
+        b.setUserId(userId);
         b.setScheduleId(scheduleId);
         b.setStatus(status);
         b.setLockedHours(cost);
@@ -88,10 +88,10 @@ public class BookingService {
         // 锁定课时（待上课与候补都锁定，保证候补转正时课时充足）
         // lock_on_booking=0 时约课不锁课时，改在签到时从可用余额扣减
         if (configService.getBool(storeId, "lock_on_booking", true)) {
-            accountService.lockHours(studentId, cost, b.getId());
+            accountService.lockHours(userId, cost, b.getId());
         }
 
-        return bookingMapper.listByStudent(studentId, null).stream()
+        return bookingMapper.listByUser(userId, null).stream()
                 .filter(v -> v.getId().equals(b.getId())).findFirst().orElse(null);
     }
 
@@ -100,10 +100,10 @@ public class BookingService {
      * 并发安全：状态流转用条件 UPDATE，仅当更新影响行数>0 才执行课时退/扣，避免重复退款。
      */
     @Transactional(rollbackFor = Exception.class)
-    public void cancel(Long bookingId, Long studentId, boolean isAdmin) {
+    public void cancel(Long bookingId, Long userId, boolean isAdmin) {
         Booking b = bookingMapper.findById(bookingId);
         if (b == null) throw new BizException(ResultCode.BOOK_NOT_FOUND);
-        if (!isAdmin && !b.getStudentId().equals(studentId)) {
+        if (!isAdmin && !b.getUserId().equals(userId)) {
             throw new BizException(ResultCode.FORBIDDEN);
         }
         int cost = b.getLockedHours() == null ? 1 : b.getLockedHours();
@@ -113,7 +113,7 @@ public class BookingService {
         if ("waitlist".equals(b.getStatus())) {
             int rows = bookingMapper.cancel(bookingId, "waitlist", 0);
             if (rows == 0) throw new BizException(ResultCode.CANCEL_NOT_ALLOWED);
-            if (lockOn) accountService.refundLock(b.getStudentId(), cost, bookingId);
+            if (lockOn) accountService.refundLock(b.getUserId(), cost, bookingId);
             return;
         }
         if (!"booked".equals(b.getStatus())) {
@@ -128,9 +128,9 @@ public class BookingService {
         if (rows == 0) throw new BizException(ResultCode.CANCEL_NOT_ALLOWED);
         if (lockOn) {
             if (free) {
-                accountService.refundLock(b.getStudentId(), cost, bookingId);
+                accountService.refundLock(b.getUserId(), cost, bookingId);
             } else {
-                accountService.forfeitOnNoShow(b.getStudentId(), cost, bookingId, false);
+                accountService.forfeitOnNoShow(b.getUserId(), cost, bookingId, false);
             }
         }
         // 释放名额并尝试候补递补
@@ -144,7 +144,7 @@ public class BookingService {
         if (next == null) return;
         if (scheduleMapper.incrBooked(scheduleId) > 0) {
             if (bookingMapper.promote(next.getId()) > 0) {
-                notificationService.push(next.getStudentId(), "booking", "候补转正成功",
+                notificationService.push(next.getUserId(), "booking", "候补转正成功",
                         "你候补的课程已为你预留名额，记得按时上课～", "booking", next.getId());
             } else {
                 // 候补在查询与转正之间被并发取消，归还已占名额
@@ -163,7 +163,7 @@ public class BookingService {
         int cost = b.getLockedHours() == null ? 1 : b.getLockedHours();
         // lock_on_booking=0 时未锁课时，爽约无课时可扣
         if (configService.getBool(b.getStoreId(), "lock_on_booking", true)) {
-            accountService.forfeitOnNoShow(b.getStudentId(), cost, b.getId(), true);
+            accountService.forfeitOnNoShow(b.getUserId(), cost, b.getId(), true);
         }
         scheduleMapper.decrBooked(b.getScheduleId());
     }
@@ -172,8 +172,8 @@ public class BookingService {
         return bookingMapper.listNoShowCandidates(LocalDateTime.now()).stream().map(Booking::getId).toList();
     }
 
-    public List<BookingVo> myBookings(Long studentId, String status) {
-        return bookingMapper.listByStudent(studentId, status);
+    public List<BookingVo> myBookings(Long userId, String status) {
+        return bookingMapper.listByUser(userId, status);
     }
 
     public List<BookingVo> bySchedule(Long scheduleId) {

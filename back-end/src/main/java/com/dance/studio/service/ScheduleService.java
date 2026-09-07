@@ -44,12 +44,12 @@ public class ScheduleService {
     }
 
     /** 小程序：带当前学员约课状态 */
-    public List<ScheduleVo> listForStudent(LocalDateTime start, LocalDateTime end, Long studentId) {
-        return scheduleMapper.list(store(), start, end, null, null, studentId);
+    public List<ScheduleVo> listForUser(LocalDateTime start, LocalDateTime end, Long userId) {
+        return scheduleMapper.list(store(), start, end, null, null, userId);
     }
 
-    public ScheduleVo detailForStudent(Long id, Long studentId) {
-        return scheduleMapper.findVoById(id, studentId);
+    public ScheduleVo detailForUser(Long id, Long userId) {
+        return scheduleMapper.findVoById(id, userId);
     }
 
     public ScheduleVo save(Long id, ScheduleSaveReq req) {
@@ -133,9 +133,9 @@ public class ScheduleService {
             if (bookingMapper.cancel(b.getId(), b.getStatus(), 0) == 0) continue;
             int cost = b.getLockedHours() == null ? 1 : b.getLockedHours();
             if (lockOn) {
-                accountService.refundLock(b.getStudentId(), cost, b.getId());
+                accountService.refundLock(b.getUserId(), cost, b.getId());
             }
-            notificationService.push(b.getStudentId(), "booking", "课程已取消",
+            notificationService.push(b.getUserId(), "booking", "课程已取消",
                     "你预约的《" + courseName + "》课次已取消，课时已退回，抱歉带来不便。",
                     "booking", b.getId());
         }

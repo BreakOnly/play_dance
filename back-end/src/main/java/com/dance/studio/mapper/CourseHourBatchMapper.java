@@ -10,10 +10,10 @@ public interface CourseHourBatchMapper {
     int insert(CourseHourBatch batch);
 
     /** 未过期且有剩余的批次，按到期时间 FIFO（NULL 永久排最后） */
-    List<CourseHourBatch> listAvailable(@Param("studentId") Long studentId);
+    List<CourseHourBatch> listAvailable(@Param("userId") Long userId);
 
     /** 最早到期的有效批次时间（会员有效期展示；NULL=永久/无课时） */
-    LocalDateTime earliestExpire(@Param("studentId") Long studentId);
+    LocalDateTime earliestExpire(@Param("userId") Long userId);
 
     /** 扣减指定批次剩余（条件保证不超扣） */
     int decrease(@Param("id") Long id, @Param("qty") int qty);
@@ -25,5 +25,5 @@ public interface CourseHourBatchMapper {
     int zeroRemaining(@Param("id") Long id);
 
     /** 学员已过期但尚未销账的批次剩余合计（约课时校验"未过期"用） */
-    int sumExpiredRemaining(@Param("studentId") Long studentId, @Param("now") LocalDateTime now);
+    int sumExpiredRemaining(@Param("userId") Long userId, @Param("now") LocalDateTime now);
 }

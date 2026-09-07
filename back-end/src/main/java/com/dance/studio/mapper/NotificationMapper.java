@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface NotificationMapper {
     int insert(Notification n);
-    List<Notification> listByStudent(@Param("studentId") Long studentId);
-    int countUnread(@Param("studentId") Long studentId);
-    int markRead(@Param("studentId") Long studentId, @Param("id") Long id);
-    int markAllRead(@Param("studentId") Long studentId);
+    List<Notification> listByUser(@Param("userId") Long userId);
+    int countUnread(@Param("userId") Long userId);
+    int markRead(@Param("userId") Long userId, @Param("id") Long id);
+    int markAllRead(@Param("userId") Long userId);
 }

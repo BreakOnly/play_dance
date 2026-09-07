@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class UserVideoVo {
     private Long id;
-    private Long studentId;
+    private Long userId;
     private String title;
     private String coverUrl;
     private String description;

@@ -21,15 +21,15 @@ public class JwtUtil {
     private String secret;
     @Value("${app.jwt.admin-expire-hours:12}")
     private long adminExpireHours;
-    @Value("${app.jwt.student-expire-hours:168}")
-    private long studentExpireHours;
+    @Value("${app.jwt.user-expire-hours:168}")
+    private long userExpireHours;
 
     private SecretKey key() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generate(LoginUser user) {
-        long hours = LoginUser.TYPE_ADMIN.equals(user.getType()) ? adminExpireHours : studentExpireHours;
+        long hours = LoginUser.TYPE_ADMIN.equals(user.getType()) ? adminExpireHours : userExpireHours;
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .subject(String.valueOf(user.getUserId()))

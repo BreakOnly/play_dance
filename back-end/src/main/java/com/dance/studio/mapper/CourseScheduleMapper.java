@@ -14,7 +14,7 @@ public interface CourseScheduleMapper {
                           @Param("end") LocalDateTime end,
                           @Param("courseId") Long courseId,
                           @Param("teacherId") Long teacherId,
-                          @Param("studentId") Long studentId);
+                          @Param("userId") Long userId);
 
     /** 小程序课表：跨门店（启用门店），支持关键字(课程/老师/舞种/曲目)与舞种/难度/门店筛选 */
     List<ScheduleVo> listForMp(@Param("start") LocalDateTime start,
@@ -23,9 +23,9 @@ public interface CourseScheduleMapper {
                                @Param("danceTypeId") Long danceTypeId,
                                @Param("levelId") Long levelId,
                                @Param("storeId") Long storeId,
-                               @Param("studentId") Long studentId);
+                               @Param("userId") Long userId);
 
-    ScheduleVo findVoById(@Param("id") Long id, @Param("studentId") Long studentId);
+    ScheduleVo findVoById(@Param("id") Long id, @Param("userId") Long userId);
 
     CourseSchedule findById(@Param("id") Long id);
 

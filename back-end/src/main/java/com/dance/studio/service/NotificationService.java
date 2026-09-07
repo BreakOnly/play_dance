@@ -13,9 +13,9 @@ public class NotificationService {
 
     private final NotificationMapper mapper;
 
-    public void push(Long studentId, String type, String title, String content, String refType, Long refId) {
+    public void push(Long userId, String type, String title, String content, String refType, Long refId) {
         Notification n = new Notification();
-        n.setStudentId(studentId);
+        n.setUserId(userId);
         n.setType(type);
         n.setTitle(title);
         n.setContent(content);
@@ -24,8 +24,8 @@ public class NotificationService {
         mapper.insert(n);
     }
 
-    public List<Notification> list(Long studentId) { return mapper.listByStudent(studentId); }
-    public int unread(Long studentId) { return mapper.countUnread(studentId); }
-    public void read(Long studentId, Long id) { mapper.markRead(studentId, id); }
-    public void readAll(Long studentId) { mapper.markAllRead(studentId); }
+    public List<Notification> list(Long userId) { return mapper.listByUser(userId); }
+    public int unread(Long userId) { return mapper.countUnread(userId); }
+    public void read(Long userId, Long id) { mapper.markRead(userId, id); }
+    public void readAll(Long userId) { mapper.markAllRead(userId); }
 }

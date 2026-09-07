@@ -12,7 +12,7 @@
     <el-row :gutter="16" style="margin-top:16px">
       <el-col :span="12">
         <div class="page-card">
-          <div class="page-title">课时不足学员（{{ lowHours.length }}）</div>
+          <div class="page-title">课时不足用户（{{ lowHours.length }}）</div>
           <el-table :data="lowHours" size="small" max-height="320" empty-text="暂无">
             <el-table-column prop="name" label="姓名" />
             <el-table-column prop="phone" label="手机" />
@@ -47,7 +47,7 @@ const metrics = computed(() => [
   { label: '累计营收(元)', value: overview.value.revenue ?? 0 },
   { label: '充值课时', value: overview.value.rechargeHours ?? 0 },
   { label: '签到次数', value: overview.value.checkinCount ?? 0 },
-  { label: '活跃/学员', value: `${overview.value.activeStudents ?? 0}/${overview.value.studentTotal ?? 0}` }
+  { label: '活跃/用户', value: `${overview.value.activeUsers ?? 0}/${overview.value.userTotal ?? 0}` }
 ])
 
 onMounted(() => {

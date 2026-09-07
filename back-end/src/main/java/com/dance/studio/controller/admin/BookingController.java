@@ -19,16 +19,16 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @Operation(summary = "按课次查约课(含候补)")
+    @Operation(summary = "约课明细：传课次ID按课次查；不传则查全部未结束课次的约课")
     @GetMapping
-    public Result<List<BookingVo>> bySchedule(@RequestParam Long scheduleId) {
+    public Result<List<BookingVo>> bySchedule(@RequestParam(required = false) Long scheduleId) {
         return Result.success(bookingService.bySchedule(scheduleId));
     }
 
     @Operation(summary = "代约")
     @PostMapping
     public Result<BookingVo> book(@RequestBody Map<String, Long> body) {
-        return Result.success(bookingService.book(body.get("studentId"), body.get("scheduleId"), true));
+        return Result.success(bookingService.book(body.get("userId"), body.get("scheduleId"), true));
     }
 
     @Operation(summary = "代取消")

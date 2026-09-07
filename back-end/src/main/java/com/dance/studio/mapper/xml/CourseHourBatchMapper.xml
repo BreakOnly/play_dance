@@ -5,7 +5,7 @@
 
     <resultMap id="BaseMap" type="com.dance.studio.entity.CourseHourBatch">
         <id column="id" property="id"/>
-        <result column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
         <result column="total" property="total"/>
         <result column="remaining" property="remaining"/>
         <result column="source" property="source"/>
@@ -15,20 +15,20 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO course_hour_batch (student_id, total, remaining, source, order_id, expire_at)
-        VALUES (#{studentId}, #{total}, #{remaining}, COALESCE(#{source},'recharge'), #{orderId}, #{expireAt})
+        INSERT INTO course_hour_batch (user_id, total, remaining, source, order_id, expire_at)
+        VALUES (#{userId}, #{total}, #{remaining}, COALESCE(#{source},'recharge'), #{orderId}, #{expireAt})
     </insert>
 
     <select id="listAvailable" resultMap="BaseMap">
         SELECT * FROM course_hour_batch
-        WHERE student_id = #{studentId} AND remaining &gt; 0
+        WHERE user_id = #{userId} AND remaining &gt; 0
           AND (expire_at IS NULL OR expire_at &gt; NOW())
         ORDER BY (expire_at IS NULL), expire_at, id
     </select>
 
     <select id="earliestExpire" resultType="java.time.LocalDateTime">
         SELECT MIN(expire_at) FROM course_hour_batch
-        WHERE student_id = #{studentId} AND remaining &gt; 0
+        WHERE user_id = #{userId} AND remaining &gt; 0
           AND expire_at IS NOT NULL AND expire_at &gt; NOW()
     </select>
 
@@ -40,7 +40,7 @@
     <select id="listExpiredWithRemaining" resultMap="BaseMap">
         SELECT * FROM course_hour_batch
         WHERE remaining &gt; 0 AND expire_at IS NOT NULL AND expire_at &lt;= #{now}
-        ORDER BY student_id, id
+        ORDER BY user_id, id
     </select>
 
     <update id="zeroRemaining">
@@ -50,7 +50,7 @@
 
     <select id="sumExpiredRemaining" resultType="int">
         SELECT COALESCE(SUM(remaining), 0) FROM course_hour_batch
-        WHERE student_id = #{studentId} AND remaining &gt; 0
+        WHERE user_id = #{userId} AND remaining &gt; 0
           AND expire_at IS NOT NULL AND expire_at &lt;= #{now}
     </select>
 </mapper>

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class UserVideo {
     private Long id;
     private Long storeId;
-    private Long studentId;
+    private Long userId;
     private String title;
     private String fileUrl;
     private String coverUrl;

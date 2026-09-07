@@ -26,18 +26,6 @@
       </view>
     </view>
 
-    <view class="teacher-overview" v-if="teacherOverview.length">
-      <view class="overview-title">当天老师与课程</view>
-      <view class="teacher-row" v-for="t in teacherOverview" :key="t.name">
-        <view class="ov-teacher">
-          <image v-if="t.avatar" :src="fileUrl(t.avatar)" class="ov-avatar" mode="aspectFill" />
-          <view v-else class="ov-avatar ph">{{ (t.name || 'T')[0] }}</view>
-          <text>{{ t.name }}</text>
-        </view>
-        <view>{{ t.courses }}</view>
-      </view>
-    </view>
-
     <view class="store-head"><view><text></text>玩舞尚志</view><text>{{ visibleSchedules.length }} 节课</text></view>
     <view v-if="loading" class="empty-card card">正在读取课表…</view>
     <view v-else-if="!visibleSchedules.length" class="empty-card card">没有匹配课程<text>换个日期、老师或舞种看看吧</text></view>
@@ -57,7 +45,7 @@
           <view class="desc-line"><text>❗</text>{{ s.description || '基础律动和 step 连接练习' }}</view>
           <view class="card-foot">
             <text>{{ seatText(s) }}</text>
-            <button class="book-button" :class="{ full: isFull(s) }" @tap.stop="onBook(s)">{{ btnText(s) }}</button>
+            <button class="book-button" :class="{ full: isFull(s) || !!courseState(s) }" @tap.stop="onBook(s)">{{ btnText(s) }}</button>
           </view>
         </view>
       </view>
@@ -146,7 +134,6 @@ const loading = ref(true)
 const days = ref([])
 const allSchedules = ref([])
 const visibleSchedules = ref([])
-const teacherOverview = ref([])
 
 // ===== 筛选弹层（多选） =====
 const fltVisible = ref(false)
@@ -248,16 +235,6 @@ function filterSchedules() {
 
   visibleSchedules.value = filtered
 
-  // 老师概览（同一老师取第一个非空头像）
-  const map = {}
-  dayList.forEach(s => {
-    const name = s.teacherName || '老师'
-    if (!map[name]) map[name] = { courses: [], avatar: '' }
-    if (!map[name].avatar && s.teacherAvatar) map[name].avatar = s.teacherAvatar
-    map[name].courses.push(`${fmtTime(s.startTime)} ${s.courseName}`)
-  })
-  teacherOverview.value = Object.keys(map).map(name => ({ name, avatar: map[name].avatar, courses: map[name].courses.join(' · ') }))
-
   const idx = days.value.findIndex(d => d.date === activeDate.value)
   const weekCn = activeDate.value ? WEEK_CN[new Date(activeDate.value + 'T00:00:00').getDay()] : ''
   // 左上角：仅今天显示 Today，其余显示当前年份；下行 日期 + 周几
@@ -296,15 +273,29 @@ function goScheduleView() { uni.navigateTo({ url: '/pages/scheduleview/schedulev
 
 function remaining(s) { return Math.max(0, (s.capacity || 0) - (s.bookedCount || 0)) }
 function isFull(s) { return remaining(s) === 0 }
-function seatText(s) { const r = remaining(s); return r === 0 ? '已约满' : '剩 ' + r + ' 席' }
+/** 课次是否已不可约：返回状态文案（已取消/已结束/已开始），空串=仍可预约 */
+function courseState(s) {
+  if (!s.startTime) return ''
+  if (s.status === 'cancelled') return '已取消'
+  if (s.status === 'finished') return '已结束'
+  const now = new Date()
+  if (s.endTime && new Date(s.endTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已结束'
+  if (new Date(s.startTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已开始'
+  return ''
+}
+function seatText(s) { const st = courseState(s); if (st) return st; const r = remaining(s); return r === 0 ? '已约满' : '剩 ' + r + ' 席' }
 function btnText(s) {
   if (s.myBookingStatus === 'booked' || s.myBookingStatus === 'checked') return '已约'
+  const st = courseState(s)
+  if (st) return st
   return isFull(s) ? '候补' : '预约'
 }
 function onBook(s) {
   if (s.myBookingStatus === 'booked' || s.myBookingStatus === 'checked') {
     uni.showToast({ title: '你已约该课', icon: 'none' }); return
   }
+  const st = courseState(s)
+  if (st) { uni.showToast({ title: '该课' + st + '，无法预约', icon: 'none' }); return }
   const full = isFull(s)
   uni.showModal({
     title: full ? '加入候补' : '确认约课',
@@ -384,14 +375,6 @@ onShow(() => {
 .flt-reset { width: 180rpx; height: 84rpx; border: 1rpx solid #2e2e33; border-radius: 42rpx; background: #222226; color: #c9c9d1; font-size: 26rpx; display: flex; align-items: center; justify-content: center; }
 .flt-ok { min-width: 0; flex: 1; height: 84rpx; border-radius: 42rpx; background: linear-gradient(90deg,#ff2d9b,#ff6fb5); box-shadow: 0 8rpx 26rpx rgba(255,45,155,.38); color: #fff; font-size: 28rpx; font-weight: 800; letter-spacing: 2rpx; display: flex; align-items: center; justify-content: center; }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.teacher-overview { margin: 18rpx 30rpx 0; padding: 20rpx 22rpx; border: 1rpx solid #34343a; border-radius: 24rpx; background: #17171a; }
-.overview-title { margin-bottom: 12rpx; color: #fff; font-size: 23rpx; font-weight: 800; }
-.teacher-row { display: grid; grid-template-columns: 200rpx 1fr; gap: 12rpx; padding: 9rpx 0; border-top: 1rpx solid #29292e; align-items: center; }
-.ov-teacher { display: flex; align-items: center; gap: 10rpx; }
-.ov-teacher > text { color: #ff6fb5; font-size: 21rpx; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ov-avatar { width: 52rpx; height: 52rpx; border-radius: 50%; flex: none; background: #26262b; }
-.ov-avatar.ph { display: flex; align-items: center; justify-content: center; color: #ff6fb5; font-size: 22rpx; font-weight: 800; }
-.teacher-row > view { color: #aaaab2; font-size: 19rpx; line-height: 1.5; }
 .store-head { padding: 31rpx 30rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
 .store-head > view { font-size: 29rpx; font-weight: 900; }
 .store-head > view > text { width: 28rpx; height: 28rpx; margin-right: 16rpx; display: inline-block; border-radius: 7rpx; background: #ff2d9b; transform: rotate(45deg); vertical-align: -4rpx; }

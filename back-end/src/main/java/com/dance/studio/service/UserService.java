@@ -1,9 +1,9 @@
 package com.dance.studio.service;
 
 import com.dance.studio.common.context.ContextHolder;
-import com.dance.studio.dto.StudentSaveReq;
-import com.dance.studio.entity.Student;
-import com.dance.studio.mapper.StudentMapper;
+import com.dance.studio.dto.UserSaveReq;
+import com.dance.studio.entity.User;
+import com.dance.studio.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,22 +14,22 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class StudentService {
+public class UserService {
 
-    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
 
     private Long store() { return ContextHolder.storeId(); }
 
-    public List<Student> list(String keyword, Integer status) {
-        return studentMapper.list(store(), keyword, status);
+    public List<User> list(String keyword, Integer status) {
+        return userMapper.list(store(), keyword, status);
     }
 
-    public Student detail(Long id) {
-        return studentMapper.findById(id);
+    public User detail(Long id) {
+        return userMapper.findById(id);
     }
 
-    public Student create(StudentSaveReq req) {
-        Student s = new Student();
+    public User create(UserSaveReq req) {
+        User s = new User();
         s.setStoreId(store());
         s.setName(req.getName());
         s.setPhone(req.getPhone());
@@ -37,12 +37,12 @@ public class StudentService {
         s.setBirthday(req.getBirthday());
         s.setAvatar(req.getAvatar());
         s.setStatus(req.getStatus() == null ? 1 : req.getStatus());
-        studentMapper.insert(s);
-        return studentMapper.findById(s.getId());
+        userMapper.insert(s);
+        return userMapper.findById(s.getId());
     }
 
-    public Student update(Long id, StudentSaveReq req) {
-        Student s = new Student();
+    public User update(Long id, UserSaveReq req) {
+        User s = new User();
         s.setId(id);
         s.setStoreId(store());
         s.setName(req.getName());
@@ -51,7 +51,7 @@ public class StudentService {
         s.setBirthday(req.getBirthday());
         s.setAvatar(req.getAvatar());
         s.setStatus(req.getStatus());
-        studentMapper.adminUpdate(s);
-        return studentMapper.findById(id);
+        userMapper.adminUpdate(s);
+        return userMapper.findById(id);
     }
 }

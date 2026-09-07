@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class QaQuestion {
     private Long id;
     private Long storeId;
-    private Long studentId;
+    private Long userId;
     private String content;
     /** JSON数组字符串 */
     private String images;

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class RedeemOrder {
     private Long id;
     private Long storeId;
-    private Long studentId;
+    private Long userId;
     private Long goodsId;
     private String goodsName;
     /** claw抓取 / redeem兑换 */

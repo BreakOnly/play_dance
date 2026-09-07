@@ -46,11 +46,11 @@ public class QaService {
     }
 
     /** 发布问题 */
-    public QaQuestion ask(Long studentId, Long storeId, String content, List<String> images) {
+    public QaQuestion ask(Long userId, Long storeId, String content, List<String> images) {
         if (content == null || content.isBlank()) throw new BizException("问题内容不能为空");
         QaQuestion q = new QaQuestion();
         q.setStoreId(storeId);
-        q.setStudentId(studentId);
+        q.setUserId(userId);
         q.setContent(content.trim());
         if (images != null && !images.isEmpty()) {
             String json = "[" + images.stream().map(i -> "\"" + i.replace("\"", "\\\"") + "\"")
@@ -63,24 +63,24 @@ public class QaService {
 
     /** 学员回答 */
     @Transactional(rollbackFor = Exception.class)
-    public QaAnswer answer(Long questionId, Long studentId, String content) {
-        return insertAnswer(questionId, studentId, null, false, content);
+    public QaAnswer answer(Long questionId, Long userId, String content) {
+        return insertAnswer(questionId, userId, null, false, content);
     }
 
-    /** 后台以老师身份回答（studentId 为回答关联学员，无则用 0 占位） */
+    /** 后台以老师身份回答（userId 为回答关联学员，无则用 0 占位） */
     @Transactional(rollbackFor = Exception.class)
     public QaAnswer teacherAnswer(Long questionId, Long teacherId, String content) {
         return insertAnswer(questionId, null, teacherId, true, content);
     }
 
-    private QaAnswer insertAnswer(Long questionId, Long studentId, Long teacherId, boolean isTeacher, String content) {
+    private QaAnswer insertAnswer(Long questionId, Long userId, Long teacherId, boolean isTeacher, String content) {
         QaQuestion q = questionMapper.findById(questionId);
         if (q == null || q.getStatus() != 1) throw new BizException(ResultCode.QA_NOT_FOUND);
         if (content == null || content.isBlank()) throw new BizException("回答内容不能为空");
 
         QaAnswer a = new QaAnswer();
         a.setQuestionId(questionId);
-        a.setStudentId(studentId != null ? studentId : 0L);
+        a.setUserId(userId != null ? userId : 0L);
         a.setTeacherId(teacherId);
         a.setIsTeacher(isTeacher ? 1 : 0);
         a.setContent(content.trim());
@@ -88,8 +88,8 @@ public class QaService {
         questionMapper.incrAnswerCount(questionId);
 
         // 通知提问人（自己回答不通知）
-        if (studentId != null && !studentId.equals(q.getStudentId())) {
-            notificationService.push(q.getStudentId(), "qa", "你的问题有新回答",
+        if (userId != null && !userId.equals(q.getUserId())) {
+            notificationService.push(q.getUserId(), "qa", "你的问题有新回答",
                     content.length() > 50 ? content.substring(0, 50) + "…" : content, "qa_question", questionId);
         }
         return a;

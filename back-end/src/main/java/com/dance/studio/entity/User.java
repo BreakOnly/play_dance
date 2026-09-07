@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-public class Student {
+public class User {
     private Long id;
     private Long storeId;
     private String openid;

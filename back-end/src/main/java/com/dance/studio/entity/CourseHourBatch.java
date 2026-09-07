@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class CourseHourBatch {
     private Long id;
-    private Long studentId;
+    private Long userId;
     private Integer total;
     private Integer remaining;
     /** recharge充值 / gift赠送 */

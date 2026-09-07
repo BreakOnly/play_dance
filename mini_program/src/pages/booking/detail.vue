@@ -31,8 +31,8 @@
           <text v-if="detail.courseType === 'private'" class="tag">1对1</text>
           <text class="tag">成品舞</text>
         </view>
-        <view class="i-line">🕐 {{ fmtRange(detail.startTime, detail.endTime) }} {{ weekCn(detail.startTime) }}</view>
-        <view class="i-line">📍 {{ detail.room || '' }} · {{ detail.storeName || storeName }}</view>
+        <view class="i-line">🕐 {{ dateCn(detail.startTime) }} {{ fmtRange(detail.startTime, detail.endTime) }}</view>
+        <view class="i-line">{{ detail.room || '待定' }}</view>
         <view class="i-line">🎟 剩余 {{ remaining }} 席</view>
         <view v-if="detail.song" class="i-line">🎵 {{ detail.song }}</view>
       </view>
@@ -74,8 +74,8 @@
 
     <!-- 底部约课 CTA -->
     <view class="cta-bar">
-      <button class="btn-primary cta-btn" :class="{ disabled: booked }" @tap="openBook">
-        {{ booked ? '已约课' : '立即约课' }}
+      <button class="btn-primary cta-btn" :class="{ disabled: booked || closed }" @tap="openBook">
+        {{ booked ? '已约课' : closed ? courseState(detail) : '立即约课' }}
       </button>
     </view>
 
@@ -99,7 +99,6 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { api, fileUrl } from '@/api'
 
 const detail = ref({})
-const storeName = ref('')
 const cancelHours = ref(6)
 const pointsPerCheckin = ref(100)
 const courseNotice = ref('')
@@ -108,6 +107,18 @@ const scheduleId = ref(null)
 
 const booked = computed(() => ['booked', 'checked', 'waitlist'].includes(detail.value.myBookingStatus))
 const remaining = computed(() => Math.max(0, (detail.value.capacity || 0) - (detail.value.bookedCount || 0)))
+
+/** 课次是否已不可约：返回状态文案（已取消/已结束/已开始），空串=仍可预约 */
+function courseState(s) {
+  if (!s || !s.startTime) return ''
+  if (s.status === 'cancelled') return '已取消'
+  if (s.status === 'finished') return '已结束'
+  const now = new Date()
+  if (s.endTime && new Date(s.endTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已结束'
+  if (new Date(s.startTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已开始'
+  return ''
+}
+const closed = computed(() => !!courseState(detail.value))
 
 /** 星级：取后台难度等级的sort(1-5)，未配置时默认3星 */
 const starCount = computed(() => {
@@ -120,7 +131,6 @@ onLoad((opts) => { scheduleId.value = opts.id })
 onShow(() => {
   api.scheduleDetail(scheduleId.value).then((d) => { detail.value = d || {} }).catch(() => {})
   api.getConfig().then((cfg) => {
-    storeName.value = cfg.storeName || ''
     cancelHours.value = cfg.cancelFreeHours || 6
     pointsPerCheckin.value = cfg.pointsPerCheckin || 100
     courseNotice.value = cfg.courseNotice || ''
@@ -130,6 +140,10 @@ onShow(() => {
 function openBook() {
   if (booked.value) {
     uni.showToast({ title: '你已约该课', icon: 'none' })
+    return
+  }
+  if (closed.value) {
+    uni.showToast({ title: '该课' + courseState(detail.value) + '，无法预约', icon: 'none' })
     return
   }
   bookPopup.value = true
@@ -144,10 +158,11 @@ function doBook() {
   }).catch(() => {})
 }
 
-function weekCn(t) {
+function dateCn(t) {
   if (!t) return ''
   const wk = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  return wk[new Date(t.replace(/-/g, '/').replace('T', ' ')).getDay()]
+  const d = new Date(t.replace(/-/g, '/').replace('T', ' '))
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + wk[d.getDay()]
 }
 function fmtRange(s, e) {
   if (!s) return ''

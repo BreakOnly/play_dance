@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.dance.studio.mapper.StudentMapper">
+<mapper namespace="com.dance.studio.mapper.UserMapper">
 
-    <resultMap id="BaseMap" type="com.dance.studio.entity.Student">
+    <resultMap id="BaseMap" type="com.dance.studio.entity.User">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
         <result column="openid" property="openid"/>
@@ -22,15 +22,15 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseMap">
-        SELECT * FROM student WHERE id = #{id}
+        SELECT * FROM `user` WHERE id = #{id}
     </select>
 
     <select id="findByOpenid" resultMap="BaseMap">
-        SELECT * FROM student WHERE openid = #{openid} LIMIT 1
+        SELECT * FROM `user` WHERE openid = #{openid} LIMIT 1
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO student (store_id, openid, unionid, name, phone, gender, birthday,
+        INSERT INTO `user` (store_id, openid, unionid, name, phone, gender, birthday,
                              avatar, course_balance, frozen_hours, points_balance, status)
         VALUES (#{storeId}, #{openid}, #{unionid}, #{name}, #{phone}, #{gender}, #{birthday},
                 #{avatar},
@@ -39,8 +39,9 @@
     </insert>
 
     <update id="updateProfile">
-        UPDATE student
+        UPDATE `user`
         <set>
+            <if test="unionid != null">unionid = #{unionid},</if>
             <if test="name != null">name = #{name},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="gender != null">gender = #{gender},</if>
@@ -51,7 +52,7 @@
     </update>
 
     <select id="list" resultMap="BaseMap">
-        SELECT * FROM student
+        SELECT * FROM `user`
         WHERE store_id = #{storeId}
         <if test="keyword != null and keyword != ''">
             AND (name LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%'))
@@ -61,7 +62,7 @@
     </select>
 
     <update id="adminUpdate">
-        UPDATE student
+        UPDATE `user`
         <set>
             <if test="name != null">name = #{name},</if>
             <if test="phone != null">phone = #{phone},</if>
@@ -74,19 +75,19 @@
     </update>
 
     <update id="addCourseBalance">
-        UPDATE student SET course_balance = course_balance + #{delta}
+        UPDATE `user` SET course_balance = course_balance + #{delta}
         WHERE id = #{id}
         <if test="delta &lt; 0">AND course_balance + #{delta} &gt;= 0</if>
     </update>
 
     <update id="addFrozen">
-        UPDATE student SET frozen_hours = frozen_hours + #{delta}
+        UPDATE `user` SET frozen_hours = frozen_hours + #{delta}
         WHERE id = #{id}
         <if test="delta &lt; 0">AND frozen_hours + #{delta} &gt;= 0</if>
     </update>
 
     <update id="addPoints">
-        UPDATE student SET points_balance = points_balance + #{delta}
+        UPDATE `user` SET points_balance = points_balance + #{delta}
         WHERE id = #{id}
         <if test="delta &lt; 0">AND points_balance + #{delta} &gt;= 0</if>
     </update>

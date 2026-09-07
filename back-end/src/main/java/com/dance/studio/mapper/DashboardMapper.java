@@ -13,8 +13,8 @@ public interface DashboardMapper {
                                  @Param("to") LocalDateTime to);
 
     /** 课时不足学员 */
-    List<Map<String, Object>> lowHoursStudents(@Param("storeId") Long storeId, @Param("threshold") int threshold);
+    List<Map<String, Object>> lowHoursUsers(@Param("storeId") Long storeId, @Param("threshold") int threshold);
 
     /** N 天未到课学员（可能流失） */
-    List<Map<String, Object>> inactiveStudents(@Param("storeId") Long storeId, @Param("before") LocalDateTime before);
+    List<Map<String, Object>> inactiveUsers(@Param("storeId") Long storeId, @Param("before") LocalDateTime before);
 }
