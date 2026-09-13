@@ -2,16 +2,17 @@ import http from '@/utils/request'
 
 export const authApi = {
   login: (data) => http.post('/api/admin/auth/login', data),
-  info: () => http.get('/api/admin/auth/info')
+  info: () => http.get('/api/admin/auth/info'),
+  logout: () => http.post('/api/admin/auth/logout'),
+  password: (data) => http.put('/api/admin/auth/password', data)
 }
 
 export const userApi = {
   list: (params) => http.get('/api/admin/users', { params }),
   detail: (id) => http.get(`/api/admin/users/${id}`),
-  create: (data) => http.post('/api/admin/users', data),
   update: (id, data) => http.put(`/api/admin/users/${id}`, data),
-  recharge: (id, data) => http.post(`/api/admin/users/${id}/recharge`, data),
-  adjustPoints: (id, data) => http.post(`/api/admin/users/${id}/points`, data),
+  recharge: (id, data, key) => http.post(`/api/admin/users/${id}/recharge`, data, { headers: { 'Idempotency-Key': key } }),
+  adjustPoints: (id, data, key) => http.post(`/api/admin/users/${id}/points`, data, { headers: { 'Idempotency-Key': key } }),
   hourLogs: (id) => http.get(`/api/admin/users/${id}/hour-logs`),
   pointLogs: (id) => http.get(`/api/admin/users/${id}/point-logs`)
 }
@@ -40,7 +41,7 @@ export const teacherApi = {
 export const noticeApi = {
   list: (onlyEnabled) => http.get('/api/admin/notices', { params: { onlyEnabled } }),
   save: (d) => d.id ? http.put(`/api/admin/notices/${d.id}`, d) : http.post('/api/admin/notices', d),
-  del: (id) => http.delete(`/api/admin/notices/${id}')
+  del: (id) => http.delete(`/api/admin/notices/${id}`)
 }
 
 export const scheduleApi = {
@@ -56,6 +57,7 @@ export const bookingApi = {
 }
 
 export const checkinApi = {
+  code: (scheduleId) => http.post('/api/admin/checkin-codes', { scheduleId }),
   records: (params) => http.get('/api/admin/checkins', { params }),
   manual: (data) => http.post('/api/admin/checkins', data),
   attendance: (params) => http.get('/api/admin/reports/attendance', { params })
@@ -72,7 +74,7 @@ export const redeemApi = {
   approve: (id) => http.post(`/api/admin/redeem-orders/${id}/approve`, {}),
   reject: (id, reason) => http.post(`/api/admin/redeem-orders/${id}/reject`, { reason }),
   logistics: (id, data) => http.put(`/api/admin/redeem-orders/${id}/logistics`, data),
-  complete: (id) => http.post(`/api/admin/redeem-orders/${id}/complete`, {})
+  complete: (id, pickupCode) => http.post(`/api/admin/redeem-orders/${id}/complete`, { pickupCode })
 }
 
 export const dashboardApi = {
@@ -88,6 +90,9 @@ export const configApi = {
 export const uploadUrl = '/api/admin/upload'
 
 export const videoApi = {
+  publicList: () => http.get('/api/admin/public-videos'),
+  publish: (data) => http.post('/api/admin/public-videos', data),
+  hidePublic: (id) => http.delete(`/api/admin/public-videos/${id}`),
   list: (params) => http.get('/api/admin/videos', { params }),
   create: (data) => http.post('/api/admin/videos', data),
   del: (id) => http.delete(`/api/admin/videos/${id}`)

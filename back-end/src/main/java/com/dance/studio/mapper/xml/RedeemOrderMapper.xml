@@ -25,8 +25,8 @@
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO redeem_order (store_id, user_id, goods_id, goods_name, source, points_cost, status)
-        VALUES (#{storeId}, #{userId}, #{goodsId}, #{goodsName}, #{source}, #{pointsCost}, #{status})
+        INSERT INTO redeem_order (store_id, user_id, goods_id, goods_name, source, points_cost, status,pickup_code)
+        VALUES (#{storeId}, #{userId}, #{goodsId}, #{goodsName}, #{source}, #{pointsCost}, #{status},#{pickupCode})
     </insert>
 
     <select id="findById" resultMap="BaseMap">
@@ -34,11 +34,10 @@
     </select>
 
     <select id="list" resultMap="BaseMap">
-        SELECT * FROM redeem_order
-        WHERE store_id = #{storeId}
-        <if test="status != null and status != ''">AND status = #{status}</if>
-        <if test="source != null and source != ''">AND source = #{source}</if>
-        ORDER BY id DESC
+        SELECT o.*,u.name AS user_name,u.phone AS user_phone FROM redeem_order o LEFT JOIN `user` u ON u.id=o.user_id
+        WHERE o.store_id = #{storeId}
+        <if test="status != null and status != ''">AND o.status = #{status}</if>
+        ORDER BY o.id DESC
     </select>
 
     <select id="listByUser" resultMap="BaseMap">

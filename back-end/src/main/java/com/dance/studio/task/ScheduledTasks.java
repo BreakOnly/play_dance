@@ -3,20 +3,22 @@ package com.dance.studio.task;
 import com.dance.studio.mapper.CourseScheduleMapper;
 import com.dance.studio.service.AccountService;
 import com.dance.studio.service.BookingService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 定时任务：课次结束流转、爽约判定、课时过期销账。
- * （临期提醒等可在此扩展）
- */
+/** 定时任务：课次结束流转、爽约判定、课时过期销账。 （临期提醒等可在此扩展） */
 @Slf4j
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "app.jobs.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 @RequiredArgsConstructor
 public class ScheduledTasks {
 
@@ -28,12 +30,17 @@ public class ScheduledTasks {
     @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void processFinishedAndNoShow() {
         try {
-            int finished = scheduleMapper.finishExpired(LocalDateTime.now());
+            bookingService.finishExpired();
+            int finished = 0;
             List<Long> ids = bookingService.noShowCandidateIds();
             int n = 0;
             for (Long id : ids) {
-                try { bookingService.handleNoShow(id); n++; }
-                catch (Exception e) { log.warn("爽约处理失败 bookingId={}", id, e); }
+                try {
+                    bookingService.handleNoShow(id);
+                    n++;
+                } catch (Exception e) {
+                    log.warn("爽约处理失败 bookingId={}", id, e);
+                }
             }
             if (finished > 0 || n > 0) {
                 log.info("定时任务：结束课次 {} 个，爽约处理 {} 条", finished, n);

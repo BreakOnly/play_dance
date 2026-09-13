@@ -10,16 +10,16 @@ import com.dance.studio.mapper.QaAnswerMapper;
 import com.dance.studio.mapper.QaQuestionMapper;
 import com.dance.studio.vo.QaAnswerVo;
 import com.dance.studio.vo.QaQuestionVo;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * 问答：提问 / 回答（学员或后台以老师身份）/ 点赞。
- */
+/** 问答：提问 / 回答（学员或后台以老师身份）/ 点赞。 */
 @Service
 @RequiredArgsConstructor
 public class QaService {
@@ -28,9 +28,12 @@ public class QaService {
     private final QaAnswerMapper answerMapper;
     private final LikeRecordMapper likeRecordMapper;
     private final NotificationService notificationService;
+    private final StudioLock lock;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     /** 问题列表（分页，含首答预览） */
     public PageResult<QaQuestionVo> questions(Long storeId, Long viewerId, int page, int size) {
+        if (page < 1 || size < 1 || size > 100) throw new BizException("分页范围不正确");
         int total = questionMapper.count(storeId);
         List<QaQuestionVo> list = questionMapper.list(storeId, viewerId, size, (page - 1) * size);
         list.forEach(q -> q.setFirstAnswer(answerMapper.findFirst(q.getId(), viewerId)));
@@ -47,15 +50,19 @@ public class QaService {
 
     /** 发布问题 */
     public QaQuestion ask(Long userId, Long storeId, String content, List<String> images) {
-        if (content == null || content.isBlank()) throw new BizException("问题内容不能为空");
+        if (content == null || content.isBlank() || content.length() > 2000)
+            throw new BizException("问题内容需为 1 到 2000 字");
         QaQuestion q = new QaQuestion();
         q.setStoreId(storeId);
         q.setUserId(userId);
         q.setContent(content.trim());
         if (images != null && !images.isEmpty()) {
-            String json = "[" + images.stream().map(i -> "\"" + i.replace("\"", "\\\"") + "\"")
-                    .reduce((a, b) -> a + "," + b).orElse("") + "]";
-            q.setImages(json);
+            if (images.size() > 9) throw new BizException("最多上传 9 张图片");
+            try {
+                q.setImages(objectMapper.writeValueAsString(images));
+            } catch (Exception e) {
+                throw new BizException("图片列表不正确");
+            }
         }
         questionMapper.insert(q);
         return q;
@@ -73,10 +80,12 @@ public class QaService {
         return insertAnswer(questionId, null, teacherId, true, content);
     }
 
-    private QaAnswer insertAnswer(Long questionId, Long userId, Long teacherId, boolean isTeacher, String content) {
+    private QaAnswer insertAnswer(
+            Long questionId, Long userId, Long teacherId, boolean isTeacher, String content) {
         QaQuestion q = questionMapper.findById(questionId);
         if (q == null || q.getStatus() != 1) throw new BizException(ResultCode.QA_NOT_FOUND);
-        if (content == null || content.isBlank()) throw new BizException("回答内容不能为空");
+        if (content == null || content.isBlank() || content.length() > 2000)
+            throw new BizException("回答内容需为 1 到 2000 字");
 
         QaAnswer a = new QaAnswer();
         a.setQuestionId(questionId);
@@ -89,34 +98,50 @@ public class QaService {
 
         // 通知提问人（自己回答不通知）
         if (userId != null && !userId.equals(q.getUserId())) {
-            notificationService.push(q.getUserId(), "qa", "你的问题有新回答",
-                    content.length() > 50 ? content.substring(0, 50) + "…" : content, "qa_question", questionId);
+            notificationService.push(
+                    q.getUserId(),
+                    "qa",
+                    "你的问题有新回答",
+                    content.length() > 50 ? content.substring(0, 50) + "…" : content,
+                    "qa_question",
+                    questionId);
         }
         return a;
     }
 
     /** 点赞切换（question / answer） */
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> toggleLike(String targetType, Long targetId, Long viewerId) {
+    public Map<String, Object> toggleLike(
+            String targetType, Long targetId, Long viewerId, boolean liked) {
+        lock.acquire();
         boolean isQuestion = "question".equals(targetType);
         if (!isQuestion && !"answer".equals(targetType)) {
             throw new BizException(ResultCode.PARAM_ERROR);
         }
-        if (isQuestion && (questionMapper.findById(targetId) == null)) {
+        if (isQuestion
+                && (questionMapper.findById(targetId) == null
+                        || questionMapper.findById(targetId).getStatus() != 1)) {
             throw new BizException(ResultCode.QA_NOT_FOUND);
         }
-        if (!isQuestion && (answerMapper.findById(targetId) == null)) {
+        if (!isQuestion
+                && (answerMapper.findById(targetId) == null
+                        || answerMapper.findById(targetId).getStatus() != 1)) {
             throw new BizException(ResultCode.ANSWER_NOT_FOUND);
         }
 
-        boolean liked = likeRecordMapper.insert(viewerId, targetType, targetId) > 0;
-        int delta = liked ? 1 : -1;
+        int changed =
+                liked
+                        ? likeRecordMapper.insert(viewerId, targetType, targetId)
+                        : likeRecordMapper.delete(viewerId, targetType, targetId);
+        int delta = changed == 0 ? 0 : liked ? 1 : -1;
         int count;
         if (isQuestion) {
-            if (questionMapper.changeLikeCount(targetId, delta) == 0) throw new BizException(ResultCode.QA_NOT_FOUND);
+            if (delta != 0 && questionMapper.changeLikeCount(targetId, delta) == 0)
+                throw new BizException(ResultCode.QA_NOT_FOUND);
             count = questionMapper.findById(targetId).getLikeCount();
         } else {
-            if (answerMapper.changeLikeCount(targetId, delta) == 0) throw new BizException(ResultCode.ANSWER_NOT_FOUND);
+            if (delta != 0 && answerMapper.changeLikeCount(targetId, delta) == 0)
+                throw new BizException(ResultCode.ANSWER_NOT_FOUND);
             count = answerMapper.findById(targetId).getLikeCount();
         }
         return Map.of("liked", liked, "likeCount", count);

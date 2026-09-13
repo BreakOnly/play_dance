@@ -4,9 +4,12 @@ import com.dance.studio.common.Result;
 import com.dance.studio.common.context.ContextHolder;
 import com.dance.studio.entity.RedeemOrder;
 import com.dance.studio.service.RedeemService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +25,9 @@ public class RedeemController {
 
     @Operation(summary = "发放单列表(按 status/source 过滤)")
     @GetMapping
-    public Result<List<RedeemOrder>> list(@RequestParam(required = false) String status,
-                                          @RequestParam(required = false) String source) {
+    public Result<List<RedeemOrder>> list(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String source) {
         return Result.success(redeemService.adminList(ContextHolder.storeId(), status, source));
     }
 
@@ -36,14 +40,15 @@ public class RedeemController {
 
     @Operation(summary = "驳回(退积分+回库存)")
     @PostMapping("/{id}/reject")
-    public Result<Void> reject(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+    public Result<Void> reject(
+            @PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         String reason = body != null ? body.get("reason") : null;
         redeemService.reject(id, ContextHolder.userId(), reason);
         return Result.success();
     }
 
     @Operation(summary = "填物流(转配送中)")
-    @PutMapping("/{id}/logistics")
+    // 到店领取不再暴露物流接口。
     public Result<Void> logistics(@PathVariable Long id, @RequestBody Map<String, String> body) {
         redeemService.ship(id, body.get("company"), body.get("no"));
         return Result.success();
@@ -51,8 +56,8 @@ public class RedeemController {
 
     @Operation(summary = "完成")
     @PostMapping("/{id}/complete")
-    public Result<Void> complete(@PathVariable Long id) {
-        redeemService.complete(id);
+    public Result<Void> complete(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        redeemService.complete(id, body.get("pickupCode"));
         return Result.success();
     }
 }

@@ -1,4 +1,16 @@
 *.log
+**/node_modules/
+**/dist/
+**/target/
+back-end/uploads/
+output/
+.playwright-cli/
+.tmp_*
+.env
+.env.local
+.env.production
+back-end/config/*.yml
+!back-end/config/*.example.yml
 
 # 开发环境配置含数据库口令，仅保留在本地
 back-end/src/main/resources/application-dev.yml

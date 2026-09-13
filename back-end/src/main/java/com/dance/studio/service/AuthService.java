@@ -13,7 +13,9 @@ import com.dance.studio.entity.User;
 import com.dance.studio.mapper.AdminMapper;
 import com.dance.studio.mapper.UserMapper;
 import com.dance.studio.vo.LoginVo;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,27 @@ public class AuthService {
     private final UserMapper userMapper;
     private final WechatService wechatService;
     private final JwtUtil jwtUtil;
+    private final StudioLock lock;
+
+    @org.springframework.transaction.annotation.Transactional
+    public void changePassword(String oldPassword, String newPassword) {
+        lock.acquire();
+        Admin a = adminMapper.findById(ContextHolder.userId());
+        if (oldPassword == null || !passwordEncoder.matches(oldPassword, a.getPasswordHash()))
+            throw new BizException("原密码不正确");
+        if (newPassword == null
+                || newPassword.length() < 12
+                || newPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
+            throw new BizException("新密码至少 12 个字符且不超过 72 字节");
+        if (passwordEncoder.matches(newPassword, a.getPasswordHash()))
+            throw new BizException("新密码不能与原密码相同");
+        adminMapper.updatePassword(a.getId(), passwordEncoder.encode(newPassword));
+    }
+
+    public void logout() {
+        adminMapper.revoke(ContextHolder.userId());
+    }
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /** 默认门店（多门店扩展时按域名/参数路由） */
@@ -40,7 +63,9 @@ public class AuthService {
             throw new BizException(ResultCode.LOGIN_FAIL);
         }
         adminMapper.updateLastLogin(admin.getId());
-        String token = jwtUtil.generate(new LoginUser(admin.getId(), admin.getStoreId(), LoginUser.TYPE_ADMIN));
+        LoginUser session = new LoginUser(admin.getId(), admin.getStoreId(), LoginUser.TYPE_ADMIN);
+        session.setTokenVersion(admin.getTokenVersion());
+        String token = jwtUtil.generate(session);
         return new LoginVo(token, admin.getId(), admin.getNickname());
     }
 
@@ -49,8 +74,10 @@ public class AuthService {
     }
 
     // ---------- 小程序登录 ----------
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     public LoginVo mpLogin(MpLoginReq req) {
         WechatService.WxSession session = wechatService.code2session(req.getCode());
+        lock.acquire();
         User user = userMapper.findByOpenid(session.openid());
         if (user == null) {
             // 首次登录自动建档（openid/unionid 落库）
@@ -68,7 +95,9 @@ public class AuthService {
             patch.setUnionid(session.unionid());
             userMapper.updateProfile(patch);
         }
-        String token = jwtUtil.generate(new LoginUser(user.getId(), user.getStoreId(), LoginUser.TYPE_USER));
+        String token =
+                jwtUtil.generate(
+                        new LoginUser(user.getId(), user.getStoreId(), LoginUser.TYPE_USER));
         return new LoginVo(token, user.getId(), user.getName());
     }
 
@@ -90,7 +119,6 @@ public class AuthService {
         User s = new User();
         s.setId(ContextHolder.userId());
         s.setName(req.getName());
-        s.setPhone(req.getPhone());
         s.setGender(req.getGender());
         s.setBirthday(req.getBirthday());
         s.setAvatar(req.getAvatar());

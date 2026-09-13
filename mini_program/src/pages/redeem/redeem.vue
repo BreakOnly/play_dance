@@ -13,13 +13,14 @@
     <!-- 商品宫格 -->
     <view class="grid">
       <view v-for="g in goodsList" :key="g.id" class="gcard card">
-        <view class="gimg">
+        <view class="gimg" @tap="gallery(g)">
           <image v-if="cover(g)" :src="cover(g)" mode="aspectFill" class="gimg-in" />
           <text v-else class="gph">🎁</text>
         </view>
         <view class="gname">{{ g.name }}</view>
         <view class="gpoints">{{ g.pointsRequired }}积分</view>
-        <button class="btn-primary ex-btn" @tap="confirmRedeem(g)">兑换</button>
+        <view class="gpoints">剩余 {{ g.stock }} 件</view>
+        <button class="btn-primary ex-btn" :disabled="g.stock < 1 || points < g.pointsRequired || busy" @tap="confirmRedeem(g)">{{ g.stock < 1 ? '已兑完' : points < g.pointsRequired ? '积分不足' : '兑换' }}</button>
       </view>
       <view v-if="!goodsList.length" class="empty">暂无可兑换商品</view>
     </view>
@@ -34,7 +35,7 @@
         <view class="d-c">是否扣除 <text class="pink">{{ popupGoods.pointsRequired }}</text> 积分兑换【<text class="pink">{{ popupGoods.name }}</text>】？</view>
         <view class="d-btns">
           <button class="d-cancel" @tap="popupGoods = null">取消</button>
-          <button class="btn-primary d-ok" @tap="doRedeem">确认兑换</button>
+          <button class="btn-primary d-ok" :loading="busy" :disabled="busy" @tap="doRedeem">确认兑换</button>
         </view>
       </view>
     </view>
@@ -50,6 +51,8 @@
               <text class="ost" :class="o.status">{{ statusText(o.status) }}</text>
             </view>
             <view class="ometa">消耗 {{ o.pointsCost }} 积分 · {{ fmtDate(o.createdAt) }}</view>
+            <view v-if="o.status === 'ready'" class="ometa">到店出示领取码：{{ o.pickupCode }}</view>
+            <view v-if="o.rejectReason" class="ometa">驳回原因：{{ o.rejectReason }}</view>
           </view>
           <view v-if="!orders.length" class="empty">暂无兑换记录</view>
         </scroll-view>
@@ -71,6 +74,7 @@ const goodsList = ref([])
 const popupGoods = ref(null)
 const showOrders = ref(false)
 const orders = ref([])
+const busy = ref(false), operationKey = ref('')
 
 onShow(() => load())
 
@@ -89,19 +93,25 @@ function cover(g) {
   return ''
 }
 
-function confirmRedeem(g) { popupGoods.value = g }
+function gallery(g) {
+  try { const images = Array.isArray(g.images) ? g.images : JSON.parse(g.images || '[]'); if (images.length) uni.previewImage({ urls: images.map(fileUrl) }) } catch {}
+}
+
+function confirmRedeem(g) { popupGoods.value = g; operationKey.value = Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) }
 
 function doRedeem() {
+  if (busy.value || !popupGoods.value) return
+  busy.value = true
   const g = popupGoods.value
-  api.redeem(g.id).then(() => {
+  api.redeem(g.id, operationKey.value).then(() => {
     popupGoods.value = null
     uni.showToast({ title: '兑换成功！积分已扣除', icon: 'none' })
     load()
-  }).catch(() => {})
+  }).catch(() => {}).finally(() => { busy.value = false })
 }
 
 function statusText(s) {
-  return { pending: '待发放', to_ship: '待发货', shipping: '配送中', completed: '已完成', rejected: '已驳回' }[s] || s
+  return { pending: '待审批', ready: '待领取', completed: '已领取', rejected: '已驳回' }[s] || s
 }
 function fmtDate(t) { return t ? String(t).substring(0, 10) : '' }
 </script>

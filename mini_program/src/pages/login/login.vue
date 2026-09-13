@@ -1,28 +1,30 @@
 <template>
   <view class="login">
     <view class="logo">M</view>
-    <view class="title">XX 街舞工作室</view>
+    <view class="title">{{ studio.name || '街舞工作室' }}</view>
     <view class="sub">咖啡就位 · 童心无穷 · 一起跳舞</view>
-    <button class="loginBtn" @tap="doLogin">微信一键登录</button>
-    <view class="agree">登录即代表同意《用户协议》《隐私政策》</view>
+    <button class="loginBtn" :loading="busy" :disabled="busy" @tap="doLogin">微信一键登录</button>
+    <view class="agree">登录前请阅读 <text @tap="openLegal(studio.termsUrl)">《用户协议》</text>和<text @tap="openLegal(studio.privacyUrl)">《隐私政策》</text></view>
   </view>
 </template>
 
 <script setup>
 import { api } from '@/api'
 import { setToken, setUser } from '@/utils/auth'
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { silentLogin } from '@/utils/request'
+const studio = ref({}), busy = ref(false)
+onLoad(() => api.studio().then(d => { studio.value = d }).catch(() => {}))
+function openLegal(url) {
+  if (!url) { uni.showToast({ title: '门店尚未配置该说明，请联系管理员', icon: 'none' }); return }
+  uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(url) })
+}
 
-function doLogin() {
-  // #ifdef MP-WEIXIN
-  uni.login({
-    provider: 'weixin',
-    success: (res) => exchange(res.code),
-    fail: () => uni.showToast({ title: '微信登录失败', icon: 'none' })
-  })
-  // #endif
-  // #ifndef MP-WEIXIN
-  exchange('devcode_001')
-  // #endif
+async function doLogin() {
+  if (busy.value) return
+  busy.value = true
+  try { await silentLogin(); uni.reLaunch({ url: '/pages/home/home' }) } finally { busy.value = false }
 }
 
 function exchange(code) {
@@ -59,5 +61,5 @@ function exchange(code) {
   color: #fff; font-size: 32rpx; font-weight: 700;
   border-radius: 44rpx; padding: 22rpx 0;
 }
-.agree { color: $txt3; font-size: 22rpx; margin-top: 30rpx; }
+.agree { color: #b6b6c0; font-size: 26rpx; line-height: 1.8; margin-top: 30rpx; }.agree text { color:#ff6fb5; text-decoration:underline; }
 </style>

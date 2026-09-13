@@ -1,0 +1,49 @@
+name: Verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            front-end/package-lock.json
+            mini_program/package-lock.json
+      - run: node scripts/check_sources.mjs
+      - run: npm ci && npm run build && npm audit --omit=dev --audit-level=high
+        working-directory: front-end
+      - run: npm ci && npm run build:mp-weixin && npm run build:h5
+        working-directory: mini_program
+      - run: npm audit --json > dependency-audit.json || test -s dependency-audit.json
+        working-directory: mini_program
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mini-program-dependency-audit
+          path: mini_program/dependency-audit.json
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: dance_repair_test
+          MYSQL_ROOT_PASSWORD: dance-test-local-only
+        ports:
+          - 13316:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pdance-test-local-only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -B -f back-end/pom.xml verify
+      - run: '! jar tf back-end/target/dance-studio-1.0.0.jar | grep -q application-dev.yml'

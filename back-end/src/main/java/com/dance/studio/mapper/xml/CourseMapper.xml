@@ -92,6 +92,6 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM course WHERE id = #{id} AND store_id = #{storeId}
+        UPDATE course SET status=0 WHERE id = #{id} AND store_id = #{storeId}
     </delete>
 </mapper>

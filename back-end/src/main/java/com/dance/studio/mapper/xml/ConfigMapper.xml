@@ -21,6 +21,7 @@
     </select>
 
     <update id="update">
-        UPDATE config SET config_value = #{value} WHERE store_id = #{storeId} AND config_key = #{key}
+        INSERT INTO config(store_id,config_key,config_value) VALUES(#{storeId},#{key},#{value})
+        ON DUPLICATE KEY UPDATE config_value=VALUES(config_value)
     </update>
 </mapper>

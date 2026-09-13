@@ -7,10 +7,14 @@ import com.dance.studio.entity.Store;
 import com.dance.studio.service.AuthService;
 import com.dance.studio.service.StoreService;
 import com.dance.studio.vo.LoginVo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -24,6 +28,7 @@ public class AdminAuthController {
 
     private final AuthService authService;
     private final StoreService storeService;
+    private final com.dance.studio.service.ConfigService configService;
 
     @Operation(summary = "登录")
     @PostMapping("/login")
@@ -43,13 +48,22 @@ public class AdminAuthController {
         map.put("storeId", a.getStoreId());
         // 门店名（侧边栏/登录态展示用，替换前端写死）
         Store store = storeService.findById(a.getStoreId());
-        map.put("storeName", store != null ? store.getName() : "");
+        map.put(
+                "storeName",
+                configService.getStr(1L, "studio_name", store != null ? store.getName() : "街舞工作室"));
         return Result.success(map);
     }
 
-    @Operation(summary = "登出(前端清 token 即可)")
+    @Operation(summary = "登出并撤销现有管理员会话")
     @PostMapping("/logout")
     public Result<Void> logout() {
+        authService.logout();
+        return Result.success();
+    }
+
+    @PutMapping("/password")
+    public Result<Void> password(@RequestBody Map<String, String> body) {
+        authService.changePassword(body.get("oldPassword"), body.get("newPassword"));
         return Result.success();
     }
 }

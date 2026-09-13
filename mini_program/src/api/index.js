@@ -9,6 +9,7 @@ export function fileUrl(u) {
 }
 
 export const api = {
+  studio: () => http.get('/api/public/studio'),
   // 鉴权与资料
   login: (code) => http.post('/api/mp/auth/login', { code }),
   bindPhone: (code) => http.post('/api/mp/auth/phone', { code }),
@@ -48,18 +49,19 @@ export const api = {
   qaDetail: (id) => http.get('/api/mp/qa/questions/' + id),
   qaAsk: (content, images) => http.post('/api/mp/qa/questions', { content, images }),
   qaAnswer: (id, content) => http.post('/api/mp/qa/questions/' + id + '/answers', { content }),
-  qaLike: (targetType, targetId) => http.post('/api/mp/qa/like', { targetType, targetId }),
+  qaLike: (targetType, targetId, liked) => http.post('/api/mp/qa/like', { targetType, targetId, liked }),
 
   // 视频（管理员上传，用户查看+点赞）
   videoRanking: (limit) => http.get('/api/mp/videos/ranking', limit ? { limit } : {}),
   videoRecommended: (limit) => http.get('/api/mp/videos/recommended', limit ? { limit } : {}),
-  videoLike: (id) => http.post('/api/mp/videos/' + id + '/like', {}),
+  videoLike: (id, liked) => http.post('/api/mp/videos/' + id + '/like', { liked }),
+  scanCheckin: (scene) => http.post('/api/mp/checkins/scan', { scene }),
   videoPlayUrl: (id) => http.get('/api/mp/user-videos/' + id + '/play'),
 
   // 手办兑换
   goods: (category) => http.get('/api/mp/goods', category ? { category } : {}),
   goodsDetail: (id) => http.get('/api/mp/goods/' + id),
-  redeem: (goodsId) => http.post('/api/mp/redeem', { goodsId }),
+  redeem: (goodsId, operationKey) => http.post('/api/mp/redeem', { goodsId }, { operationKey }),
   redeemOrders: (status) => http.get('/api/mp/redeem-orders', status ? { status } : {}),
   fillAddress: (id, name, phone, address) => http.put('/api/mp/redeem-orders/' + id + '/address', { name, phone, address })
 }

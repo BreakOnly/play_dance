@@ -38,7 +38,7 @@
         </view>
         <view class="meta">{{ b.teacherName || '老师' }} · {{ b.room || '' }} · {{ storeName(b) }}</view>
         <view class="meta">{{ fmtTime(b.startTime) }} - {{ fmtTime(b.endTime) }}</view>
-        <view v-if="b.status==='checked'" class="points">+{{ pointsPerCheckin }} 积分</view>
+        <view v-if="b.status==='checked'" class="points">+{{ b.checkinPoints ?? 0 }} 积分</view>
       </view>
     </view>
 
@@ -89,8 +89,8 @@ function canCancel(b) {
 onShow(() => {
   api.myBookings().then((d) => { all.value = d || [] }).catch(() => {})
   api.getConfig().then((cfg) => {
-    cancelFreeHours.value = cfg.cancelFreeHours || 6
-    pointsPerCheckin.value = cfg.pointsPerCheckin || 100
+    cancelFreeHours.value = cfg.cancelFreeHours ?? 6
+    pointsPerCheckin.value = cfg.pointsPerCheckin ?? 100
   }).catch(() => {})
 })
 

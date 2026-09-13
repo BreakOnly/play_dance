@@ -1,6 +1,8 @@
 {
   "pages": [
     { "path": "pages/home/home", "style": { "navigationBarTitleText": "玩舞首页" } },
+    { "path": "pages/checkin/result", "style": { "navigationBarTitleText": "签到结果" } },
+    { "path": "pages/video/player", "style": { "navigationBarTitleText": "视频" } },
     { "path": "pages/booking/booking", "style": { "navigationBarTitleText": "课程" } },
     { "path": "pages/booking/detail", "style": { "navigationBarTitleText": "课程详情" } },
     { "path": "pages/scheduleview/scheduleview", "style": { "navigationBarTitleText": "课表视图" } },
@@ -31,6 +33,7 @@
       { "pagePath": "pages/home/home", "text": "首页" },
       { "pagePath": "pages/booking/booking", "text": "门店课程" },
       { "pagePath": "pages/qa/qa", "text": "咨询" },
+      { "pagePath": "pages/redeem/redeem", "text": "积分兑换" },
       { "pagePath": "pages/mine/mine", "text": "我的" }
     ]
   }

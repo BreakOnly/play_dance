@@ -1,0 +1,12 @@
+# 本地配置文件不打包；兼容当前开发者已有的文件。
+spring:
+  config:
+    import: optional:file:./src/main/resources/application-dev.yml,optional:file:./config/application-local.yml
+app:
+  wechat:
+    mock: ${WX_MOCK:true}
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

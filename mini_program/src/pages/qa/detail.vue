@@ -85,14 +85,14 @@ function aName(a) {
 }
 
 function likeQuestion() {
-  api.qaLike('question', qid.value).then((d) => {
+  api.qaLike('question', qid.value, !question.value.liked).then((d) => {
     question.value.liked = d.liked
     question.value.likeCount = d.likeCount
   }).catch(() => {})
 }
 
 function likeAnswer(a) {
-  api.qaLike('answer', a.id).then((d) => {
+  api.qaLike('answer', a.id, !a.liked).then((d) => {
     a.liked = d.liked
     a.likeCount = d.likeCount
   }).catch(() => {})

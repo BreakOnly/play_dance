@@ -17,6 +17,7 @@
 
     <resultMap id="VoMap" type="com.dance.studio.vo.QaQuestionVo">
         <id column="id" property="id"/>
+        <result column="images" property="images" typeHandler="com.dance.studio.mapper.JsonStringListTypeHandler"/>
         <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
         <result column="answer_count" property="answerCount"/>
@@ -29,15 +30,15 @@
     </resultMap>
 
     <sql id="voSelect">
-        SELECT q.id, q.user_id, q.content, q.answer_count, q.like_count, q.status, q.created_at,
+        SELECT q.id, q.user_id, q.content, q.images, q.answer_count, q.like_count, q.status, q.created_at,
                s.name AS author_name, s.avatar AS author_avatar,
                <if test="viewerId != null">
                EXISTS (SELECT 1 FROM like_record lr
                         WHERE lr.user_id = #{viewerId} AND lr.target_type = 'question'
-                          AND lr.target_id = q.id) AS liked,
+                          AND lr.target_id = q.id) AS liked
                </if>
                <if test="viewerId == null">
-               0 AS liked,
+               0 AS liked
                </if>
         FROM qa_question q
         LEFT JOIN `user` s ON s.id = q.user_id

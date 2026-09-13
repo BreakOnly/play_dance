@@ -36,10 +36,10 @@
                <if test="viewerId != null">
                EXISTS (SELECT 1 FROM like_record lr
                         WHERE lr.user_id = #{viewerId} AND lr.target_type = 'answer'
-                          AND lr.target_id = a.id) AS liked,
+                          AND lr.target_id = a.id) AS liked
                </if>
                <if test="viewerId == null">
-               0 AS liked,
+               0 AS liked
                </if>
         FROM qa_answer a
         LEFT JOIN `user` s ON s.id = a.user_id

@@ -33,7 +33,7 @@
 
       <!-- 签到提示条 -->
       <view class="checkin-tip">
-        <view class="ct-line1">到店免扫码 · 工作人员后台确认签到</view>
+        <view class="ct-line1">到店后用微信扫一扫门店签到码</view>
         <view class="ct-line2">签到成功自动赠送 {{ pointsPerCheckin }} 积分，可在手办商城兑换</view>
       </view>
 
@@ -54,8 +54,9 @@
         <view class="sc-h"><text class="sc-t">支付规则</text></view>
         <view class="sc-list">
           <text class="sc-li">· 约课冻结 {{ detail.costHours || 1 }} 课时</text>
-          <text class="sc-li">· 开课前 {{ cancelHours }} 小时内取消免费退回</text>
-          <text class="sc-li">· 逾期取消或爽约将扣除课时</text>
+          <text class="sc-li">· 距开课至少 {{ cancelHours }} 小时可在线取消</text>
+          <text class="sc-li">· 临近开课请联系管理员取消；爽约核销冻结课时</text>
+          <text class="sc-li">· 候补不冻结课时；取消时已到期的原课时不会恢复</text>
         </view>
       </view>
       <view class="sec-card card">
@@ -79,7 +80,7 @@
     <view v-if="bookPopup" class="mask" @tap="bookPopup = false">
       <view class="sheet card" @tap.stop>
         <view class="s-title">确定预约课程？</view>
-        <view class="s-text">{{ detail.courseName }} · {{ fmtRange(detail.startTime, detail.endTime) }}，将冻结 {{ detail.costHours || 1 }} 课时；开课前 {{ cancelHours }} 小时可免费取消。</view>
+        <view class="s-text">{{ detail.courseName }} · {{ fmtRange(detail.startTime, detail.endTime) }}，{{ remaining === 0 ? '候补暂不冻结，转正时冻结' : '将冻结' }} {{ detail.costHours || 1 }} 课时；距开课至少 {{ cancelHours }} 小时可在线取消。</view>
         <view class="s-btns">
           <button class="s-cancel" @tap="bookPopup = false">取 消</button>
           <button class="btn-primary s-ok" @tap="doBook">确 定</button>
@@ -106,8 +107,8 @@ const mediaImg = ref('')
 onShow(() => {
   api.scheduleDetail(scheduleId.value).then((d) => { detail.value = d || {} }).catch(() => {})
   api.getConfig().then((cfg) => {
-    cancelHours.value = cfg.cancelFreeHours || 6
-    pointsPerCheckin.value = cfg.pointsPerCheckin || 100
+    cancelHours.value = cfg.cancelFreeHours ?? 6
+    pointsPerCheckin.value = cfg.pointsPerCheckin ?? 100
     courseNotice.value = cfg.courseNotice || ''
   }).catch(() => {})
   api.home().then((d) => {
@@ -137,7 +138,7 @@ const ctaText = computed(() => {
   if (myStatus.value === 'waitlist') return '取消候补'
   if (myStatus.value === 'checked') return '已签到'
   if (closed.value) return courseState(detail.value)
-  return '立即约课'
+  return remaining.value === 0 ? '加入候补' : '立即约课'
 })
 const ctaDisabled = computed(() => myStatus.value === 'checked' || (!myStatus.value && closed.value))
 

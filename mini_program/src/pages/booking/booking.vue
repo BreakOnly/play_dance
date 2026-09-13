@@ -109,11 +109,11 @@ const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '�
 
 // 固定时段（其余筛选项走后端接口）
 const timeSlots = [
-  { value: 'am', label: '上午 8:00-11:00', from: 8, to: 12 },
-  { value: 'noon', label: '中午12:00-14:00', from: 12, to: 15 },
-  { value: 'pm', label: '下午15:00-18:00', from: 15, to: 19 },
-  { value: 'eve', label: '晚上19:00-20:00', from: 19, to: 21 },
-  { value: 'night', label: '深夜21:00-23:00', from: 21, to: 24 }
+  { value: 'am', label: '上午 8:00–12:00', from: 8, to: 12 },
+  { value: 'noon', label: '中午12:00–15:00', from: 12, to: 15 },
+  { value: 'pm', label: '下午15:00–19:00', from: 15, to: 19 },
+  { value: 'eve', label: '晚上19:00–21:00', from: 19, to: 21 },
+  { value: 'night', label: '深夜21:00–24:00', from: 21, to: 24 }
 ]
 const fltTabs = [
   { key: 'course', label: '课程' },
@@ -131,6 +131,7 @@ const activeDate = ref('')
 const activeDateTitle = ref('Today')
 const activeDateLabel = ref('')
 const loading = ref(true)
+const bookAheadDays = ref(7), bookCutoffMin = ref(30)
 const days = ref([])
 const allSchedules = ref([])
 const visibleSchedules = ref([])
@@ -183,7 +184,7 @@ function buildDays() {
   const weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   const start = new Date(); start.setHours(0, 0, 0, 0)
   const arr = []
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i <= bookAheadDays.value; i++) {
     const dt = new Date(start); dt.setDate(start.getDate() + i)
     arr.push({
       date: fmtDate(dt), week: i === 0 ? '今天' : i === 1 ? '明天' : weekNames[dt.getDay()],
@@ -318,6 +319,7 @@ function courseState(s) {
   const now = new Date()
   if (s.endTime && new Date(s.endTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已结束'
   if (new Date(s.startTime.replace(/-/g, '/').replace('T', ' ')) <= now) return '已开始'
+  if (new Date(s.startTime.replace(/-/g, '/').replace('T', ' ')) < new Date(now.getTime() + bookCutoffMin.value * 60000)) return '已截止预约'
   return ''
 }
 function seatText(s) { const st = courseState(s); if (st) return st; const r = remaining(s); return r === 0 ? '已约满' : '剩 ' + r + ' 席' }
@@ -337,7 +339,7 @@ function onBook(s) {
   const full = isFull(s)
   uni.showModal({
     title: full ? '加入候补' : '确认约课',
-    content: `${s.courseName}\n${fmtTime(s.startTime)}–${fmtTime(s.endTime)}\n约课锁定 ${s.costHours || 1} 课时`,
+    content: `${s.courseName}\n${fmtTime(s.startTime)}–${fmtTime(s.endTime)}\n${full ? '候补暂不冻结，转正时冻结' : '预约冻结'} ${s.costHours || 1} 课时`,
     confirmColor: '#ff2d9b',
     success: (r) => {
       if (!r.confirm) return
@@ -352,7 +354,8 @@ function openCourse(s) { uni.navigateTo({ url: '/pages/booking/detail?id=' + s.i
 function fmtTime(t) { if (!t) return ''; return t.substring(11, 16) }
 
 onReady(measureStrip)
-onShow(() => {
+onShow(async () => {
+  try { const cfg = await api.getConfig(); bookAheadDays.value = cfg.bookAheadDays ?? 7; bookCutoffMin.value = cfg.bookCutoffMin ?? 30 } catch {}
   measureStrip()
   buildDays()
   const first = days.value[0], last = days.value[days.value.length - 1]

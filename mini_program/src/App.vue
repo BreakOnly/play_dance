@@ -2,10 +2,10 @@
 import { isLogin } from '@/utils/auth'
 import { silentLogin } from '@/utils/request'
 export default {
-  onLaunch: function () {
+  onLaunch: function (options) {
     // 本地无 token 时静默自动登录（微信一键授权无感知）；失败才兜底进登录页
-    if (!isLogin()) {
-      silentLogin().catch(() => uni.reLaunch({ url: '/pages/login/login' }))
+    if (!isLogin() && options?.path !== 'pages/checkin/result') {
+      uni.reLaunch({ url: '/pages/login/login' })
     }
   },
   onShow: function () {},

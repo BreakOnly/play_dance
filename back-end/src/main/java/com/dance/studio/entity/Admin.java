@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class Admin {
+    private Integer tokenVersion;
     private Long id;
     private Long storeId;
     private String username;

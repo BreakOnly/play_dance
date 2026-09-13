@@ -39,6 +39,7 @@
     <update id="update">
         UPDATE goods
         <set>
+            version=version+1,
             <if test="name != null">name = #{name},</if>
             <if test="images != null">images = #{images},</if>
             <if test="description != null">description = #{description},</if>
@@ -48,11 +49,11 @@
             <if test="status != null">status = #{status},</if>
             <if test="sort != null">sort = #{sort},</if>
         </set>
-        WHERE id = #{id} AND store_id = #{storeId}
+        WHERE id = #{id} AND store_id = #{storeId} AND version=#{version}
     </update>
 
     <delete id="deleteById">
-        DELETE FROM goods WHERE id = #{id} AND store_id = #{storeId}
+        UPDATE goods SET status=0,version=version+1 WHERE id = #{id} AND store_id = #{storeId}
     </delete>
 
     <select id="clawPool" resultMap="BaseMap">
@@ -61,10 +62,10 @@
     </select>
 
     <update id="decreaseStock">
-        UPDATE goods SET stock = stock - 1 WHERE id = #{id} AND stock &gt; 0
+        UPDATE goods SET stock = stock - 1,version=version+1 WHERE id = #{id} AND stock &gt; 0
     </update>
 
     <update id="increaseStock">
-        UPDATE goods SET stock = stock + 1 WHERE id = #{id}
+        UPDATE goods SET stock = stock + 1,version=version+1 WHERE id = #{id}
     </update>
 </mapper>

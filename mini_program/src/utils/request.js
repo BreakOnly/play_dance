@@ -7,6 +7,7 @@ import { getToken, clearToken, setToken, setUser } from './auth'
  * token 缺失/过期(401/1002)：先静默重登一次并自动重放原请求，重登也失败才踢登录页。
  */
 export function request(options) {
+  options = { ...options, operationKey: options.operationKey || (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)) }
   const { url, method = 'GET', data = {}, showLoading = false, silent = false } = options
   return new Promise((resolve, reject) => {
     if (showLoading) uni.showLoading({ title: '加载中', mask: true })
@@ -16,12 +17,13 @@ export function request(options) {
       data,
       header: {
         'Content-Type': 'application/json',
+        'Idempotency-Key': options.operationKey,
         Authorization: getToken() ? 'Bearer ' + getToken() : ''
       },
       success(res) {
         const body = res.data || {}
         if (res.statusCode === 401 || body.code === 1002) {
-          if (!options._retried) {
+          if (!options._retried && url !== '/api/mp/auth/login' && getToken()) {
             silentLogin().then(() => {
               request({ ...options, _retried: true }).then(resolve).catch(reject)
             }).catch(() => {
@@ -70,7 +72,9 @@ export function silentLogin() {
     })
     // #endif
     // #ifndef MP-WEIXIN
-    exchange('devcode_001', resolve, reject)
+    let devCode = uni.getStorageSync('local_dev_identity')
+    if (!devCode) { devCode = 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2); uni.setStorageSync('local_dev_identity', devCode) }
+    exchange(devCode, resolve, reject)
     // #endif
   }).finally(() => { silentLoginPromise = null })
   return silentLoginPromise

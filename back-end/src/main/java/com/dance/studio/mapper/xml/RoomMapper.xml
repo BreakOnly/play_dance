@@ -40,6 +40,6 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM room WHERE id = #{id} AND store_id = #{storeId}
+        UPDATE room SET status=0 WHERE id = #{id} AND store_id = #{storeId}
     </delete>
 </mapper>

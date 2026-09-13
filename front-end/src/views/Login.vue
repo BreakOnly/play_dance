@@ -24,7 +24,7 @@ import { ElMessage } from 'element-plus'
 import { authApi } from '@/api'
 
 const router = useRouter()
-const form = ref({ username: 'admin', password: 'admin123' })
+const form = ref({ username: '', password: '' })
 const loading = ref(false)
 
 function submit() {

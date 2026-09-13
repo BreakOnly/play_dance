@@ -30,7 +30,9 @@
     <view class="section-title">我的服务</view>
     <view class="services card">
       <view @tap="goBookings"><view class="service-icon">约</view><text>我的约课</text><text>{{ member.upcomingCount || 0 }} 节待上课</text><text>›</text></view>
-      <view @tap="showMessages"><view class="service-icon">信</view><text>消息通知</text><text>暂无新消息</text><text>›</text></view>
+      <view @tap="showMessages"><view class="service-icon">信</view><text>消息通知</text><text>{{ unread ? unread + ' 条未读' : '查看消息' }}</text><text>›</text></view>
+      <view @tap="goLogs"><view class="service-icon">账</view><text>课时与积分明细</text><text></text><text>›</text></view>
+      <view @tap="goRedeem"><view class="service-icon">兑</view><text>积分兑换</text><text>{{ member.pointsBalance ?? 0 }} 积分</text><text>›</text></view>
       <view @tap="showRule"><view class="service-icon">规</view><text>预约与取消规则</text><text></text><text>›</text></view>
       <view @tap="callStudio"><view class="service-icon">电</view><text>联系舞房</text><text>{{ servicePhone }}</text><text>›</text></view>
     </view>
@@ -45,8 +47,11 @@ import { api } from '@/api'
 
 const member = ref({})
 const servicePhone = ref('')
+const unread = ref(0), rules = ref({})
 
 onShow(() => {
+  api.unreadCount().then(d => { unread.value = typeof d === 'number' ? d : d.count || 0 }).catch(() => {})
+  api.getConfig().then(d => { rules.value = d }).catch(() => {})
   api.member().then((d) => {
     member.value = d || {}
   }).catch(() => {})
@@ -56,6 +61,7 @@ onShow(() => {
 })
 
 function editProfile() {
+  uni.navigateTo({ url: '/pages/profile/profile' }); return
   uni.showModal({
     title: '修改名字',
     editable: true,
@@ -75,15 +81,18 @@ function editProfile() {
 }
 
 function callStudio() {
-  const p = servicePhone.value || '18945043496'
+  const p = servicePhone.value
+  if (!p) { uni.showToast({ title: '门店暂未设置联系电话', icon: 'none' }); return }
   uni.showModal({ title: '联系舞房', content: '请拨打电话：' + p, showCancel: false, confirmColor: '#ff2d9b' })
 }
 
-function showMessages() { uni.showToast({ title: '暂无新的系统消息', icon: 'none' }) }
+function showMessages() { uni.navigateTo({ url: '/pages/notifications/notifications' }) }
+function goLogs() { uni.navigateTo({ url: '/pages/logs/logs' }) }
+function goRedeem() { uni.switchTab({ url: '/pages/redeem/redeem' }) }
 function showRule() {
   uni.showModal({
     title: '预约与取消规则',
-    content: '预约成功后冻结 1 课时，上课完成后正式扣除；开课前 6 小时可在"我的约课"中取消。课程购买请电话咨询舞房。',
+    content: `预约按课程标注冻结课时，签到后核销；候补不冻结，转正才冻结。距开课不足 ${rules.value.cancelFreeHours ?? 6} 小时仅管理员可以取消。取消时原批次已到期的课时不会恢复为可用。请使用微信扫一扫门店签到码。`,
     showCancel: false, confirmColor: '#ff2d9b'
   })
 }

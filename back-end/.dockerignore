@@ -1,0 +1,5 @@
+target
+uploads
+src/main/resources/application-dev.yml
+config
+*.log

@@ -5,9 +5,12 @@ import com.dance.studio.common.context.ContextHolder;
 import com.dance.studio.entity.Store;
 import com.dance.studio.mapper.StoreMapper;
 import com.dance.studio.service.ConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,9 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 小程序端业务配置（取消规则等），从 config 表读取，前端不写死。
- */
+/** 小程序端业务配置（取消规则等），从 config 表读取，前端不写死。 */
 @Tag(name = "小程序-配置")
 @RestController
 @RequestMapping("/api/mp/config")
@@ -50,6 +51,9 @@ public class MpConfigController {
         map.put("storeName", store != null ? store.getName() : "");
         map.put("storeAddress", store != null ? store.getAddress() : "");
         map.put("storePhone", store != null ? store.getPhone() : "");
+        map.put("checkinBeforeMin", configService.getInt(1L, "checkin_before_min", 30));
+        map.put("lockOnBooking", true);
+        map.put("waitlistLocksHours", false);
         return Result.success(map);
     }
 

@@ -59,7 +59,7 @@ const servicePhone = ref('')
 
 onShow(() => {
   api.videoRanking(20).then((list) => {
-    allRankings.value = (list || []).map((v, i) => ({ ...v, liked: false }))
+    allRankings.value = list || []
     visibleRankings.value = allRankings.value.slice(0, 3)
   }).catch(() => {})
   api.qaQuestions(1, 10).then((d) => {
@@ -84,20 +84,22 @@ function searchRanking() {
 }
 
 function toggleLike(v) {
-  api.qaLike('video', v.id).then((d) => {
+  if (v.busy) return
+  v.busy = true
+  api.videoLike(v.id, !v.liked).then((d) => {
     v.liked = d.liked
     v.likeCount = d.likeCount
-  }).catch(() => {})
+  }).catch(() => {}).finally(() => { v.busy = false })
 }
 
 function play(v) {
   api.videoPlayUrl(v.id).then((d) => {
-    uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(d.url) })
+    uni.navigateTo({ url: '/pages/video/player?id=' + v.id })
   }).catch(() => {})
 }
 
 function callStudio() {
-  uni.showModal({ title: '联系舞房', content: '请拨打电话：' + (servicePhone.value || '18945043496'), showCancel: false, confirmColor: '#ff2d9b' })
+  uni.showModal({ title: '联系舞房', content: servicePhone.value ? '请拨打电话：' + servicePhone.value : '门店暂未配置联系电话，请到店咨询。', showCancel: false, confirmColor: '#ff2d9b' })
 }
 
 function fmtDur(sec) {

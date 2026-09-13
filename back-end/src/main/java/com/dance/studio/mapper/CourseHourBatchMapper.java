@@ -1,12 +1,37 @@
 package com.dance.studio.mapper;
 
 import com.dance.studio.entity.CourseHourBatch;
+
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CourseHourBatchMapper {
+    @org.apache.ibatis.annotations.Select(
+            "SELECT * FROM course_hour_batch WHERE user_id=#{userId} ORDER BY (expire_at IS"
+                    + " NULL),expire_at,id FOR UPDATE")
+    List<CourseHourBatch> lockAll(Long userId);
+
+    @org.apache.ibatis.annotations.Update(
+            "UPDATE course_hour_batch SET frozen=frozen+#{qty} WHERE id=#{id} AND"
+                    + " remaining-frozen>=#{qty}")
+    int freeze(@Param("id") Long id, @Param("qty") int qty);
+
+    @org.apache.ibatis.annotations.Update(
+            "UPDATE course_hour_batch SET remaining=remaining-#{consume}, frozen=frozen-#{qty}"
+                    + " WHERE id=#{id} AND frozen>=#{qty} AND remaining>=#{consume}")
+    int release(@Param("id") Long id, @Param("qty") int qty, @Param("consume") int consume);
+
+    @org.apache.ibatis.annotations.Update(
+            "UPDATE course_hour_batch SET remaining=frozen WHERE id=#{id} AND remaining>=frozen")
+    int expireFree(Long id);
+
+    @org.apache.ibatis.annotations.Select(
+            "SELECT DISTINCT user_id FROM course_hour_batch WHERE expire_at<=NOW() AND"
+                    + " remaining>frozen ORDER BY user_id")
+    List<Long> expiredUsers();
+
     int insert(CourseHourBatch batch);
 
     /** 未过期且有剩余的批次，按到期时间 FIFO（NULL 永久排最后） */

@@ -1,5 +1,6 @@
 <template>
   <view class="home-page safe-top safe-bottom">
+    <view class="welcome"><text>你好，{{ account.name || '舞者' }}</text><text @tap="openMessages">消息{{ unread ? ' · ' + unread : '' }} ›</text></view>
     <!-- 首页轮播：后台「Banner 管理」配置，未配置时回退品牌静态图 -->
     <swiper v-if="banners.length" class="banner-swiper" circular autoplay :interval="4000"
             indicator-dots indicator-color="rgba(255,255,255,.35)" indicator-active-color="#ff2d9b">
@@ -34,13 +35,13 @@
     <view class="guide-card card">
       <view class="guide-head"><text>新手指南</text><text>3 步开启街舞之旅</text></view>
       <view class="steps">
-        <view class="step"><view class="step-number">1</view><text>购买体验课</text></view>
-        <view class="step"><view class="step-number">2</view><text>选择课程</text></view>
-        <view class="step off"><view class="step-number">3</view><text>到店试课</text></view>
+        <view class="step" :class="{ off: !guide.step1Done }"><view class="step-number">1</view><text>购买体验课</text></view>
+        <view class="step" :class="{ off: !guide.step2Done }"><view class="step-number">2</view><text>选择课程</text></view>
+        <view class="step" :class="{ off: !guide.step3Done }"><view class="step-number">3</view><text>到店试课</text></view>
       </view>
     </view>
 
-    <view class="section-title" v-if="videos.length"><view>视频推荐</view><text @tap="goSchedule">更多 ›</text></view>
+    <view class="section-title" v-if="videos.length"><view>视频推荐</view><text @tap="goVideos">更多 ›</text></view>
     <scroll-view v-if="videos.length" class="video-scroll" scroll-x enhanced :show-scrollbar="false">
       <view class="video-row">
         <view v-for="v in videos" :key="v.id" class="video-card" @tap="play(v)">
@@ -55,7 +56,7 @@
     <view class="sheet-mask" v-if="serviceSheet" @tap="serviceSheet = false">
       <view class="sheet-panel" @tap.stop>
         <view class="sheet-title">联系客服</view>
-        <view class="sheet-body">请拨打电话购买体验课：{{ servicePhone || '400-888-6688' }}</view>
+        <view class="sheet-body">{{ servicePhone ? '请拨打电话购买体验课：' + servicePhone : '门店暂未配置联系电话，请到店咨询。' }}</view>
         <view class="sheet-btn" @tap="serviceSheet = false">我知道了</view>
       </view>
     </view>
@@ -73,9 +74,13 @@ const guide = ref({})
 const banners = ref([])
 const servicePhone = ref('')
 const serviceSheet = ref(false)
+const account = ref({}), unread = ref(0)
+function openMessages() { uni.navigateTo({ url: '/pages/notifications/notifications' }) }
 
 onShow(() => {
   api.home().then((d) => {
+    account.value = d.account || {}
+    unread.value = d.unreadCount || 0
     trial.value = d.trial || {}
     videos.value = d.videos || []
     guide.value = d.guide || {}
@@ -93,17 +98,19 @@ function openBanner(b) {
 
 function play(v) {
   api.videoPlayUrl(v.id).then((d) => {
-    uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(d.url) })
+    uni.navigateTo({ url: '/pages/video/player?id=' + v.id })
   }).catch(() => {})
 }
 
 function openService() { serviceSheet.value = true }
 
 function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
+function goVideos() { uni.navigateTo({ url: '/pages/qa/ranking' }) }
 </script>
 
 <style lang="scss" scoped>
 .home-page { min-height: 100vh; padding: calc(36rpx + env(safe-area-inset-top)) 28rpx 44rpx; background: #0d0d0e; color: #fff; }
+.welcome { display:flex; justify-content:space-between; align-items:center; margin-bottom:24rpx; font-size:28rpx; }.welcome text:last-child { color:#ff6fb5; font-size:24rpx; }
 .banner-swiper { height: 310rpx; border: 1rpx solid #34343b; border-radius: 38rpx; overflow: hidden; }
 .banner-swiper .banner-img { width: 100%; height: 100%; }
 .brand-hero { height: 310rpx; border: 1rpx solid #34343b; border-radius: 38rpx; background: radial-gradient(circle at 76% 18%, rgba(255,45,155,.22), transparent 44%), linear-gradient(135deg,#19191c,#111114); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -134,7 +141,7 @@ function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 /* 1、2 常亮：粉色渐变填满 + 白色数字（照设计稿固定） */
 .step-number { width: 39rpx; height: 39rpx; margin: auto; border-radius: 50%; background: linear-gradient(135deg,#ff2d9b,#ff6fb5); color: #fff; font-size: 20rpx; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 /* 第 3 步：黑灰空心 —— 灰描边、透明填充、灰数字 */
-.step-number.off { border: 2rpx solid #4a4a52; background: transparent; color: #777780; }
+.step.off .step-number { border: 2rpx solid #4a4a52; background: #1a1a1d; color: #777780; }
 .step text { display: block; margin-top: 13rpx; font-size: 21rpx; color: #fff; }
 .step.off text { color: #777780; }
 .section-title { height: 84rpx; display: flex; align-items: center; justify-content: space-between; }

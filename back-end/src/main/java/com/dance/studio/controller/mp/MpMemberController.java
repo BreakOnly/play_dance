@@ -4,20 +4,20 @@ import com.dance.studio.common.Result;
 import com.dance.studio.common.ResultCode;
 import com.dance.studio.common.context.ContextHolder;
 import com.dance.studio.entity.User;
-import com.dance.studio.mapper.BookingMapper;
 import com.dance.studio.mapper.CourseHourBatchMapper;
 import com.dance.studio.mapper.UserMapper;
 import com.dance.studio.service.BookingService;
 import com.dance.studio.vo.BookingVo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +31,13 @@ public class MpMemberController {
     private final UserMapper userMapper;
     private final CourseHourBatchMapper batchMapper;
     private final BookingService bookingService;
+    private final com.dance.studio.service.AccountService accountService;
 
     @Operation(summary = "会员资料（姓名/等级/课时/冻结/有效期/临期/待上课数）")
     @GetMapping
     public Result<Map<String, Object>> member() {
         Long sid = ContextHolder.userId();
+        var balances = accountService.balances(sid);
         User stu = userMapper.findById(sid);
 
         int available = stu.getCourseBalance() == null ? 0 : stu.getCourseBalance();
@@ -49,15 +51,11 @@ public class MpMemberController {
         // 有效期
         LocalDateTime expireAt = batchMapper.earliestExpire(sid);
         String validUntil = expireAt != null ? expireAt.toLocalDate().toString() : "长期有效";
+        if (totalHours == 0) validUntil = "暂无课时";
+        else if (expireAt == null && available == 0 && frozen > 0) validUntil = "已预约课时待结算";
 
-        // 临期课时（7天内到期）
-        int expiringHours = 0;
-        if (expireAt != null) {
-            long days = ChronoUnit.DAYS.between(LocalDate.now(), expireAt.toLocalDate());
-            if (days >= 0 && days <= 7) {
-                expiringHours = available;
-            }
-        }
+        // 按配置天数逐批次汇总临期课时。
+        int expiringHours = balances.get("expiring");
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("name", stu.getName());
@@ -68,6 +66,7 @@ public class MpMemberController {
         data.put("upcomingCount", upcomingCount);
         data.put("validUntil", validUntil);
         data.put("expiringHours", expiringHours);
+        data.put("pointsBalance", balances.get("points"));
 
         return Result.success(data);
     }

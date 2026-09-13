@@ -5,9 +5,12 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.ObjectMetadata;
 import com.dance.studio.common.exception.BizException;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,8 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * 阿里云 OSS 存储实现。上线设置 app.storage.type=oss 时启用。
- * - 图片等公共资源：返回直链（建议 bucket 公共读或绑定 CDN）
- * - 视频等私有资源：signedUrl() 返回带时效的签名 URL（建议 bucket 私有读写）
+ * 阿里云 OSS 存储实现。上线设置 app.storage.type=oss 时启用。 - 图片等公共资源：返回直链（建议 bucket 公共读或绑定 CDN） -
+ * 视频等私有资源：signedUrl() 返回带时效的签名 URL（建议 bucket 私有读写）
  */
 @Slf4j
 @Service
@@ -30,16 +32,21 @@ public class OssStorageService implements StorageService {
 
     @Value("${app.storage.oss.endpoint}")
     private String endpoint;
+
     @Value("${app.storage.oss.bucket}")
     private String bucket;
+
     @Value("${app.storage.oss.access-key-id}")
     private String ak;
+
     @Value("${app.storage.oss.access-key-secret}")
     private String sk;
+
     @Value("${app.storage.oss.url-expire-seconds:3600}")
     private long urlExpireSeconds;
 
     private OSS client;
+
     /** endpoint 为 IP/localhost（如本地 oss-emulator）时无法用虚拟主机风格，改 path-style 访问 */
     private boolean pathStyleEndpoint;
 
@@ -54,7 +61,11 @@ public class OssStorageService implements StorageService {
         } else {
             this.client = new OSSClientBuilder().build(endpoint, ak, sk);
         }
-        log.info("OSS 存储已启用 bucket={} endpoint={} pathStyle={}", bucket, endpoint, pathStyleEndpoint);
+        log.info(
+                "OSS 存储已启用 bucket={} endpoint={} pathStyle={}",
+                bucket,
+                endpoint,
+                pathStyleEndpoint);
     }
 
     @PreDestroy
@@ -64,15 +75,34 @@ public class OssStorageService implements StorageService {
 
     @Override
     public String upload(MultipartFile file, String dir) {
+        file = UploadValidation.validate(file, dir);
         if (file == null || file.isEmpty()) throw new BizException("文件为空");
         String original = file.getOriginalFilename();
-        String ext = (original != null && original.contains(".")) ? original.substring(original.lastIndexOf('.')) : "";
-        String key = dir + "/" + LocalDate.now() + "/" + UUID.randomUUID().toString().replace("-", "") + ext;
+        String ext =
+                (original != null && original.contains("."))
+                        ? original.substring(original.lastIndexOf('.'))
+                        : "";
+        String key =
+                dir
+                        + "/"
+                        + LocalDate.now()
+                        + "/"
+                        + UUID.randomUUID().toString().replace("-", "")
+                        + ext;
         try {
             ObjectMetadata meta = new ObjectMetadata();
             meta.setContentLength(file.getSize());
-            if (file.getContentType() != null) meta.setContentType(file.getContentType());
-            client.putObject(bucket, key, file.getInputStream(), meta);
+            meta.setContentType("image".equals(dir) ? "image/png" : "video/mp4");
+            try (var input = file.getInputStream()) {
+                client.putObject(bucket, key, input, meta);
+            }
+            if (!pathStyleEndpoint)
+                client.setObjectAcl(
+                        bucket,
+                        key,
+                        "image".equals(dir)
+                                ? com.aliyun.oss.model.CannedAccessControlList.PublicRead
+                                : com.aliyun.oss.model.CannedAccessControlList.Private);
         } catch (IOException e) {
             log.error("OSS 上传失败", e);
             throw new BizException("文件上传失败");
@@ -82,16 +112,27 @@ public class OssStorageService implements StorageService {
         // 本地模拟器(IP)用 path-style http://{endpoint}/{bucket}/
         String hostOnly = endpoint.replaceFirst("^https?://", "");
         if (pathStyleEndpoint) {
-            return (endpoint.startsWith("https://") ? "https://" : "http://") + hostOnly + "/" + bucket + "/" + key;
+            return (endpoint.startsWith("https://") ? "https://" : "http://")
+                    + hostOnly
+                    + "/"
+                    + bucket
+                    + "/"
+                    + key;
         }
-        return (endpoint.startsWith("http://") ? "http://" : "https://") + bucket + "." + hostOnly + "/" + key;
+        return (endpoint.startsWith("http://") ? "http://" : "https://")
+                + bucket
+                + "."
+                + hostOnly
+                + "/"
+                + key;
     }
 
     @Override
     public String signedUrl(String url, long expireSeconds) {
         if (url == null) return null;
         String key = extractKey(url);
-        if (key == null) return url;
+        if (key == null || !key.startsWith("video/") || key.contains(".."))
+            throw new BizException("视频地址不属于本站上传资源");
         long exp = expireSeconds > 0 ? expireSeconds : urlExpireSeconds;
         Date expiration = new Date(System.currentTimeMillis() + exp * 1000);
         return client.generatePresignedUrl(bucket, key, expiration).toString();
@@ -99,15 +140,22 @@ public class OssStorageService implements StorageService {
 
     /** 从直链中解析出对象 key（兼容虚拟主机风格与 path-style，忽略可能携带的查询串） */
     private String extractKey(String url) {
-        if (!url.startsWith("http")) return url; // 已是 key 形式
-        String path = url.split("\\?", 2)[0];
-        String hostOnly = endpoint.replaceFirst("^https?://", "");
-        String vhPrefix = bucket + "." + hostOnly + "/";
-        int idx = path.indexOf(vhPrefix);
-        if (idx >= 0) return path.substring(idx + vhPrefix.length());
-        String psPrefix = "/" + bucket + "/";
-        idx = path.indexOf(psPrefix);
-        if (idx >= 0) return path.substring(idx + psPrefix.length());
-        return null;
+        if (!url.startsWith("http")) return url;
+        try {
+            var uri = java.net.URI.create(url);
+            var ep =
+                    java.net.URI.create(
+                            endpoint.startsWith("http") ? endpoint : "https://" + endpoint);
+            String expected = pathStyleEndpoint ? ep.getHost() : bucket + "." + ep.getHost();
+            if (!expected.equalsIgnoreCase(uri.getHost())
+                    || uri.getPort() != ep.getPort()
+                    || uri.getUserInfo() != null) return null;
+            String prefix = pathStyleEndpoint ? "/" + bucket + "/" : "/";
+            return uri.getPath().startsWith(prefix)
+                    ? uri.getPath().substring(prefix.length())
+                    : null;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

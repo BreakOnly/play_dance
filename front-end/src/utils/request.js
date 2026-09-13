@@ -8,6 +8,7 @@ const service = axios.create({
 })
 
 service.interceptors.request.use((config) => {
+  if (['post', 'put'].includes(config.method) && !config.headers['Idempotency-Key']) config.headers['Idempotency-Key'] = globalThis.crypto?.randomUUID?.() || (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))
   const token = localStorage.getItem('admin_token')
   if (token) config.headers.Authorization = 'Bearer ' + token
   return config

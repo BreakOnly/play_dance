@@ -8,16 +8,15 @@ import com.dance.studio.entity.User;
 import com.dance.studio.mapper.GoodsMapper;
 import com.dance.studio.mapper.RedeemOrderMapper;
 import com.dance.studio.mapper.UserMapper;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * 积分乐园：抓娃娃机(claw 必得) + 指定兑换(redeem)，统一进发放单走审批/物流。
- */
+/** 积分乐园：抓娃娃机(claw 必得) + 指定兑换(redeem)，统一进发放单走审批/物流。 */
 @Service
 @RequiredArgsConstructor
 public class RedeemService {
@@ -27,18 +26,24 @@ public class RedeemService {
     private final UserMapper userMapper;
     private final AccountService accountService;
     private final ConfigService configService;
+    private final StudioLock lock;
 
     /** 指定兑换：兑换款 */
     @Transactional(rollbackFor = Exception.class)
     public RedeemOrder redeem(Long userId, Long goodsId) {
+        lock.acquire();
         User stu = userMapper.findById(userId);
         Goods g = goodsMapper.findById(goodsId);
         if (g == null) throw new BizException(ResultCode.GOODS_NOT_FOUND);
-        if (g.getStatus() == null || g.getStatus() != 1) throw new BizException(ResultCode.GOODS_OFF_SHELF);
-        if (!"redeem".equals(g.getCategory())) throw new BizException(ResultCode.GOODS_CATEGORY_MISMATCH);
+        if (g.getStatus() == null || g.getStatus() != 1)
+            throw new BizException(ResultCode.GOODS_OFF_SHELF);
+        if (!"redeem".equals(g.getCategory()))
+            throw new BizException(ResultCode.GOODS_CATEGORY_MISMATCH);
         int cost = g.getPointsRequired();
+        if (cost <= 0 || !Long.valueOf(1).equals(g.getStoreId())) throw new BizException("商品信息不正确");
         if (stu.getPointsBalance() < cost) throw new BizException(ResultCode.POINTS_NOT_ENOUGH);
-        if (goodsMapper.decreaseStock(goodsId) == 0) throw new BizException(ResultCode.GOODS_STOCK_EMPTY);
+        if (goodsMapper.decreaseStock(goodsId) == 0)
+            throw new BizException(ResultCode.GOODS_STOCK_EMPTY);
 
         accountService.spendPoints(userId, cost, "redeem", goodsId, "积分兑换:" + g.getName());
         return createOrder(stu, g, "redeem", cost);
@@ -53,7 +58,15 @@ public class RedeemService {
         o.setGoodsName(g.getName());
         o.setSource(source);
         o.setPointsCost(cost);
-        o.setStatus(autoApprove ? "to_ship" : "pending");
+        o.setPickupCode(
+                java.util
+                        .UUID
+                        .randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        .substring(0, 12)
+                        .toUpperCase());
+        o.setStatus(autoApprove ? "ready" : "pending");
         redeemMapper.insert(o);
         return o;
     }
@@ -61,14 +74,19 @@ public class RedeemService {
     // ---------- 后台审批/物流 ----------
     @Transactional(rollbackFor = Exception.class)
     public void approve(Long orderId, Long adminId) {
+        lock.acquire();
         RedeemOrder o = mustPending(orderId);
-        redeemMapper.updateStatus(orderId, "to_ship", adminId, null);
+        if (redeemMapper.transition(orderId, "pending", "ready", adminId, null) != 1)
+            throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void reject(Long orderId, Long adminId, String reason) {
+        lock.acquire();
         RedeemOrder o = mustPending(orderId);
-        redeemMapper.updateStatus(orderId, "rejected", adminId, reason);
+        if (reason == null || reason.isBlank()) throw new BizException("请填写驳回原因");
+        if (redeemMapper.transition(orderId, "pending", "rejected", adminId, reason) != 1)
+            throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
         // 退积分 + 回库存
         accountService.refundPoints(o.getUserId(), o.getPointsCost(), "redeem", orderId, "兑换驳回退积分");
         goodsMapper.increaseStock(o.getGoodsId());
@@ -77,21 +95,28 @@ public class RedeemService {
     public void ship(Long orderId, String company, String no) {
         RedeemOrder o = redeemMapper.findById(orderId);
         if (o == null) throw new BizException(ResultCode.REDEEM_NOT_FOUND);
-        if (!"to_ship".equals(o.getStatus())) throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
+        if (!"to_ship".equals(o.getStatus()))
+            throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
         redeemMapper.updateLogistics(orderId, company, no);
     }
 
-    public void complete(Long orderId) {
+    @Transactional(rollbackFor = Exception.class)
+    public void complete(Long orderId, String pickupCode) {
+        lock.acquire();
         RedeemOrder o = redeemMapper.findById(orderId);
         if (o == null) throw new BizException(ResultCode.REDEEM_NOT_FOUND);
-        if (!"shipping".equals(o.getStatus())) throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
-        redeemMapper.updateStatus(orderId, "completed", o.getAuditAdminId(), null);
+        if (pickupCode == null || !pickupCode.trim().equalsIgnoreCase(o.getPickupCode()))
+            throw new BizException("领取码不正确，请核对学员出示的兑换记录");
+        if ("completed".equals(o.getStatus())) return;
+        if (redeemMapper.pickup(orderId, com.dance.studio.common.context.ContextHolder.userId())
+                != 1) throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
     }
 
     private RedeemOrder mustPending(Long orderId) {
         RedeemOrder o = redeemMapper.findById(orderId);
         if (o == null) throw new BizException(ResultCode.REDEEM_NOT_FOUND);
-        if (!"pending".equals(o.getStatus())) throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
+        if (!"pending".equals(o.getStatus()))
+            throw new BizException(ResultCode.REDEEM_STATUS_INVALID);
         return o;
     }
 

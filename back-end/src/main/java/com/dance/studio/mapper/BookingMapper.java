@@ -2,24 +2,49 @@ package com.dance.studio.mapper;
 
 import com.dance.studio.entity.Booking;
 import com.dance.studio.vo.BookingVo;
+
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingMapper {
+    @org.apache.ibatis.annotations.Update(
+            "UPDATE booking SET locked_hours=0 WHERE id=#{id} AND status='waitlist'")
+    int clearWaitlistLock(Long id);
+
+    @org.apache.ibatis.annotations.Select(
+            "SELECT COALESCE(MAX(waitlist_no),0)+1 FROM booking WHERE schedule_id=#{scheduleId}")
+    int nextWaitlistNumber(Long scheduleId);
+
+    @org.apache.ibatis.annotations.Update(
+            "UPDATE booking SET status='booked',waitlist_no=NULL,locked_hours=#{cost} WHERE"
+                    + " id=#{id} AND status='waitlist'")
+    int promoteWithHours(@Param("id") Long id, @Param("cost") int cost);
+
+    @org.apache.ibatis.annotations.Select(
+            "SELECT b.* FROM booking b JOIN course_schedule s ON s.id=b.schedule_id WHERE"
+                    + " b.status='waitlist' AND s.start_time<=NOW() ORDER BY b.id")
+    List<Booking> expiredWaitlists();
 
     int insert(Booking b);
 
     Booking findById(@Param("id") Long id);
 
-    Booking findActiveByUserSchedule(@Param("userId") Long userId, @Param("scheduleId") Long scheduleId);
+    Booking findActiveByUserSchedule(
+            @Param("userId") Long userId, @Param("scheduleId") Long scheduleId);
 
     /** 条件更新状态：仅当前状态为 expectStatus 时生效，返回影响行数（防并发重复流转） */
-    int updateStatusIf(@Param("id") Long id, @Param("status") String status, @Param("expectStatus") String expectStatus);
+    int updateStatusIf(
+            @Param("id") Long id,
+            @Param("status") String status,
+            @Param("expectStatus") String expectStatus);
 
     /** 条件取消：仅当前状态为 expectStatus 时生效，返回影响行数（退款/扣减必须以此为凭） */
-    int cancel(@Param("id") Long id, @Param("expectStatus") String expectStatus, @Param("cancelDeduct") int cancelDeduct);
+    int cancel(
+            @Param("id") Long id,
+            @Param("expectStatus") String expectStatus,
+            @Param("cancelDeduct") int cancelDeduct);
 
     /** 某课次下所有"待上课/候补"的预约（课次取消时批量退还用） */
     List<Booking> listActiveBySchedule(@Param("scheduleId") Long scheduleId);
@@ -42,8 +67,9 @@ public interface BookingMapper {
     List<Booking> listNoShowCandidates(@Param("now") LocalDateTime now);
 
     /** 找该学员在某时刻可签到的待上课预约（按门店 + 时间窗，由 service 计算窗口） */
-    List<Booking> listCheckinable(@Param("userId") Long userId,
-                                  @Param("storeId") Long storeId,
-                                  @Param("from") LocalDateTime from,
-                                  @Param("to") LocalDateTime to);
+    List<Booking> listCheckinable(
+            @Param("userId") Long userId,
+            @Param("storeId") Long storeId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

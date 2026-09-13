@@ -40,6 +40,6 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM dance_type WHERE id = #{id} AND store_id = #{storeId}
+        UPDATE dance_type SET status=0 WHERE id = #{id} AND store_id = #{storeId}
     </delete>
 </mapper>

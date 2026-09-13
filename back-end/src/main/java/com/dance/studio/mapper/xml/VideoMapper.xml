@@ -31,7 +31,7 @@
     </select>
 
     <delete id="deleteById">
-        DELETE FROM video WHERE id = #{id} AND store_id = #{storeId}
+        UPDATE video SET status=0 WHERE id = #{id} AND store_id = #{storeId}
     </delete>
 
     <select id="listAdmin" resultMap="BaseMap">

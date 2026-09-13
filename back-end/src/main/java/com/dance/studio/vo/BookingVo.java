@@ -4,11 +4,10 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * 约课记录（含课次信息，供"我的约课"与后台约课管理展示）
- */
+/** 约课记录（含课次信息，供"我的约课"与后台约课管理展示） */
 @Data
 public class BookingVo {
+    private Integer checkinPoints;
     private Long id;
     private Long scheduleId;
     private Long userId;
@@ -17,8 +16,10 @@ public class BookingVo {
     private String courseType;
     private String teacherName;
     private String room;
+
     /** 门店名（我的约课卡片展示） */
     private String storeName;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;

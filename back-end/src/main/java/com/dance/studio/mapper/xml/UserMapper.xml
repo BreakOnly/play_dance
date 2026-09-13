@@ -69,7 +69,6 @@
             <if test="gender != null">gender = #{gender},</if>
             <if test="birthday != null">birthday = #{birthday},</if>
             <if test="avatar != null">avatar = #{avatar},</if>
-            <if test="status != null">status = #{status},</if>
         </set>
         WHERE id = #{id} AND store_id = #{storeId}
     </update>

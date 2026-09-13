@@ -5,265 +5,319 @@ import com.dance.studio.common.exception.BizException;
 import com.dance.studio.dto.RechargeReq;
 import com.dance.studio.entity.*;
 import com.dance.studio.mapper.*;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * 账户核心服务：课时充值/扣减、积分增减。
- * 约定：所有"流水(*_log) + 缓存(user.*)"在同一事务内更新。
- *
- * 课时模型：
- *   course_balance = 当前拥有的总剩余课时(= sum(batch.remaining))
- *   frozen_hours   = 已被"待上课"约课锁定的课时
- *   可用 available = course_balance - frozen_hours （前端展示用，VO 层计算）
- * 本阶段(P2)实现：充值 / 积分手动增减。
- * lock/refund/deduct/noshow 在 P4(约课+签到) 实现。
- */
+/** 余额=未冻结课时；批次 remaining 包含 frozen。门店事务锁保证多进程写入有序。 */
 @Service
 @RequiredArgsConstructor
+@Transactional(rollbackFor = Exception.class)
 public class AccountService {
-
     private final UserMapper userMapper;
     private final RechargeOrderMapper rechargeOrderMapper;
     private final CourseHourBatchMapper batchMapper;
     private final HourLogMapper hourLogMapper;
     private final PointLogMapper pointLogMapper;
     private final ConfigService configService;
+    private final HourAllocationMapper allocationMapper;
+    private final StudioLock lock;
 
-    /** 课时充值：建订单 + 批次 + 流水 + 余额；并按充值金额送积分 */
-    @Transactional(rollbackFor = Exception.class)
+    private User user(Long id) {
+        User u = userMapper.findById(id);
+        if (u == null || !Objects.equals(u.getStoreId(), 1L))
+            throw new BizException(ResultCode.NOT_FOUND);
+        return u;
+    }
+
+    private void changed(int rows) {
+        if (rows != 1) throw new BizException("账目校验失败，操作已撤销，请联系管理员核对");
+    }
+
+    private void positive(int amount) {
+        if (amount <= 0 || amount > 100000) throw new BizException("课时必须在 1 到 100000 之间");
+    }
+
     public void recharge(Long userId, RechargeReq req, Long operatorId) {
-        User user = userMapper.findById(userId);
-        if (user == null) throw new BizException(ResultCode.NOT_FOUND);
-
-        int hours = req.getHours();
+        lock.acquire();
+        expireUser(userId);
         int gift = req.getGiftHours() == null ? 0 : req.getGiftHours();
-        int totalHours = hours + gift;
-
-        // 有效期
-        Integer days = req.getValidityDays();
-        if (days == null) {
-            days = configService.getInt(user.getStoreId(), "course_validity_days", 365);
-        }
-        LocalDateTime expireAt = (days == null || days <= 0) ? null : LocalDateTime.now().plusDays(days);
-
-        // 充值金额送积分
-        int pointsPerYuan = configService.getInt(user.getStoreId(), "points_per_yuan", 1);
-        int pointsGain = req.getAmount() == null ? 0 : req.getAmount().intValue() * pointsPerYuan;
-
-        // 1. 订单
+        int total = Math.addExact(req.getHours(), gift);
+        positive(total);
+        if (gift < 0 || req.getAmount() == null || req.getAmount().signum() < 0)
+            throw new BizException("充值数值不正确");
+        int days =
+                req.getValidityDays() == null
+                        ? configService.getInt(1L, "course_validity_days", 365)
+                        : req.getValidityDays();
+        if (days < 0 || days > 36500) throw new BizException("有效期不正确");
+        int points =
+                req.getAmount()
+                        .multiply(
+                                java.math.BigDecimal.valueOf(
+                                        configService.getInt(1L, "points_per_yuan", 1)))
+                        .setScale(0, RoundingMode.DOWN)
+                        .intValueExact();
         RechargeOrder order = new RechargeOrder();
-        order.setStoreId(user.getStoreId());
+        order.setStoreId(1L);
         order.setUserId(userId);
-        order.setHours(hours);
+        order.setHours(req.getHours());
         order.setGiftHours(gift);
         order.setAmount(req.getAmount());
-        order.setPointsGain(pointsGain);
+        order.setPointsGain(points);
         order.setValidityDays(days);
         order.setOperatorId(operatorId);
         order.setRemark(req.getRemark());
         rechargeOrderMapper.insert(order);
-
-        // 2. 批次（合并为一个批次，便于 FIFO）
-        CourseHourBatch batch = new CourseHourBatch();
-        batch.setUserId(userId);
-        batch.setTotal(totalHours);
-        batch.setRemaining(totalHours);
-        batch.setSource("recharge");
-        batch.setOrderId(order.getId());
-        batch.setExpireAt(expireAt);
-        batchMapper.insert(batch);
-
-        // 3. 余额
-        userMapper.addCourseBalance(userId, totalHours);
-        int balAfter = user.getCourseBalance() + totalHours;
-
-        // 4. 课时流水（充值 + 赠送分开记）
-        writeHourLog(userId, "recharge", hours, user.getCourseBalance() + hours, "recharge", order.getId(), operatorId, "课时充值");
-        if (gift > 0) {
-            writeHourLog(userId, "gift", gift, balAfter, "recharge", order.getId(), operatorId, "赠送课时");
-        }
-
-        // 5. 积分（充值得分）
-        if (pointsGain > 0) {
-            addPointsInternal(user, pointsGain, "recharge", "recharge", order.getId(), operatorId, "充值赠送积分");
-        }
+        CourseHourBatch b = new CourseHourBatch();
+        b.setUserId(userId);
+        b.setTotal(total);
+        b.setRemaining(total);
+        b.setFrozen(0);
+        b.setSource("recharge");
+        b.setOrderId(order.getId());
+        b.setExpireAt(days == 0 ? null : LocalDateTime.now().plusDays(days));
+        batchMapper.insert(b);
+        changed(userMapper.addCourseBalance(userId, total));
+        writeHourLog(
+                userId,
+                "recharge",
+                total,
+                "recharge",
+                order.getId(),
+                operatorId,
+                "充值含赠送 " + gift + " 课时");
+        if (points > 0)
+            changePoints(
+                    userId, points, "recharge", "recharge", order.getId(), operatorId, "充值赠送积分");
+        assertBalanced(userId);
     }
 
-    /** 管理员手动调整积分（正加负减），不可使余额为负 */
-    @Transactional(rollbackFor = Exception.class)
     public void adjustPoints(Long userId, int delta, String reason, Long operatorId) {
-        User user = userMapper.findById(userId);
-        if (user == null) throw new BizException(ResultCode.NOT_FOUND);
-        addPointsInternal(user, delta, "manual", null, null, operatorId, reason);
+        lock.acquire();
+        if (delta == 0 || Math.abs((long) delta) > 1000000 || reason == null || reason.isBlank())
+            throw new BizException("请填写有效积分变动值和原因");
+        changePoints(userId, delta, "manual", null, null, operatorId, reason);
     }
 
-    /** 内部积分变更：更新余额(带不为负保护) + 流水 */
-    private void addPointsInternal(User user, int delta, String type, String refType, Long refId, Long operatorId, String remark) {
-        int rows = userMapper.addPoints(user.getId(), delta);
-        if (rows == 0) {
+    private void changePoints(
+            Long userId,
+            int delta,
+            String type,
+            String refType,
+            Long refId,
+            Long operatorId,
+            String remark) {
+        user(userId);
+        if (delta == 0) return;
+        if (userMapper.addPoints(userId, delta) != 1)
             throw new BizException(ResultCode.POINTS_NOT_ENOUGH);
-        }
-        int after = user.getPointsBalance() + delta;
-        PointLog log = new PointLog();
-        log.setUserId(user.getId());
-        log.setType(type);
-        log.setAmount(delta);
-        log.setBalanceAfter(after);
-        log.setRefType(refType);
-        log.setRefId(refId);
-        log.setOperatorId(operatorId);
-        log.setRemark(remark);
-        pointLogMapper.insert(log);
+        PointLog p = new PointLog();
+        p.setUserId(userId);
+        p.setType(type);
+        p.setAmount(delta);
+        p.setBalanceAfter(user(userId).getPointsBalance());
+        p.setRefType(refType);
+        p.setRefId(refId);
+        p.setOperatorId(operatorId);
+        p.setRemark(remark);
+        pointLogMapper.insert(p);
     }
 
-    // ============ 约课/签到 课时变更（在调用方事务内执行） ============
-
-    /** 约课锁定：可用课时 -cost、冻结 +cost。可用不足或已过期抛异常 */
     public void lockHours(Long userId, int cost, Long bookingId) {
-        User s = userMapper.findById(userId);
-        if (s == null) throw new BizException(ResultCode.NOT_FOUND);
-        // 原型 §3.1 约课校验"未过期"：剔除已过期(尚未销账)批次对应的课时再判断
-        int expired = batchMapper.sumExpiredRemaining(userId, LocalDateTime.now());
-        int frozen = s.getFrozenHours() == null ? 0 : s.getFrozenHours();
-        int validAvail = s.getCourseBalance() - Math.max(0, expired - frozen);
-        if (validAvail < cost) {
-            throw new BizException(s.getCourseBalance() >= cost
-                    ? ResultCode.COURSE_HOUR_EXPIRED : ResultCode.COURSE_HOUR_NOT_ENOUGH);
+        lock.acquire();
+        positive(cost);
+        expireUser(userId);
+        if (user(userId).getCourseBalance() < cost)
+            throw new BizException(ResultCode.COURSE_HOUR_NOT_ENOUGH);
+        if (!allocationMapper.locked(bookingId).isEmpty()) throw new BizException("预约已冻结课时");
+        int left = cost;
+        LocalDateTime now = LocalDateTime.now();
+        for (CourseHourBatch b : batchMapper.lockAll(userId)) {
+            if (left == 0) break;
+            if (b.getExpireAt() != null && !b.getExpireAt().isAfter(now)) continue;
+            int take = Math.min(left, b.getRemaining() - b.getFrozen());
+            if (take <= 0) continue;
+            changed(batchMapper.freeze(b.getId(), take));
+            HourAllocation a = new HourAllocation();
+            a.setBookingId(bookingId);
+            a.setBatchId(b.getId());
+            a.setHours(take);
+            allocationMapper.insert(a);
+            left -= take;
         }
-        int rows = userMapper.addCourseBalance(userId, -cost);
-        if (rows == 0) throw new BizException(ResultCode.COURSE_HOUR_NOT_ENOUGH);
-        userMapper.addFrozen(userId, cost);
-        writeHourLog(userId, "lock", -cost, s.getCourseBalance() - cost, "booking", bookingId, null, "约课锁定");
+        if (left != 0) throw new BizException("可用批次不足，操作已撤销，请核对课时");
+        changed(userMapper.addCourseBalance(userId, -cost));
+        changed(userMapper.addFrozen(userId, cost));
+        writeHourLog(userId, "lock", -cost, "booking", bookingId, null, "预约冻结");
+        assertBalanced(userId);
     }
 
-    /** lock_on_booking 关闭时：签到直接从可用课时扣减（未经锁定），不足抛异常 */
-    public void consumeDirect(Long userId, int cost, Long bookingId) {
-        User s = userMapper.findById(userId);
-        int rows = userMapper.addCourseBalance(userId, -cost);
-        if (rows == 0) throw new BizException(ResultCode.COURSE_HOUR_NOT_ENOUGH);
-        consumeBatches(userId, cost);
-        writeHourLog(userId, "deduct", -cost, s.getCourseBalance() - cost, "booking", bookingId, null, "签到扣减课时");
-    }
-
-    /** 取消(免费)退回：可用 +cost、冻结 -cost */
     public void refundLock(Long userId, int cost, Long bookingId) {
-        User s = userMapper.findById(userId);
-        userMapper.addCourseBalance(userId, cost);
-        userMapper.addFrozen(userId, -cost);
-        writeHourLog(userId, "refund", cost, s.getCourseBalance() + cost, "booking", bookingId, null, "取消退回课时");
+        settle(userId, cost, bookingId, true, "refund");
     }
 
-    /** 签到核销：冻结 -cost，并按 FIFO 消耗批次（可用课时已在约课时扣除，故此处不变） */
     public void consumeOnCheckin(Long userId, int cost, Long bookingId) {
-        User s = userMapper.findById(userId);
-        userMapper.addFrozen(userId, -cost);
-        consumeBatches(userId, cost);
-        writeHourLog(userId, "deduct", 0, s.getCourseBalance(), "booking", bookingId, null, "签到核销(课时已于约课时锁定)");
+        settle(userId, cost, bookingId, false, "deduct");
     }
 
-    /** 爽约/逾期取消：冻结 -cost、消耗批次，课时不退 */
     public void forfeitOnNoShow(Long userId, int cost, Long bookingId, boolean noshow) {
-        User s = userMapper.findById(userId);
-        userMapper.addFrozen(userId, -cost);
-        consumeBatches(userId, cost);
-        writeHourLog(userId, noshow ? "noshow" : "deduct", 0, s.getCourseBalance(), "booking", bookingId, null,
-                noshow ? "爽约核销(课时不退)" : "逾期取消核销(课时不退)");
+        settle(userId, cost, bookingId, false, noshow ? "noshow" : "deduct");
     }
 
-    /** 按到期 FIFO 消耗课时批次 */
-    private void consumeBatches(Long userId, int qty) {
-        int left = qty;
-        for (CourseHourBatch b : batchMapper.listAvailable(userId)) {
-            if (left <= 0) break;
-            int take = Math.min(b.getRemaining(), left);
-            if (take > 0 && batchMapper.decrease(b.getId(), take) > 0) {
-                left -= take;
+    private void settle(Long userId, int cost, Long bookingId, boolean refund, String type) {
+        lock.acquire();
+        positive(cost);
+        expireUser(userId);
+        List<HourAllocation> allocations = allocationMapper.locked(bookingId);
+        if (allocations.stream().mapToInt(HourAllocation::getHours).sum() != cost)
+            throw new BizException("预约冻结记录不匹配，操作已撤销");
+        int returned = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (HourAllocation a : allocations) {
+            boolean valid = a.getExpireAt() == null || a.getExpireAt().isAfter(now);
+            boolean release = refund && valid;
+            changed(batchMapper.release(a.getBatchId(), a.getHours(), release ? 0 : a.getHours()));
+            changed(
+                    allocationMapper.finish(
+                            bookingId,
+                            a.getBatchId(),
+                            release ? "released" : refund ? "expired" : "consumed"));
+            if (release) returned += a.getHours();
+        }
+        changed(userMapper.addFrozen(userId, -cost));
+        if (returned > 0) changed(userMapper.addCourseBalance(userId, returned));
+        writeHourLog(
+                userId,
+                type,
+                returned,
+                "booking",
+                bookingId,
+                null,
+                refund
+                        ? "取消退回 " + returned + " 课时；已到期部分 " + (cost - returned) + " 课时不恢复"
+                        : type.equals("noshow") ? "爽约核销冻结课时" : "签到核销冻结课时");
+        assertBalanced(userId);
+    }
+
+    public int expireBatches() {
+        lock.acquire();
+        int count = 0;
+        for (Long id : batchMapper.expiredUsers()) {
+            expireUser(id);
+            count++;
+        }
+        return count;
+    }
+
+    public void expireUser(Long userId) {
+        lock.acquire();
+        user(userId);
+        int expired = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (CourseHourBatch b : batchMapper.lockAll(userId)) {
+            if (b.getExpireAt() != null
+                    && !b.getExpireAt().isAfter(now)
+                    && b.getRemaining() > b.getFrozen()) {
+                expired += b.getRemaining() - b.getFrozen();
+                changed(batchMapper.expireFree(b.getId()));
             }
         }
-    }
-
-    /**
-     * 课时过期销账（定时任务调用，对应原型"有效期365天"）：
-     * 已过期批次剩余清零，并按学员扣减可用课时。
-     * 销账口径：销账额 = min( max(0, 过期批次剩余合计 - 冻结课时), 可用余额)。
-     * 冻结课时不回退——已约课次仍可正常上/按取消规则处理；
-     * 已知偏差：若冻结课时落在已过期批次上，批次合计与余额会有少量漂移，随约课完结收敛。
-     * @return 被销账的学员数
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public int expireBatches() {
-        List<CourseHourBatch> expired = batchMapper.listExpiredWithRemaining(LocalDateTime.now());
-        if (expired.isEmpty()) return 0;
-        // 按学员归集过期课时合计
-        Map<Long, Integer> sumByUser = new LinkedHashMap<>();
-        for (CourseHourBatch b : expired) {
-            sumByUser.merge(b.getUserId(), b.getRemaining(), Integer::sum);
-            batchMapper.zeroRemaining(b.getId());
+        if (expired > 0) {
+            changed(userMapper.addCourseBalance(userId, -expired));
+            writeHourLog(userId, "expire", -expired, null, null, null, "未预约课时到期；冻结课时保留至本次预约结算");
         }
-        int users = 0;
-        for (Map.Entry<Long, Integer> e : sumByUser.entrySet()) {
-            Long userId = e.getKey();
-            int expiredHours = e.getValue();
-            User s = userMapper.findById(userId);
-            if (s == null) continue;
-            int frozen = s.getFrozenHours() == null ? 0 : s.getFrozenHours();
-            int balance = s.getCourseBalance() == null ? 0 : s.getCourseBalance();
-            int writeOff = Math.min(Math.max(0, expiredHours - frozen), balance);
-            if (writeOff <= 0) continue;
-            userMapper.addCourseBalance(userId, -writeOff);
-            writeHourLog(userId, "expire", -writeOff, balance - writeOff, null, null, null, "课时过期销账");
-            users++;
-        }
-        return users;
+        assertBalanced(userId);
     }
 
-    // ============ 积分（供签到/兑换调用） ============
-
-    /** 赚取积分（签到等） */
-    public void earnPoints(Long userId, int delta, String type, String refType, Long refId, String remark) {
-        User s = userMapper.findById(userId);
-        if (delta == 0) return;
-        addPointsInternal(s, delta, type, refType, refId, null, remark);
+    public Map<String, Integer> balances(Long userId) {
+        lock.acquire();
+        expireUser(userId);
+        User u = user(userId);
+        int days = configService.getInt(1L, "expiry_reminder_days", 30);
+        int expiring =
+                batchMapper.lockAll(userId).stream()
+                        .filter(
+                                b ->
+                                        b.getExpireAt() != null
+                                                && b.getExpireAt().isAfter(LocalDateTime.now())
+                                                && !b.getExpireAt()
+                                                        .isAfter(
+                                                                LocalDateTime.now().plusDays(days)))
+                        .mapToInt(b -> b.getRemaining() - b.getFrozen())
+                        .sum();
+        return Map.of(
+                "available",
+                u.getCourseBalance(),
+                "frozen",
+                u.getFrozenHours(),
+                "points",
+                u.getPointsBalance(),
+                "expiring",
+                expiring);
     }
 
-    /** 消费积分（兑换/抓取），不足抛 1103 */
-    public void spendPoints(Long userId, int cost, String refType, Long refId, String remark) {
-        User s = userMapper.findById(userId);
-        addPointsInternal(s, -cost, "redeem", refType, refId, null, remark);
+    public void assertBalanced(Long userId) {
+        User u = user(userId);
+        List<CourseHourBatch> bs = batchMapper.lockAll(userId);
+        int remaining = bs.stream().mapToInt(CourseHourBatch::getRemaining).sum();
+        int frozen = bs.stream().mapToInt(CourseHourBatch::getFrozen).sum();
+        if (remaining != u.getCourseBalance() + u.getFrozenHours()
+                || frozen != u.getFrozenHours()
+                || bs.stream().anyMatch(b -> b.getRemaining() < b.getFrozen() || b.getFrozen() < 0))
+            throw new BizException("课时对账不一致，操作已撤销，请联系管理员核对历史记录");
     }
 
-    /** 退回积分（兑换驳回） */
-    public void refundPoints(Long userId, int cost, String refType, Long refId, String remark) {
-        User s = userMapper.findById(userId);
-        addPointsInternal(s, cost, "redeem", refType, refId, null, remark);
+    public void earnPoints(
+            Long id, int delta, String type, String refType, Long refId, String remark) {
+        lock.acquire();
+        if (delta < 0) throw new BizException("积分奖励不能为负");
+        changePoints(id, delta, type, refType, refId, null, remark);
     }
 
-    private void writeHourLog(Long userId, String type, int amount, int balanceAfter,
-                              String refType, Long refId, Long operatorId, String remark) {
-        HourLog log = new HourLog();
-        log.setUserId(userId);
-        log.setType(type);
-        log.setAmount(amount);
-        log.setBalanceAfter(balanceAfter);
-        log.setRefType(refType);
-        log.setRefId(refId);
-        log.setOperatorId(operatorId);
-        log.setRemark(remark);
-        hourLogMapper.insert(log);
+    public void spendPoints(Long id, int cost, String refType, Long refId, String remark) {
+        lock.acquire();
+        if (cost <= 0) throw new BizException("积分消费必须大于零");
+        changePoints(id, -cost, "redeem", refType, refId, null, remark);
     }
 
-    public List<HourLog> hourLogs(Long userId) {
-        return hourLogMapper.listByUser(userId);
+    public void refundPoints(Long id, int cost, String refType, Long refId, String remark) {
+        lock.acquire();
+        if (cost <= 0) throw new BizException("积分退回必须大于零");
+        changePoints(id, cost, "refund", refType, refId, null, remark);
     }
 
-    public List<PointLog> pointLogs(Long userId) {
-        return pointLogMapper.listByUser(userId);
+    private void writeHourLog(
+            Long id,
+            String type,
+            int amount,
+            String refType,
+            Long refId,
+            Long operatorId,
+            String remark) {
+        HourLog l = new HourLog();
+        l.setUserId(id);
+        l.setType(type);
+        l.setAmount(amount);
+        l.setBalanceAfter(user(id).getCourseBalance());
+        l.setRefType(refType);
+        l.setRefId(refId);
+        l.setOperatorId(operatorId);
+        l.setRemark(remark);
+        hourLogMapper.insert(l);
+    }
+
+    public List<HourLog> hourLogs(Long id) {
+        return hourLogMapper.listByUser(id);
+    }
+
+    public List<PointLog> pointLogs(Long id) {
+        return pointLogMapper.listByUser(id);
     }
 }

@@ -5,13 +5,13 @@
       <el-button type="primary" @click="save">保存全部</el-button>
     </div>
     <el-table :data="list" border>
-      <el-table-column prop="configKey" label="配置键" width="220" />
+      <el-table-column prop="remark" label="设置项" min-width="220" />
       <el-table-column label="值" width="200">
         <template #default="{row}"><el-input v-model="row.configValue" /></template>
       </el-table-column>
       <el-table-column prop="remark" label="说明" />
     </el-table>
-    <div class="tip">提示：所有阈值改这里即生效（如免费取消时限、签到积分、抓娃娃机消耗等），复制给新店只改这里。</div>
+    <div class="tip">新预约使用保存后的规则；已有预约按原课时和签到积分结算。候补不冻结课时，转正时冻结。商品到店领取。</div>
   </div>
 </template>
 

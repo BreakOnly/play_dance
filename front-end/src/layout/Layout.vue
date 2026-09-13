@@ -20,6 +20,7 @@
           <span class="user">{{ admin.nickname || admin.username || '管理员' }} <el-icon><ArrowDown /></el-icon></span>
           <template #dropdown>
             <el-dropdown-menu>
+              <el-dropdown-item command="password">修改密码</el-dropdown-item>
               <el-dropdown-item command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -29,6 +30,13 @@
         <router-view />
       </el-main>
     </el-container>
+    <el-dialog v-model="passwordVisible" title="修改管理员密码" width="420px">
+      <el-form label-width="85px">
+        <el-form-item label="原密码"><el-input v-model="password.oldPassword" type="password" show-password /></el-form-item>
+        <el-form-item label="新密码"><el-input v-model="password.newPassword" type="password" show-password placeholder="至少 12 个字符" /></el-form-item>
+      </el-form>
+      <template #footer><el-button :loading="saving" type="primary" @click="savePassword">修改并重新登录</el-button></template>
+    </el-dialog>
   </el-container>
 </template>
 
@@ -39,14 +47,22 @@ import { authApi } from '@/api'
 
 const router = useRouter()
 const admin = ref({})
+const passwordVisible = ref(false), password = ref({ oldPassword: '', newPassword: '' }), saving = ref(false)
+async function savePassword() {
+  if (saving.value) return
+  saving.value = true
+  try { await authApi.password(password.value); localStorage.removeItem('admin_token'); router.replace('/login') } finally { saving.value = false }
+}
 const menus = router.getRoutes().find((r) => r.path === '/').children.filter((c) => c.name)
 
 onMounted(() => {
   authApi.info().then((d) => { admin.value = d }).catch(() => {})
 })
 
-function onCmd(cmd) {
+async function onCmd(cmd) {
+  if (cmd === 'password') { password.value = { oldPassword: '', newPassword: '' }; passwordVisible.value = true; return }
   if (cmd === 'logout') {
+    await authApi.logout()
     localStorage.removeItem('admin_token')
     router.push('/login')
   }

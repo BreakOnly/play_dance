@@ -6,10 +6,14 @@ import com.dance.studio.dto.ProfileUpdateReq;
 import com.dance.studio.entity.User;
 import com.dance.studio.service.AuthService;
 import com.dance.studio.vo.LoginVo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -42,7 +46,7 @@ public class MpAuthController {
 
     @Operation(summary = "更新资料")
     @PutMapping("/profile")
-    public Result<User> updateProfile(@RequestBody ProfileUpdateReq req) {
+    public Result<User> updateProfile(@Valid @RequestBody ProfileUpdateReq req) {
         return Result.success(authService.updateProfile(req));
     }
 }

@@ -4,9 +4,6 @@
       <span class="page-title">用户管理</span>
       <div style="display:flex;gap:8px">
         <el-input v-model="q.keyword" placeholder="姓名/手机" clearable style="width:200px" @keyup.enter="reload" />
-        <el-select v-model="q.status" placeholder="状态" clearable style="width:110px">
-          <el-option label="正常" :value="1" /><el-option label="停用" :value="0" />
-        </el-select>
         <el-button type="primary" @click="reload">查询</el-button>
       </div>
     </div>
@@ -17,9 +14,6 @@
       <el-table-column prop="courseBalance" label="可用课时" width="90" />
       <el-table-column prop="frozenHours" label="冻结" width="70" />
       <el-table-column prop="pointsBalance" label="积分" width="90" />
-      <el-table-column label="状态" width="80">
-        <template #default="{ row }"><el-tag :type="row.status===1?'success':'info'">{{ row.status===1?'正常':'停用' }}</el-tag></template>
-      </el-table-column>
       <el-table-column label="操作" min-width="260">
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">明细</el-button>
@@ -32,15 +26,12 @@
     <el-pagination style="margin-top:12px;justify-content:flex-end" layout="total,prev,pager,next" :total="total" :page-size="q.size" :current-page="q.page" @current-change="onPage" />
 
     <!-- 新增/编辑 -->
-    <el-dialog v-model="editVisible" :title="form.id?'编辑用户':'新增用户'" width="460px">
+    <el-dialog v-model="editVisible" title="编辑用户资料" width="460px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="姓名"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="手机"><el-input v-model="form.phone" /></el-form-item>
+        <el-form-item label="微信手机号"><el-input v-model="form.phone" disabled /></el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.gender"><el-radio :value="1">男</el-radio><el-radio :value="2">女</el-radio></el-radio-group>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-switch v-model="form.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer><el-button @click="editVisible=false">取消</el-button><el-button type="primary" @click="saveUser">保存</el-button></template>
@@ -104,7 +95,15 @@ import { ElMessage } from 'element-plus'
 import { userApi } from '@/api'
 
 const list = ref([]); const total = ref(0); const loading = ref(false)
-const q = ref({ keyword: '', status: null, page: 1, size: 10 })
+const q = ref({ keyword: '', page: 1, size: 10 })
+const saving = ref(false)
+const rechargeKey = ref(''), pointsKey = ref('')
+function operationKey() { return Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) }
+async function mutate(action, close) {
+  if (saving.value) return
+  saving.value = true
+  try { await action(); ElMessage.success('已保存'); close(); load() } finally { saving.value = false }
+}
 
 function reload() { q.value.page = 1; load() }
 function onPage(p) { q.value.page = p; load() }
@@ -116,25 +115,23 @@ function load() {
 // 编辑
 const editVisible = ref(false)
 const form = ref({})
-function openEdit(row) { form.value = row ? { ...row } : { gender: 0, status: 1 }; editVisible.value = true }
+function openEdit(row) { form.value = { ...row }; editVisible.value = true }
 function saveUser() {
-  const op = form.value.id ? userApi.update(form.value.id, form.value) : userApi.create(form.value)
-  op.then(() => { ElMessage.success('已保存'); editVisible.value = false; load() })
+  mutate(() => userApi.update(form.value.id, { name: form.value.name, gender: form.value.gender }), () => { editVisible.value = false })
 }
 
 // 充值
 const rechargeVisible = ref(false); const rechargeForm = ref({})
-function openRecharge(row) { rechargeForm.value = { id: row.id, hours: 10, giftHours: 0, amount: 0, validityDays: 365, remark: '' }; rechargeVisible.value = true }
+function openRecharge(row) { rechargeKey.value = operationKey(); rechargeForm.value = { id: row.id, hours: 10, giftHours: 0, amount: 0, validityDays: 365, remark: '' }; rechargeVisible.value = true }
 function doRecharge() {
-  userApi.recharge(rechargeForm.value.id, rechargeForm.value).then(() => { ElMessage.success('充值成功'); rechargeVisible.value = false; load() })
+  mutate(() => userApi.recharge(rechargeForm.value.id, rechargeForm.value, rechargeKey.value), () => { rechargeVisible.value = false })
 }
 
 // 积分
 const pointsVisible = ref(false); const pointsForm = ref({})
-function openPoints(row) { pointsForm.value = { id: row.id, delta: 0, reason: '' }; pointsVisible.value = true }
+function openPoints(row) { pointsKey.value = operationKey(); pointsForm.value = { id: row.id, delta: 0, reason: '' }; pointsVisible.value = true }
 function doPoints() {
-  userApi.adjustPoints(pointsForm.value.id, { delta: pointsForm.value.delta, reason: pointsForm.value.reason })
-    .then(() => { ElMessage.success('已调整'); pointsVisible.value = false; load() })
+  mutate(() => userApi.adjustPoints(pointsForm.value.id, { delta: pointsForm.value.delta, reason: pointsForm.value.reason }, pointsKey.value), () => { pointsVisible.value = false })
 }
 
 // 明细

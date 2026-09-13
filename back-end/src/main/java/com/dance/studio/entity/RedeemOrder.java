@@ -6,16 +6,25 @@ import java.time.LocalDateTime;
 
 @Data
 public class RedeemOrder {
+    private String pickupCode;
+    private String userName;
+    private String userPhone;
+    private Long pickupAdminId;
+    private java.time.LocalDateTime pickedUpAt;
     private Long id;
     private Long storeId;
     private Long userId;
     private Long goodsId;
     private String goodsName;
+
     /** claw抓取 / redeem兑换 */
     private String source;
+
     private Integer pointsCost;
+
     /** pending待审批 to_ship待发货 shipping配送中 completed已完成 rejected已驳回 */
     private String status;
+
     private String receiverName;
     private String receiverPhone;
     private String address;

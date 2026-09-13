@@ -1,7 +1,9 @@
 package com.dance.studio.service;
 
 import com.dance.studio.common.exception.BizException;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -9,8 +11,8 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 /**
- * 微信小程序服务：code 换会话（openid/unionid）、手机号授权、access_token 缓存。
- * 开发期 app.wechat.mock=true 时：code 直接当 openid；手机号接口的 code 直接当手机号（便于自测联调）。
+ * 微信小程序服务：code 换会话（openid/unionid）、手机号授权、access_token 缓存。 开发期 app.wechat.mock=true 时：code 直接当
+ * openid；手机号接口的 code 直接当手机号（便于自测联调）。
  */
 @Slf4j
 @Service
@@ -23,14 +25,63 @@ public class WechatService {
     private static final String PHONE_URL =
             "https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={token}";
 
-    @Value("${app.wechat.mock:true}")
+    @Value("${app.wechat.mock:false}")
     private boolean mock;
+
     @Value("${app.wechat.appid:}")
     private String appid;
+
     @Value("${app.wechat.secret:}")
     private String secret;
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient =
+            RestClient.builder().requestFactory(requestFactory()).build();
+
+    private static org.springframework.http.client.JdkClientHttpRequestFactory requestFactory() {
+        var factory =
+                new org.springframework.http.client.JdkClientHttpRequestFactory(
+                        java.net.http.HttpClient.newBuilder()
+                                .connectTimeout(java.time.Duration.ofSeconds(10))
+                                .build());
+        factory.setReadTimeout(java.time.Duration.ofSeconds(15));
+        return factory;
+    }
+
+    @Value("${app.wechat.code-env:release}")
+    private String codeEnv;
+
+    public byte[] unlimitedCode(String scene) {
+        requireAppidConfig();
+        if (mock) throw new BizException("生成微信签到码需要真实微信配置，请关闭模拟登录");
+        byte[] bytes =
+                safe(
+                        () ->
+                                restClient
+                                        .post()
+                                        .uri(
+                                                "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token={token}",
+                                                accessToken())
+                                        .body(
+                                                Map.of(
+                                                        "scene",
+                                                        scene,
+                                                        "page",
+                                                        "pages/checkin/result",
+                                                        "env_version",
+                                                        codeEnv,
+                                                        "check_path",
+                                                        "release".equals(codeEnv),
+                                                        "width",
+                                                        430))
+                                        .retrieve()
+                                        .body(byte[].class));
+        if (bytes == null
+                || bytes.length < 8
+                || !((bytes[0] == (byte) 0x89 && bytes[1] == 0x50)
+                        || (bytes[0] == (byte) 0xff && bytes[1] == (byte) 0xd8)))
+            throw new BizException("微信签到码生成失败，请核对 AppID、密钥和已发布的签到页面");
+        return bytes;
+    }
 
     /** code2session 结果：openid 必有；unionid 需小程序绑定微信开放平台后才返回 */
     public record WxSession(String openid, String unionid) {}
@@ -44,16 +95,13 @@ public class WechatService {
         requireAppidConfig();
         Map<String, Object> resp = getForMap(JSCODE2SESSION_URL, appid, secret, code);
         if (resp == null || resp.get("openid") == null) {
-            log.warn("jscode2session 失败: {}", resp);
+            log.warn("jscode2session 失败，errcode={}", resp == null ? null : resp.get("errcode"));
             throw new BizException("微信登录失败");
         }
         return new WxSession((String) resp.get("openid"), (String) resp.get("unionid"));
     }
 
-    /**
-     * 手机号授权 code 换手机号（需企业主体小程序且已开通手机号验证组件）。
-     * mock 模式下 code 即手机号，供开发联调。
-     */
+    /** 手机号授权 code 换手机号（需企业主体小程序且已开通手机号验证组件）。 mock 模式下 code 即手机号，供开发联调。 */
     @SuppressWarnings("unchecked")
     public String phoneNumber(String code) {
         if (code == null || code.isBlank()) {
@@ -63,20 +111,25 @@ public class WechatService {
             return code.trim();
         }
         requireAppidConfig();
-        Map<String, Object> resp = restClient.post()
-                .uri(PHONE_URL, accessToken())
-                .body(Map.of("code", code))
-                .retrieve()
-                .body(Map.class);
+        Map<String, Object> resp =
+                safe(
+                        () ->
+                                restClient
+                                        .post()
+                                        .uri(PHONE_URL, accessToken())
+                                        .body(Map.of("code", code))
+                                        .retrieve()
+                                        .body(Map.class));
         if (resp == null || !Integer.valueOf(0).equals(toInt(resp.get("errcode")))) {
-            log.warn("getuserphonenumber 失败: {}", resp);
+            log.warn("getuserphonenumber 失败，errcode={}", resp == null ? null : resp.get("errcode"));
             throw new BizException("手机号授权失败");
         }
         Map<String, Object> phoneInfo = (Map<String, Object>) resp.get("phone_info");
         if (phoneInfo == null) {
             throw new BizException("手机号授权失败");
         }
-        String phone = (String) phoneInfo.getOrDefault("purePhoneNumber", phoneInfo.get("phoneNumber"));
+        String phone =
+                (String) phoneInfo.getOrDefault("purePhoneNumber", phoneInfo.get("phoneNumber"));
         if (phone == null || phone.isBlank()) {
             throw new BizException("手机号授权失败");
         }
@@ -85,6 +138,7 @@ public class WechatService {
 
     /** access_token 内存缓存：有效期 7200s，提前 5 分钟过期 */
     private volatile String cachedToken;
+
     private volatile long tokenExpireAt = 0;
 
     private synchronized String accessToken() {
@@ -94,7 +148,7 @@ public class WechatService {
         }
         Map<String, Object> resp = getForMap(TOKEN_URL, appid, secret);
         if (resp == null || resp.get("access_token") == null) {
-            log.warn("获取access_token失败: {}", resp);
+            log.warn("获取access_token失败，errcode={}", resp == null ? null : resp.get("errcode"));
             throw new BizException("获取access_token失败");
         }
         cachedToken = (String) resp.get("access_token");
@@ -111,7 +165,16 @@ public class WechatService {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> getForMap(String url, Object... uriVars) {
-        return restClient.get().uri(url, uriVars).retrieve().body(Map.class);
+        return safe(() -> restClient.get().uri(url, uriVars).retrieve().body(Map.class));
+    }
+
+    private <T> T safe(java.util.function.Supplier<T> request) {
+        try {
+            return request.get();
+        } catch (org.springframework.web.client.RestClientException e) {
+            // 不让包含 AppSecret/access_token 查询串的上游异常进入通用日志。
+            throw new BizException("微信服务暂时不可用，请稍后重试");
+        }
     }
 
     private int toInt(Object v) {

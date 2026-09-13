@@ -59,7 +59,9 @@
                s.course_id, c.name AS course_name, c.type AS course_type,
                dt.id AS dance_type_id, dt.name AS dance_type_name, dt.intro AS dance_type_intro,
                lv.id AS level_id, lv.name AS level_name, lv.sort AS level_sort,
-               c.tag AS course_tag, c.duration_min, c.cost_hours,
+               c.tag AS course_tag, c.duration_min,
+               COALESCE((SELECT b.cost_hours FROM booking b WHERE b.schedule_id=s.id AND b.user_id=#{userId}
+                         AND b.status IN ('booked','waitlist','checked') LIMIT 1),c.cost_hours) AS cost_hours,
                s.notice_id, nz.name AS notice_name, nz.content AS notice_content,
                c.description,
                s.teacher_id, t.name AS teacher_name, t.avatar AS teacher_avatar, t.intro AS teacher_intro,
@@ -167,7 +169,7 @@
 
     <update id="incrBooked">
         UPDATE course_schedule SET booked_count = booked_count + 1
-        WHERE id = #{id} AND booked_count &lt; capacity AND status = 'open'
+        WHERE id = #{id} AND booked_count &lt; capacity AND status IN ('open','full')
     </update>
 
     <update id="decrBooked">

@@ -11,9 +11,12 @@ import com.dance.studio.mapper.TeacherMapper;
 import com.dance.studio.service.ScheduleService;
 import com.dance.studio.vo.CourseVo;
 import com.dance.studio.vo.ScheduleVo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +32,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MpScheduleController {
 
-    private static final Map<String, String> COURSE_TYPE_LABELS = Map.of("group", "团课", "private", "私教");
+    private static final Map<String, String> COURSE_TYPE_LABELS =
+            Map.of("group", "团课", "private", "私教");
 
     private final ScheduleService scheduleService;
     private final CourseScheduleMapper scheduleMapper;
@@ -40,14 +44,18 @@ public class MpScheduleController {
 
     @Operation(summary = "课表(跨门店,支持关键字与舞种/难度/门店筛选)")
     @GetMapping
-    public Result<List<ScheduleVo>> list(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-                                         @RequestParam(required = false) String keyword,
-                                         @RequestParam(required = false) Long danceTypeId,
-                                         @RequestParam(required = false) Long levelId,
-                                         @RequestParam(required = false) Long storeId) {
-        return Result.success(scheduleMapper.listForMp(start, end, keyword, danceTypeId, levelId,
-                storeId, ContextHolder.userId()));
+    public Result<List<ScheduleVo>> list(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    LocalDateTime start,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    LocalDateTime end,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long danceTypeId,
+            @RequestParam(required = false) Long levelId,
+            @RequestParam(required = false) Long storeId) {
+        return Result.success(
+                scheduleMapper.listForMp(
+                        start, end, keyword, danceTypeId, levelId, 1L, ContextHolder.userId()));
     }
 
     @Operation(summary = "课次详情")
@@ -64,12 +72,16 @@ public class MpScheduleController {
 
         // 课程类型取上架课程去重，映射中文标签
         List<Map<String, Object>> courseTypes = new ArrayList<>();
-        courses.stream().map(CourseVo::getType).distinct().forEach(t -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("value", t);
-            m.put("label", COURSE_TYPE_LABELS.getOrDefault(t, t));
-            courseTypes.add(m);
-        });
+        courses.stream()
+                .map(CourseVo::getType)
+                .distinct()
+                .forEach(
+                        t -> {
+                            Map<String, Object> m = new LinkedHashMap<>();
+                            m.put("value", t);
+                            m.put("label", COURSE_TYPE_LABELS.getOrDefault(t, t));
+                            courseTypes.add(m);
+                        });
 
         List<Map<String, Object>> teachers = new ArrayList<>();
         for (Teacher t : teacherMapper.listByStore(storeId, true)) {

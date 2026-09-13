@@ -39,7 +39,7 @@
     <sql id="voSelect">
         SELECT b.id, b.schedule_id, b.user_id, stu.name AS user_name,
                c.name AS course_name, c.type AS course_type, t.name AS teacher_name,
-               s.room, st.name AS store_name, s.start_time, s.end_time, b.status, b.waitlist_no, b.locked_hours, b.created_at
+               s.room, st.name AS store_name, s.start_time, s.end_time, b.status, b.waitlist_no, b.locked_hours, b.checkin_points, b.created_at
         FROM booking b
         LEFT JOIN course_schedule s ON s.id = b.schedule_id
         LEFT JOIN store st ON st.id = s.store_id
@@ -49,9 +49,9 @@
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO booking (store_id, user_id, schedule_id, status, locked_hours, waitlist_no, is_admin)
+        INSERT INTO booking (store_id, user_id, schedule_id, status, locked_hours, waitlist_no, is_admin, cost_hours, checkin_points)
         VALUES (#{storeId}, #{userId}, #{scheduleId}, #{status}, COALESCE(#{lockedHours},1),
-                #{waitlistNo}, COALESCE(#{isAdmin},0))
+                #{waitlistNo}, COALESCE(#{isAdmin},0), #{costHours}, #{checkinPoints})
     </insert>
 
     <select id="findById" resultMap="EntityMap">

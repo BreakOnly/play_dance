@@ -6,12 +6,15 @@ import java.time.LocalDateTime;
 
 @Data
 public class CourseHourBatch {
+    private Integer frozen;
     private Long id;
     private Long userId;
     private Integer total;
     private Integer remaining;
+
     /** recharge充值 / gift赠送 */
     private String source;
+
     private Long orderId;
     private LocalDateTime expireAt;
     private LocalDateTime createdAt;

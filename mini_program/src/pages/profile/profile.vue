@@ -7,7 +7,7 @@
       </view>
       <view class="f">
         <text class="lb">手机号</text>
-        <input class="ipt" v-model="form.phone" type="number" placeholder="请输入手机号" placeholder-class="ph" />
+        <input class="ipt" v-model="form.phone" disabled placeholder="通过微信授权绑定" placeholder-class="ph" />
         <button class="wx-phone" open-type="getPhoneNumber" @getphonenumber="onGetPhone">一键绑定</button>
       </view>
       <view class="f">
@@ -50,7 +50,7 @@ function onGetPhone(e) {
   const d = e.detail || {}
   if (!d.code) {
     const denied = (d.errMsg || '').includes('deny')
-    uni.showToast({ title: denied ? '已取消授权' : '当前环境不支持，请手动填写', icon: 'none' })
+    uni.showToast({ title: denied ? '已取消授权' : '请在微信小程序中授权手机号', icon: 'none' })
     return
   }
   api.bindPhone(d.code).then((phone) => {

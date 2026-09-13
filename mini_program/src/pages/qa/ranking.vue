@@ -39,7 +39,7 @@ onShow(() => {
 
 function play(v) {
   api.videoPlayUrl(v.id).then((d) => {
-    uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(d.url) })
+    uni.navigateTo({ url: '/pages/video/player?id=' + v.id })
   }).catch(() => {})
 }
 

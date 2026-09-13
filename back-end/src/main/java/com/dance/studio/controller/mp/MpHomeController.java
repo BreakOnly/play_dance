@@ -12,9 +12,12 @@ import com.dance.studio.service.ConfigService;
 import com.dance.studio.service.NotificationService;
 import com.dance.studio.service.UserVideoService;
 import com.dance.studio.vo.BookingVo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,6 +49,7 @@ public class MpHomeController {
     public Result<Map<String, Object>> home() {
         Long sid = ContextHolder.userId();
         Long storeId = ContextHolder.storeId();
+        accountService.balances(sid);
         User stu = userMapper.findById(sid);
 
         int available = (stu.getCourseBalance() == null ? 0 : stu.getCourseBalance());
@@ -53,9 +57,13 @@ public class MpHomeController {
 
         // 今日已约课
         LocalDate today = LocalDate.now();
-        List<BookingVo> todayCourses = bookingService.myBookings(sid, "booked").stream()
-                .filter(b -> b.getStartTime() != null && b.getStartTime().toLocalDate().isEqual(today))
-                .toList();
+        List<BookingVo> todayCourses =
+                bookingService.myBookings(sid, "booked").stream()
+                        .filter(
+                                b ->
+                                        b.getStartTime() != null
+                                                && b.getStartTime().toLocalDate().isEqual(today))
+                        .toList();
 
         // 提醒
         int lowThreshold = configService.getInt(storeId, "low_hours_threshold", 2);
@@ -91,8 +99,10 @@ public class MpHomeController {
         List<BookingVo> allBookings = bookingService.myBookings(sid, null);
         boolean hasBooking = !allBookings.isEmpty();
         boolean hasChecked = allBookings.stream().anyMatch(b -> "checked".equals(b.getStatus()));
-        boolean hasRecharged = accountService.hourLogs(sid).stream()
-                .anyMatch(l -> "recharge".equals(l.getType()) || "gift".equals(l.getType()));
+        boolean hasRecharged =
+                accountService.hourLogs(sid).stream()
+                        .anyMatch(
+                                l -> "recharge".equals(l.getType()) || "gift".equals(l.getType()));
         Map<String, Object> guide = new LinkedHashMap<>();
         guide.put("step1Done", hasRecharged);
         guide.put("step2Done", hasBooking);
@@ -106,7 +116,9 @@ public class MpHomeController {
         LocalDateTime expireAt = batchMapper.earliestExpire(sid);
         if (expireAt != null) {
             data.put("membershipExpireAt", expireAt.toLocalDate().toString());
-            data.put("membershipRemainDays", ChronoUnit.DAYS.between(LocalDate.now(), expireAt.toLocalDate()));
+            data.put(
+                    "membershipRemainDays",
+                    ChronoUnit.DAYS.between(LocalDate.now(), expireAt.toLocalDate()));
         } else {
             data.put("membershipExpireAt", "");
             data.put("membershipRemainDays", null);

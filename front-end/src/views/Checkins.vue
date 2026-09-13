@@ -5,6 +5,7 @@
       <div style="display:flex;gap:8px">
         <el-date-picker v-model="range" type="datetimerange" value-format="YYYY-MM-DDTHH:mm:ss" start-placeholder="开始" end-placeholder="结束" @change="load" />
         <el-button @click="loadStat">出勤统计</el-button>
+        <el-button type="primary" @click="codeVisible = true">展示签到码</el-button>
         <el-button type="primary" @click="openManual">管理员代签</el-button>
       </div>
     </div>
@@ -22,6 +23,17 @@
       <el-table-column prop="checkTime" label="签到时间" width="180" />
     </el-table>
 
+    <el-dialog v-model="codeVisible" title="微信扫一扫签到" width="480px" @closed="code = null">
+      <el-select v-model="codeSchedule" placeholder="选择正在签到的课次" style="width:100%" @change="code = null">
+        <el-option v-for="s in schedules" :key="s.id" :label="optLabel(s)" :value="s.id" />
+      </el-select>
+      <div v-if="code" style="text-align:center;margin-top:20px">
+        <img :src="code.image" alt="本课次微信签到码" style="width:300px;max-width:100%" />
+        <p>有效期至 {{ code.expiresAt }}，仅限本人扫码签到</p>
+      </div>
+      <p v-else>请在开课前允许签到的时段内生成，签到码有效期为 5 分钟。</p>
+      <template #footer><el-button type="primary" :loading="codeLoading" :disabled="!codeSchedule" @click="generateCode">生成 / 刷新签到码</el-button></template>
+    </el-dialog>
     <el-dialog v-model="manualVisible" title="管理员代签" width="440px">
       <el-form label-width="80px">
         <el-form-item label="课次">
@@ -47,6 +59,12 @@ import { checkinApi, scheduleApi, bookingApi } from '@/api'
 
 const list = ref([]); const range = ref([]); const stat = ref(null)
 const schedules = ref([])
+const codeVisible = ref(false), codeSchedule = ref(null), code = ref(null), codeLoading = ref(false)
+async function generateCode() {
+  if (codeLoading.value) return
+  codeLoading.value = true
+  try { code.value = await checkinApi.code(codeSchedule.value) } finally { codeLoading.value = false }
+}
 const manualVisible = ref(false); const mSchedule = ref(null); const mBooking = ref(null); const bookedList = ref([])
 
 function load() {

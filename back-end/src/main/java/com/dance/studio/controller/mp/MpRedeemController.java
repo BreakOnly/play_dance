@@ -6,9 +6,12 @@ import com.dance.studio.entity.Goods;
 import com.dance.studio.entity.RedeemOrder;
 import com.dance.studio.service.GoodsService;
 import com.dance.studio.service.RedeemService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +25,7 @@ public class MpRedeemController {
 
     private final GoodsService goodsService;
     private final RedeemService redeemService;
+    private final com.dance.studio.service.IdempotencyService idempotency;
 
     @Operation(summary = "手办列表(?category=claw/redeem)")
     @GetMapping("/goods")
@@ -37,8 +41,15 @@ public class MpRedeemController {
 
     @Operation(summary = "指定兑换")
     @PostMapping("/redeem")
-    public Result<RedeemOrder> redeem(@RequestBody Map<String, Long> body) {
-        return Result.success(redeemService.redeem(ContextHolder.userId(), body.get("goodsId")));
+    public Result<RedeemOrder> redeem(
+            @RequestHeader("Idempotency-Key") String key, @RequestBody Map<String, Long> body) {
+        return Result.success(
+                idempotency.execute(
+                        "redeem:" + ContextHolder.userId(),
+                        key,
+                        body,
+                        RedeemOrder.class,
+                        () -> redeemService.redeem(ContextHolder.userId(), body.get("goodsId"))));
     }
 
     @Operation(summary = "我的兑换/发放记录")
@@ -50,15 +61,9 @@ public class MpRedeemController {
     @Operation(summary = "我的手办(非驳回)")
     @GetMapping("/my-goods")
     public Result<List<RedeemOrder>> myGoods() {
-        return Result.success(redeemService.myOrders(ContextHolder.userId(), null)
-                .stream().filter(o -> !"rejected".equals(o.getStatus())).toList());
-    }
-
-    @Operation(summary = "填写收货信息")
-    @PutMapping("/redeem-orders/{id}/address")
-    public Result<Void> address(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        redeemService.fillAddress(id, ContextHolder.userId(),
-                body.get("name"), body.get("phone"), body.get("address"));
-        return Result.success();
+        return Result.success(
+                redeemService.myOrders(ContextHolder.userId(), null).stream()
+                        .filter(o -> !"rejected".equals(o.getStatus()))
+                        .toList());
     }
 }
