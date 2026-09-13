@@ -6,11 +6,14 @@ import com.dance.studio.common.exception.BizException;
 import com.dance.studio.entity.Course;
 import com.dance.studio.entity.CourseLevel;
 import com.dance.studio.entity.DanceType;
+import com.dance.studio.entity.Notice;
 import com.dance.studio.entity.Room;
 import com.dance.studio.entity.Teacher;
 import com.dance.studio.mapper.CourseLevelMapper;
 import com.dance.studio.mapper.CourseMapper;
+import com.dance.studio.mapper.CourseScheduleMapper;
 import com.dance.studio.mapper.DanceTypeMapper;
+import com.dance.studio.mapper.NoticeMapper;
 import com.dance.studio.mapper.RoomMapper;
 import com.dance.studio.mapper.TeacherMapper;
 import com.dance.studio.vo.CourseVo;
@@ -32,6 +35,8 @@ public class BasicDataService {
     private final RoomMapper roomMapper;
     private final CourseMapper courseMapper;
     private final TeacherMapper teacherMapper;
+    private final NoticeMapper noticeMapper;
+    private final CourseScheduleMapper courseScheduleMapper;
 
     private Long store() { return ContextHolder.storeId(); }
 
@@ -101,4 +106,20 @@ public class BasicDataService {
         return teacherMapper.findById(t.getId());
     }
     public void deleteTeacher(Long id) { teacherMapper.deleteById(id, store()); }
+
+    // ---------- 注意事项 ----------
+    public List<Notice> listNotices(boolean onlyEnabled) { return noticeMapper.listByStore(store(), onlyEnabled); }
+    public Notice saveNotice(Notice n) {
+        n.setStoreId(store());
+        if (n.getName() == null || n.getName().isBlank()) throw new BizException(ResultCode.PARAM_ERROR.getCode(), "注意事项名称不能为空");
+        if (n.getContent() == null || n.getContent().isBlank()) throw new BizException(ResultCode.PARAM_ERROR.getCode(), "注意事项内容不能为空");
+        if (n.getId() == null) noticeMapper.insert(n); else noticeMapper.update(n);
+        return noticeMapper.findById(n.getId());
+    }
+    public void deleteNotice(Long id) {
+        // 被排课引用的注意事项不允许删除，先在排课里改选其他/清空
+        int used = courseScheduleMapper.countByNotice(id, store());
+        if (used > 0) throw new BizException(ResultCode.PARAM_ERROR.getCode(), "该注意事项已被 " + used + " 节排课引用，请先调整排课");
+        noticeMapper.deleteById(id, store());
+    }
 }

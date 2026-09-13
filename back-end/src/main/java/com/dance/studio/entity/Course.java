@@ -14,6 +14,8 @@ public class Course {
     private String type;
     private Long danceTypeId;
     private Long levelId;
+    /** 课程标签（小程序课程卡片角标） */
+    private String tag;
     private Integer durationMin;
     private BigDecimal price;
     private Integer costHours;

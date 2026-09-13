@@ -17,7 +17,8 @@
         <view class="meta">{{ fmtTime(b.startTime) }} - {{ fmtTime(b.endTime) }}</view>
         <view v-if="b.status==='waitlist'" class="wl">候补第 {{ b.waitlistNo }} 位</view>
         <view class="foot-row">
-          <button v-if="b.status==='booked' || b.status==='waitlist'" class="cancel" @tap.stop="openCancel(b)">取消预约</button>
+          <button v-if="(b.status==='booked' || b.status==='waitlist') && canCancel(b)" class="cancel" @tap.stop="openCancel(b)">取消预约</button>
+          <view v-else-if="b.status==='booked'" class="late-tip">距开课不足 {{ cancelFreeHours }} 小时，如需取消请联系门店</view>
         </view>
       </view>
     </view>
@@ -72,8 +73,18 @@ const pointsPerCheckin = ref(100)
 const upcomings = computed(() => all.value.filter((b) => b.status === 'booked' || b.status === 'waitlist'))
 const useds = computed(() => all.value.filter((b) => ['checked', 'noshow', 'cancelled'].includes(b.status)))
 
-const cancelFreeText = computed(() =>
-  `本次在开课 ${cancelFreeHours.value} 小时前，可免费取消并退回冻结课时；不足 ${cancelFreeHours.value} 小时将扣除课时。确定取消《${cancelTarget.value?.courseName || ''}》？`)
+const cancelFreeText = computed(() => {
+  const b = cancelTarget.value
+  if (b?.status === 'waitlist') return `确定取消《${b.courseName || ''}》的候补吗？取消后当前候补位置将立即释放。`
+  return `确定要取消预约《${cancelTarget.value?.courseName || ''}》吗？\n取消后冻结的课时将立即退回。`
+})
+
+/** 候补随时可取消；已约课仅开课 cancelFreeHours 小时之前可线上取消 */
+function canCancel(b) {
+  if (b.status === 'waitlist') return true
+  if (!b.startTime) return false
+  return (new Date(b.startTime.replace(/-/g, '/').replace('T', ' ')) - new Date()) / 3600000 >= cancelFreeHours.value
+}
 
 onShow(() => {
   api.myBookings().then((d) => { all.value = d || [] }).catch(() => {})
@@ -133,7 +144,9 @@ function statusText(s) {
 .meta { color: $txt2; font-size: 23rpx; margin-top: 8rpx; }
 .wl { color: #ffd166; font-size: 23rpx; margin-top: 6rpx; }
 .points { color: #7ee787; font-size: 25rpx; font-weight: 800; margin-top: 10rpx; }
-.foot-row { display: flex; justify-content: flex-end; margin-top: 12rpx; }
+.foot-row { display: flex; justify-content: flex-end; align-items: center; margin-top: 12rpx; }
+/* 临近开课（<6h）不可线上取消时的提示 */
+.late-tip { color: $txt2; font-size: 22rpx; }
 .cancel { background: transparent; border: 1rpx solid $pink; color: $pink2; font-size: 24rpx; border-radius: 999rpx; padding: 4rpx 30rpx; line-height: 2; }
 .p-tip { margin-top: 30rpx; background: $pink-soft; border: 1rpx solid #4d1530; color: $pink2; font-size: 23rpx; border-radius: 14rpx; padding: 16rpx 20rpx; text-align: center; }
 .mask { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1000; display: flex; align-items: flex-end; }

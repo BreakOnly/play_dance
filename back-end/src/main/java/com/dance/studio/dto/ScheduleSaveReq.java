@@ -13,6 +13,9 @@ public class ScheduleSaveReq {
     private String room;
     /** 本课次曲目（可选） */
     private String song;
+
+    /** 注意事项 id（选填，可清空） */
+    private Long noticeId;
     @NotNull(message = "请选择开始时间")
     private LocalDateTime startTime;
     @NotNull(message = "请选择结束时间")

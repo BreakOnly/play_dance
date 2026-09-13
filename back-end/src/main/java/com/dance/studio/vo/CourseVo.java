@@ -16,6 +16,8 @@ public class CourseVo {
     private String danceTypeName;
     private Long levelId;
     private String levelName;
+    /** 课程标签（小程序课程卡片角标） */
+    private String tag;
     private Integer durationMin;
     private BigDecimal price;
     private Integer costHours;

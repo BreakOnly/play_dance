@@ -1,5 +1,6 @@
 package com.dance.studio.service.storage;
 
+import com.aliyun.oss.ClientBuilderConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.ObjectMetadata;
@@ -39,11 +40,21 @@ public class OssStorageService implements StorageService {
     private long urlExpireSeconds;
 
     private OSS client;
+    /** endpoint 为 IP/localhost（如本地 oss-emulator）时无法用虚拟主机风格，改 path-style 访问 */
+    private boolean pathStyleEndpoint;
 
     @PostConstruct
     public void init() {
-        this.client = new OSSClientBuilder().build(endpoint, ak, sk);
-        log.info("OSS 存储已启用 bucket={} endpoint={}", bucket, endpoint);
+        String host = endpoint.replaceFirst("^https?://", "").split(":")[0];
+        pathStyleEndpoint = host.equals("localhost") || host.matches("\\d+\\.\\d+\\.\\d+\\.\\d+");
+        if (pathStyleEndpoint) {
+            ClientBuilderConfiguration cfg = new ClientBuilderConfiguration();
+            cfg.setSLDEnabled(true);
+            this.client = new OSSClientBuilder().build(endpoint, ak, sk, cfg);
+        } else {
+            this.client = new OSSClientBuilder().build(endpoint, ak, sk);
+        }
+        log.info("OSS 存储已启用 bucket={} endpoint={} pathStyle={}", bucket, endpoint, pathStyleEndpoint);
     }
 
     @PreDestroy
@@ -66,8 +77,14 @@ public class OssStorageService implements StorageService {
             log.error("OSS 上传失败", e);
             throw new BizException("文件上传失败");
         }
-        // 返回直链；私有资源播放时再走 signedUrl()
-        return "https://" + bucket + "." + endpoint + "/" + key;
+        // 返回直链；私有资源播放时再走 signedUrl()。
+        // 云端 endpoint 用虚拟主机风格 https://{bucket}.{endpoint}/；
+        // 本地模拟器(IP)用 path-style http://{endpoint}/{bucket}/
+        String hostOnly = endpoint.replaceFirst("^https?://", "");
+        if (pathStyleEndpoint) {
+            return (endpoint.startsWith("https://") ? "https://" : "http://") + hostOnly + "/" + bucket + "/" + key;
+        }
+        return (endpoint.startsWith("http://") ? "http://" : "https://") + bucket + "." + hostOnly + "/" + key;
     }
 
     @Override
@@ -80,12 +97,17 @@ public class OssStorageService implements StorageService {
         return client.generatePresignedUrl(bucket, key, expiration).toString();
     }
 
-    /** 从直链中解析出对象 key */
+    /** 从直链中解析出对象 key（兼容虚拟主机风格与 path-style，忽略可能携带的查询串） */
     private String extractKey(String url) {
-        String host = bucket + "." + endpoint + "/";
-        int idx = url.indexOf(host);
-        if (idx >= 0) return url.substring(idx + host.length());
-        // 已是 key 形式
-        return url.startsWith("http") ? null : url;
+        if (!url.startsWith("http")) return url; // 已是 key 形式
+        String path = url.split("\\?", 2)[0];
+        String hostOnly = endpoint.replaceFirst("^https?://", "");
+        String vhPrefix = bucket + "." + hostOnly + "/";
+        int idx = path.indexOf(vhPrefix);
+        if (idx >= 0) return path.substring(idx + vhPrefix.length());
+        String psPrefix = "/" + bucket + "/";
+        idx = path.indexOf(psPrefix);
+        if (idx >= 0) return path.substring(idx + psPrefix.length());
+        return null;
     }
 }

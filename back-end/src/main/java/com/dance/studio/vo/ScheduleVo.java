@@ -26,6 +26,13 @@ public class ScheduleVo {
     private Long levelId;
     /** 星级(1-5)，取自难度等级的sort字段，小程序详情页展示 */
     private Integer levelSort;
+    /** 课程标签（course.tag，小程序课程卡片角标） */
+    private String courseTag;
+    /** 注意事项 id（后台编辑排课时回显） */
+    private Long noticeId;
+    /** 注意事项内容（排课选填关联，小程序课程详情展示，支持换行） */
+    private String noticeName;
+    private String noticeContent;
     private Integer durationMin;
     private Integer costHours;
     /** 课程简介（course.description） */
@@ -46,4 +53,6 @@ public class ScheduleVo {
     private String status;
     /** 小程序场景：当前学员对该课次的约课状态（booked/checked/waitlist/null） */
     private String myBookingStatus;
+    /** 小程序场景：当前学员在该课次的有效约课单 id（用于取消预约） */
+    private Long myBookingId;
 }

@@ -37,6 +37,12 @@ export const teacherApi = {
   del: (id) => http.delete(`/api/admin/teachers/${id}`)
 }
 
+export const noticeApi = {
+  list: (onlyEnabled) => http.get('/api/admin/notices', { params: { onlyEnabled } }),
+  save: (d) => d.id ? http.put(`/api/admin/notices/${d.id}`, d) : http.post('/api/admin/notices', d),
+  del: (id) => http.delete(`/api/admin/notices/${id}')
+}
+
 export const scheduleApi = {
   list: (params) => http.get('/api/admin/schedules', { params }),
   save: (d) => d.id ? http.put(`/api/admin/schedules/${d.id}`, d) : http.post('/api/admin/schedules', d),

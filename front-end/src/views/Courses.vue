@@ -12,6 +12,7 @@
           <el-table-column label="类型" width="90"><template #default="{row}">{{ row.type==='private'?'私教':'团课' }}</template></el-table-column>
           <el-table-column prop="danceTypeName" label="舞种" width="100" />
           <el-table-column prop="levelName" label="难度" width="90" />
+          <el-table-column prop="tag" label="标签" width="110"><template #default="{row}">{{ row.tag || '—' }}</template></el-table-column>
           <el-table-column prop="durationMin" label="时长" width="80" />
           <el-table-column prop="price" label="价格" width="90" />
           <el-table-column prop="costHours" label="耗课时" width="80" />
@@ -64,6 +65,25 @@
           <el-table-column label="操作" width="100"><template #default="{row}"><el-button link type="danger" @click="delRoom(row.id)">删除</el-button></template></el-table-column>
         </el-table>
       </el-tab-pane>
+
+      <!-- 注意事项 -->
+      <el-tab-pane label="注意事项" name="notice">
+        <div class="page-toolbar">
+          <span style="color:#909399;font-size:12px">排课时可选用；小程序课程详情页展示所选内容</span>
+          <el-button type="primary" @click="openNotice()">新增注意事项</el-button>
+        </div>
+        <el-table :data="notices" border>
+          <el-table-column prop="name" label="名称" width="180" />
+          <el-table-column prop="content" label="内容" min-width="300" show-overflow-tooltip />
+          <el-table-column prop="sort" label="排序" width="80" />
+          <el-table-column label="操作" width="140">
+            <template #default="{row}">
+              <el-button link type="primary" @click="openNotice(row)">编辑</el-button>
+              <el-button link type="danger" @click="delNotice(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
     </el-tabs>
 
     <el-dialog v-model="courseVisible" :title="cf.id?'编辑课程':'新增课程'" width="480px">
@@ -74,6 +94,7 @@
         </el-form-item>
         <el-form-item label="舞种"><el-select v-model="cf.danceTypeId"><el-option v-for="d in danceTypes" :key="d.id" :label="d.name" :value="d.id" /></el-select></el-form-item>
         <el-form-item label="难度"><el-select v-model="cf.levelId"><el-option v-for="l in levels" :key="l.id" :label="l.name" :value="l.id" /></el-select></el-form-item>
+        <el-form-item label="标签"><el-input v-model="cf.tag" maxlength="30" placeholder="选填，小程序课程卡片角标，如：零基础友好" clearable /></el-form-item>
         <el-form-item label="时长(分)"><el-input-number v-model="cf.durationMin" :min="15" /></el-form-item>
         <el-form-item label="价格(元)">
           <el-input v-model="cf.price" placeholder="请输入价格" @input="onPriceInput">
@@ -81,8 +102,22 @@
           </el-input>
         </el-form-item>
         <el-form-item label="耗课时"><el-input-number v-model="cf.costHours" :min="1" /></el-form-item>
+        <el-form-item label="课程简介"><el-input v-model="cf.description" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="选填，小程序课程详情页展示" /></el-form-item>
       </el-form>
       <template #footer><el-button @click="courseVisible=false">取消</el-button><el-button type="primary" @click="saveCourse">保存</el-button></template>
+    </el-dialog>
+
+    <!-- 注意事项编辑弹窗 -->
+    <el-dialog v-model="noticeVisible" :title="nf.id?'编辑注意事项':'新增注意事项'" width="520px">
+      <el-form :model="nf" label-width="80px">
+        <el-form-item label="名称"><el-input v-model="nf.name" maxlength="50" placeholder="如：常规课注意事项" /></el-form-item>
+        <el-form-item label="内容">
+          <el-input v-model="nf.content" type="textarea" :rows="8" maxlength="2000" show-word-limit
+                    placeholder="支持换行；小程序课程详情页「注意事项」板块展示" />
+        </el-form-item>
+        <el-form-item label="排序"><el-input-number v-model="nf.sort" :min="0" /></el-form-item>
+      </el-form>
+      <template #footer><el-button @click="noticeVisible=false">取消</el-button><el-button type="primary" @click="saveNotice">保存</el-button></template>
     </el-dialog>
   </div>
 </template>
@@ -90,10 +125,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { courseApi } from '@/api'
+import { courseApi, noticeApi } from '@/api'
 
 const tab = ref('course')
-const courses = ref([]); const danceTypes = ref([]); const levels = ref([]); const rooms = ref([])
+const courses = ref([]); const danceTypes = ref([]); const levels = ref([]); const rooms = ref([]); const notices = ref([])
 const newDance = ref(''); const newLevel = ref(''); const newRoom = ref('')
 
 function refreshDanceTypes() { return courseApi.danceTypes().then((d) => danceTypes.value = d || []) }
@@ -104,6 +139,7 @@ function loadAll() {
   refreshLevels()
   refreshRooms()
   courseApi.courses().then((d) => courses.value = d || [])
+  noticeApi.list().then((d) => notices.value = d || [])
 }
 
 const courseVisible = ref(false); const cf = ref({})
@@ -152,6 +188,14 @@ function addRoom() {
 // 保存后重新拉取，按 sort 升序即时重排；失败时回滚为库里的值
 function saveRoom(row) { courseApi.saveRoom(row).then(refreshRooms).catch(refreshRooms) }
 function delRoom(id) { courseApi.delRoom(id).then(() => { ElMessage.success('已删除'); refreshRooms() }) }
+
+// 注意事项（排课时选填关联，小程序课程详情展示）
+const noticeVisible = ref(false); const nf = ref({})
+function openNotice(row) { nf.value = row ? { ...row } : { sort: 0, status: 1 }; noticeVisible.value = true }
+function saveNotice() {
+  noticeApi.save(nf.value).then(() => { ElMessage.success('已保存'); noticeVisible.value = false; noticeApi.list().then((d) => notices.value = d || []) })
+}
+function delNotice(row) { ElMessageBox.confirm('删除该注意事项？被排课引用时将无法删除。').then(() => noticeApi.del(row.id).then(() => { ElMessage.success('已删除'); noticeApi.list().then((d) => notices.value = d || []) })).catch(() => {}) }
 
 onMounted(loadAll)
 </script>

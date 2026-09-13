@@ -18,6 +18,7 @@
     </div>
     <el-table :data="list" border>
       <el-table-column prop="courseName" label="课程" />
+      <el-table-column label="标签" width="100"><template #default="{row}">{{ row.courseTag || '—' }}</template></el-table-column>
       <el-table-column prop="teacherName" label="教师" width="100" />
       <el-table-column prop="room" label="教室" width="90" />
       <el-table-column label="时间" min-width="220">
@@ -44,6 +45,7 @@
         <el-form-item label="结束"><el-input :model-value="fmt(f.endTime)" disabled placeholder="选课程与开始时间后自动生成" /></el-form-item>
         <el-form-item label="容量"><el-input-number v-model="f.capacity" :min="1" placeholder="留空按课程类型默认" /></el-form-item>
         <el-form-item label="曲目"><el-input v-model="f.song" maxlength="100" placeholder="选填，如：Ditto - NewJeans；基本功等可留空" clearable /></el-form-item>
+        <el-form-item label="注意事项"><el-select v-model="f.noticeId" clearable placeholder="选填，不选则小程序显示门店默认"><el-option v-for="n in notices" :key="n.id" :label="n.name" :value="n.id" /></el-select></el-form-item>
       </el-form>
       <template #footer><el-button @click="visible=false">取消</el-button><el-button type="primary" @click="save">保存</el-button></template>
     </el-dialog>
@@ -53,9 +55,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { scheduleApi, courseApi, teacherApi, configApi } from '@/api'
+import { scheduleApi, courseApi, teacherApi, configApi, noticeApi } from '@/api'
 
-const list = ref([]); const courses = ref([]); const teachers = ref([]); const rooms = ref([]); const configs = ref([])
+const list = ref([]); const courses = ref([]); const teachers = ref([]); const rooms = ref([]); const configs = ref([]); const notices = ref([])
 const range = ref([nowStr(), null])
 const queryCourseId = ref(null); const queryTeacherId = ref(null)
 const visible = ref(false); const f = ref({})
@@ -115,6 +117,7 @@ onMounted(() => {
   courseApi.courses().then((d) => courses.value = d || [])
   teacherApi.list().then((d) => teachers.value = d || [])
   courseApi.rooms().then((d) => rooms.value = d || [])
+  noticeApi.list(true).then((d) => notices.value = d || [])
   configApi.list().then((d) => configs.value = d || [])
   load()
 })

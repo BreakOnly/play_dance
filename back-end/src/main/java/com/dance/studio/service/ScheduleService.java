@@ -100,6 +100,7 @@ public class ScheduleService {
         s.setTeacherId(req.getTeacherId());
         s.setRoom(req.getRoom());
         s.setSong(req.getSong());
+        s.setNoticeId(req.getNoticeId());
         s.setStartTime(req.getStartTime());
         s.setEndTime(req.getEndTime());
         s.setCapacity(capacity);

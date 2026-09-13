@@ -13,6 +13,8 @@ public class CourseSchedule {
     private String room;
     /** 本课次曲目 */
     private String song;
+    /** 注意事项（选填，小程序课程详情展示其内容） */
+    private Long noticeId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer capacity;

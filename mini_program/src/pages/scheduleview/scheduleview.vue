@@ -12,12 +12,12 @@
       </view>
     </view>
 
-    <!-- 日期条（从昨天起横向滚动） -->
+    <!-- 日期条（从昨天起横向滚动），选中日期平滑滚动到居中（与门店课程页同款实现） -->
     <scroll-view class="sv-date-scroll" scroll-x enhanced :show-scrollbar="false"
-      :scroll-into-view="'svday-' + activeDate">
+      :scroll-left="stripLeft" scroll-with-animation>
       <view class="sv-dates">
         <view v-for="d in days" :key="d.date" :id="'svday-' + d.date" class="sv-date-item"
-          :class="{ active: d.date === activeDate }" @tap="activeDate = d.date">
+          :class="{ active: d.date === activeDate }" @tap="selectDate(d.date)">
           <text>{{ d.week }}</text><view>{{ d.day }}</view>
         </view>
       </view>
@@ -90,6 +90,7 @@ import { api, fileUrl } from '@/api'
 // 当前视图模式：day=日视图 week=周视图
 const viewMode = ref('day')
 const activeDate = ref('')
+const stripLeft = ref(0)
 const days = ref([])
 
 // 英文星期缩写（参考图二：昨天 / 今天 / MON TUE…）
@@ -119,6 +120,21 @@ function buildDays() {
   }
   days.value = arr
   activeDate.value = arr[1].date
+  centerDate(arr[1].date)
+}
+
+/** 选中日期滚动到日期条中间（每格 118rpx 无间隙；scroll-view 通栏宽度即屏宽） */
+function centerDate(date) {
+  const idx = days.value.findIndex((d) => d.date === date)
+  if (idx < 0) return
+  const win = uni.getSystemInfoSync()
+  const itemW = 118 * win.windowWidth / 750
+  stripLeft.value = Math.max(0, Math.round(idx * itemW + itemW / 2 - win.windowWidth / 2))
+}
+
+function selectDate(date) {
+  activeDate.value = date
+  centerDate(date)
 }
 
 function fmtDate(dt) {

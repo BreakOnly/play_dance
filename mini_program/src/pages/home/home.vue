@@ -1,11 +1,13 @@
 <template>
   <view class="home-page safe-top safe-bottom">
-    <view class="home-top">
-      <view>Hi, <text>{{ member.name || '舞者' }}</text> 👋</view>
-      <view class="bell" @tap="showMessages">🔔<view class="bell-dot" v-if="unreadCount > 0"></view></view>
-    </view>
-
-    <view class="brand-hero">
+    <!-- 首页轮播：后台「Banner 管理」配置，未配置时回退品牌静态图 -->
+    <swiper v-if="banners.length" class="banner-swiper" circular autoplay :interval="4000"
+            indicator-dots indicator-color="rgba(255,255,255,.35)" indicator-active-color="#ff2d9b">
+      <swiper-item v-for="b in banners" :key="b.id" @tap="openBanner(b)">
+        <image class="banner-img" :src="fileUrl(b.imageUrl)" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+    <view class="brand-hero" v-else>
       <image src="/static/logo.png" mode="widthFix"></image>
       <view class="brand-copy">
         <text>玩舞尚志</text>
@@ -49,11 +51,6 @@
       </view>
     </scroll-view>
 
-    <view class="contact-strip" @tap="callStudio">
-      <view><text>玩舞尚志</text><text>购课与新人试课请电话咨询</text></view>
-      <text>{{ servicePhone }} ›</text>
-    </view>
-
     <!-- 试课联系客服底部弹窗 -->
     <view class="sheet-mask" v-if="serviceSheet" @tap="serviceSheet = false">
       <view class="sheet-panel" @tap.stop>
@@ -70,39 +67,34 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { api, fileUrl } from '@/api'
 
-const member = ref({})
 const trial = ref({})
 const videos = ref([])
 const guide = ref({})
-const unreadCount = ref(0)
+const banners = ref([])
 const servicePhone = ref('')
 const serviceSheet = ref(false)
 
 onShow(() => {
   api.home().then((d) => {
-    member.value = d.account || {}
     trial.value = d.trial || {}
     videos.value = d.videos || []
     guide.value = d.guide || {}
-    unreadCount.value = d.unreadCount || 0
+    banners.value = d.banners || []
     servicePhone.value = d.servicePhone || ''
   }).catch(() => {})
 })
+
+/** banner 点击跳转（后台可配 tab 切换 / 页面 / 外链） */
+function openBanner(b) {
+  if (b.linkType === 'tab' && b.linkValue) uni.switchTab({ url: b.linkValue })
+  else if (b.linkType === 'page' && b.linkValue) uni.navigateTo({ url: b.linkValue })
+  else if (b.linkType === 'web' && b.linkValue) uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(b.linkValue) })
+}
 
 function play(v) {
   api.videoPlayUrl(v.id).then((d) => {
     uni.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(d.url) })
   }).catch(() => {})
-}
-
-function callStudio() {
-  if (servicePhone.value) {
-    uni.showModal({ title: '联系舞房', content: '请拨打电话：' + servicePhone.value, showCancel: false, confirmColor: '#ff2d9b' })
-  }
-}
-
-function showMessages() {
-  uni.showToast({ title: '暂无新的消息', icon: 'none' })
 }
 
 function openService() { serviceSheet.value = true }
@@ -111,11 +103,9 @@ function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 </script>
 
 <style lang="scss" scoped>
-.home-page { min-height: 100vh; padding: calc(74rpx + env(safe-area-inset-top)) 28rpx 44rpx; background: #0d0d0e; color: #fff; }
-.home-top { height: 78rpx; display: flex; align-items: center; justify-content: space-between; font-size: 38rpx; font-weight: 900; }
-.home-top > view:first-child text { color: #ff62ad; }
-.bell { position: relative; width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; font-size: 34rpx; }
-.bell-dot { position: absolute; width: 13rpx; height: 13rpx; border-radius: 50%; top: 8rpx; right: 8rpx; background: #ff2d9b; }
+.home-page { min-height: 100vh; padding: calc(36rpx + env(safe-area-inset-top)) 28rpx 44rpx; background: #0d0d0e; color: #fff; }
+.banner-swiper { height: 310rpx; border: 1rpx solid #34343b; border-radius: 38rpx; overflow: hidden; }
+.banner-swiper .banner-img { width: 100%; height: 100%; }
 .brand-hero { height: 310rpx; border: 1rpx solid #34343b; border-radius: 38rpx; background: radial-gradient(circle at 76% 18%, rgba(255,45,155,.22), transparent 44%), linear-gradient(135deg,#19191c,#111114); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
 .brand-hero image { width: 82%; opacity: .95; }
 .brand-copy { position: absolute; left: 28rpx; right: 28rpx; bottom: 28rpx; display: flex; justify-content: space-between; align-items: end; }
@@ -158,11 +148,6 @@ function goSchedule() { uni.switchTab({ url: '/pages/booking/booking' }) }
 .video-card > text { display: block; padding: 0 20rpx; }
 .video-card > text:nth-child(2) { font-size: 24rpx; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .video-card > text:last-child { margin-top: 7rpx; font-size: 20rpx; color: #aeb0c4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.contact-strip { margin-top: 25rpx; padding: 24rpx 26rpx; border: 1rpx solid #4b1732; border-radius: 25rpx; background: #24101b; display: flex; justify-content: space-between; align-items: center; }
-.contact-strip view { display: flex; flex-direction: column; }
-.contact-strip view text:first-child { font-size: 25rpx; font-weight: 800; }
-.contact-strip view text:last-child { margin-top: 6rpx; font-size: 20rpx; color: #ff67b1; }
-.contact-strip > text { font-size: 21rpx; color: #fff; }
 .sheet-mask { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; }
 .sheet-panel { width: 100%; padding: 56rpx 40rpx calc(44rpx + env(safe-area-inset-bottom)); border-radius: 32rpx 32rpx 0 0; background: #2a2a2e; animation: sheet-up .25s ease-out; }
 .sheet-title { text-align: center; font-size: 32rpx; font-weight: 800; color: #fff; }

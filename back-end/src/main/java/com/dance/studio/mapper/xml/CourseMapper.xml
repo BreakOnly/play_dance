@@ -10,6 +10,7 @@
         <result column="type" property="type"/>
         <result column="dance_type_id" property="danceTypeId"/>
         <result column="level_id" property="levelId"/>
+        <result column="tag" property="tag"/>
         <result column="duration_min" property="durationMin"/>
         <result column="price" property="price"/>
         <result column="cost_hours" property="costHours"/>
@@ -28,6 +29,7 @@
         <result column="dance_type_name" property="danceTypeName"/>
         <result column="level_id" property="levelId"/>
         <result column="level_name" property="levelName"/>
+        <result column="tag" property="tag"/>
         <result column="duration_min" property="durationMin"/>
         <result column="price" property="price"/>
         <result column="cost_hours" property="costHours"/>
@@ -38,7 +40,7 @@
 
     <sql id="voSelect">
         SELECT c.id, c.name, c.type, c.dance_type_id, dt.name AS dance_type_name,
-               c.level_id, lv.name AS level_name, c.duration_min, c.price, c.cost_hours,
+               c.level_id, lv.name AS level_name, c.tag, c.duration_min, c.price, c.cost_hours,
                c.cover, c.description, c.status
         FROM course c
         LEFT JOIN dance_type dt ON dt.id = c.dance_type_id
@@ -64,10 +66,10 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO course (store_id, name, type, dance_type_id, level_id, duration_min,
+        INSERT INTO course (store_id, name, type, dance_type_id, level_id, tag, duration_min,
                             price, cost_hours, cover, description, status)
         VALUES (#{storeId}, #{name}, COALESCE(#{type},'group'), #{danceTypeId}, #{levelId},
-                COALESCE(#{durationMin},60), COALESCE(#{price},0), COALESCE(#{costHours},1),
+                #{tag}, COALESCE(#{durationMin},60), COALESCE(#{price},0), COALESCE(#{costHours},1),
                 #{cover}, #{description}, COALESCE(#{status},1))
     </insert>
 
@@ -78,6 +80,7 @@
             <if test="type != null">type = #{type},</if>
             <if test="danceTypeId != null">dance_type_id = #{danceTypeId},</if>
             <if test="levelId != null">level_id = #{levelId},</if>
+            <if test="tag != null">tag = #{tag},</if>
             <if test="durationMin != null">duration_min = #{durationMin},</if>
             <if test="price != null">price = #{price},</if>
             <if test="costHours != null">cost_hours = #{costHours},</if>

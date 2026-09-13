@@ -51,4 +51,7 @@ public interface CourseScheduleMapper {
 
     /** 结束已过期的课次 */
     int finishExpired(@Param("now") LocalDateTime now);
+
+    /** 统计引用某注意事项的排课数（删除注意事项前校验用） */
+    int countByNotice(@Param("noticeId") Long noticeId, @Param("storeId") Long storeId);
 }

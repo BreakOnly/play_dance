@@ -7,7 +7,6 @@
 
     <view class="date-head">
       <view><text>{{ activeDateTitle }} ▸</text><view>{{ activeDateLabel }}</view></view>
-      <text class="brand-text">玩舞尚志</text>
     </view>
 
     <view class="date-strip">
@@ -26,21 +25,23 @@
       </view>
     </view>
 
-    <view class="store-head"><view><text></text>玩舞尚志</view><text>{{ visibleSchedules.length }} 节课</text></view>
+    <view class="store-head"><view><text></text>玩舞尚志</view></view>
     <view v-if="loading" class="empty-card card">正在读取课表…</view>
     <view v-else-if="!visibleSchedules.length" class="empty-card card">没有匹配课程<text>换个日期、老师或舞种看看吧</text></view>
     <view v-else class="course-list">
       <view v-for="(s, i) in visibleSchedules" :key="s.id" class="schedule-card card" @tap="openCourse(s)">
-        <view class="course-thumb"><text>{{ emojis[i % emojis.length] }}</text><view>{{ badges[i % badges.length] }}</view></view>
+        <view class="course-thumb">
+          <image v-if="s.teacherAvatar" class="thumb-img" :src="fileUrl(s.teacherAvatar)" mode="aspectFill" />
+          <text v-else>{{ emojis[i % emojis.length] }}</text>
+          <view v-if="s.courseTag">{{ s.courseTag }}</view>
+        </view>
         <view class="schedule-body">
           <view class="schedule-title">{{ s.courseName }} <text>（{{ s.levelName }}）</text></view>
           <view class="teacher-line">
-            <image v-if="s.teacherAvatar" :src="fileUrl(s.teacherAvatar)" class="t-avatar" mode="aspectFill" />
-            <view v-else class="t-avatar ph">{{ (s.teacherName || 'T')[0] }}</view>
             <text class="t-name">{{ s.teacherName }}</text>
             <text class="t-time">{{ fmtTime(s.startTime) }}–{{ fmtTime(s.endTime) }}</text>
           </view>
-          <view class="room-line">{{ s.room || '待定' }} · {{ s.durationMin || 60 }} 分钟</view>
+          <view class="room-line">{{ s.room ? s.room + ' 教室' : '待定' }}</view>
           <view v-if="s.song" class="song-line">♫ {{ s.song }}</view>
           <view class="desc-line"><text>❗</text>{{ s.description || '基础律动和 step 连接练习' }}</view>
           <view class="card-foot">
@@ -103,7 +104,6 @@ import { onShow, onReady } from '@dcloudio/uni-app'
 import { api, fileUrl } from '@/api'
 
 const emojis = ['🕺', '💃', '✨', '🔥']
-const badges = ['零基础友好', '热门课程', '身体开发', '进阶提升']
 // 中文星期（左上角日期标签用）
 const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -208,14 +208,50 @@ function loadAll() {
   }).catch(() => {}).finally(() => { loading.value = false })
 }
 
+/** 搜索归一化：小写并去掉连字符/空格等分隔符（中文保留），
+ *  让 hiphop / hip hop / hip-hop 都归一成 hiphop */
+function normSearch(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '')
+}
+
+/** Damerau-Levenshtein 编辑距离（含相邻换位），长度差>1 直接返回 2 剪枝 */
+function editDistance(a, b) {
+  const m = a.length, n = b.length
+  if (Math.abs(m - n) > 1) return 2
+  const d = Array.from({ length: m + 1 }, (_, i) => [i])
+  for (let j = 0; j <= n; j++) d[0][j] = j
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
+      }
+    }
+  }
+  return d[m][n]
+}
+
+/** 搜索匹配：归一化子串命中即可；否则按词比较，允许一次编辑距离（容忍 hip-hpo 这类笔误） */
+function searchMatch(q, txt) {
+  const qn = normSearch(q)
+  if (!qn) return true
+  const tn = normSearch(txt)
+  if (tn.includes(qn)) return true
+  const tokens = (s) => (s.toLowerCase().match(/[a-z0-9\u4e00-\u9fa5]+/g) || [])
+  const qs = tokens(q)
+  const ts = tokens(txt)
+  return qs.some((qq) => qq.length >= 3 && ts.some((tt) => tt.length >= 3 && editDistance(qq, tt) <= 1))
+}
+
 function filterSchedules() {
   const dayList = allSchedules.value.filter(s => s.startTime && s.startTime.startsWith(activeDate.value))
   let filtered = dayList
-  const q = query.value.trim().toLowerCase()
+  const q = query.value.trim()
   if (q) {
     filtered = filtered.filter(s => {
-      const txt = `${s.courseName} ${s.danceTypeName || ''} ${s.teacherName} ${s.song || ''}`.toLowerCase()
-      return txt.includes(q)
+      const txt = `${s.courseName} ${s.danceTypeName || ''} ${s.teacherName} ${s.song || ''}`
+      return searchMatch(q, txt)
     })
   }
 
@@ -244,26 +280,27 @@ function filterSchedules() {
 
 function selectDate(date) {
   activeDate.value = date
-  // 点击可视区最后两个日期时，日期条向右平移一天；其余情况不滚动
-  const itemW = uni.upx2px(95)
-  if (stripWidth > 0 && itemW > 0) {
-    const idx = days.value.findIndex(d => d.date === date)
-    const firstVisible = Math.round(stripRealLeft / itemW)
-    const visibleCount = Math.max(3, Math.floor(stripWidth / itemW))
-    if (idx - firstVisible >= visibleCount - 2) {
-      const max = Math.max(0, days.value.length * itemW - stripWidth)
-      stripLeft.value = Math.min(stripRealLeft + itemW, max)
-    }
-  }
+  centerDate(date)
   filterSchedules()
 }
 
-// ===== 日期条滚动（点击右侧日期时整体右移一天，不做定位跳转） =====
+// ===== 日期条滚动：选中日期定位到可视区中间（往前/往后点都会滚动） =====
 const stripLeft = ref(0)      // 绑定 scroll-left（仅程序赋值，带动画）
 let stripRealLeft = 0         // 用户手势实时位置
 let stripWidth = 0            // 日期条可视宽度
 
 function onStripScroll(e) { stripRealLeft = e.detail.scrollLeft }
+
+/** 选中日期滚动到日期条中间（每格 95rpx 无间隙，按格索引计算绝对位置） */
+function centerDate(date) {
+  const itemW = uni.upx2px(95)
+  if (stripWidth <= 0 || itemW <= 0) { measureStrip(); return }
+  const idx = days.value.findIndex(d => d.date === date)
+  if (idx < 0) return
+  const max = Math.max(0, days.value.length * itemW - stripWidth)
+  const target = Math.round(idx * itemW + itemW / 2 - stripWidth / 2)
+  stripLeft.value = Math.min(Math.max(0, target), max)
+}
 
 function measureStrip() {
   uni.createSelectorQuery().select('.date-scroll').boundingClientRect((r) => { if (r) stripWidth = r.width }).exec()
@@ -295,6 +332,7 @@ function onBook(s) {
     uni.showToast({ title: '你已约该课', icon: 'none' }); return
   }
   const st = courseState(s)
+  if (st === '已结束') { uni.showToast({ title: '课程已结束', icon: 'none' }); return }
   if (st) { uni.showToast({ title: '该课' + st + '，无法预约', icon: 'none' }); return }
   const full = isFull(s)
   uni.showModal({
@@ -337,7 +375,6 @@ onShow(() => {
 .date-head { padding: 34rpx 30rpx 15rpx; display: flex; align-items: flex-end; justify-content: space-between; }
 .date-head > view:first-child > text { color: #ff6fb5; font-size: 38rpx; font-weight: 900; }
 .date-head > view:first-child > view { margin-top: 5rpx; color: #fff; font-size: 23rpx; }
-.brand-text { color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 3rpx; text-shadow: 0 0 14rpx rgba(255,45,155,.5); }
 .date-strip { min-height: 128rpx; display: flex; align-items: stretch; border-bottom: 1rpx solid #2e2e33; }
 /* 课表视图入口（Blackpink 风：黑底 + 荧光粉） */
 .view-entry { width: 116rpx; margin: 8rpx 10rpx 12rpx 24rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rpx; border: 1rpx solid rgba(255,45,155,.55); border-radius: 25rpx; background: linear-gradient(135deg,#2b1322,#1a1a1e); box-shadow: 0 0 18rpx rgba(255,45,155,.22); color: #ff5fae; font-size: 25rpx; font-weight: 900; letter-spacing: 2rpx; text-shadow: 0 0 12rpx rgba(255,45,155,.5); }
@@ -351,9 +388,9 @@ onShow(() => {
 /* 筛选按钮：仅漏斗图标；底色与日期区一致（透明），靠描边辨识 */
 .filter-entry { margin: 8rpx 20rpx 12rpx 0; padding: 0 40rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid #34343a; border-radius: 25rpx; background: transparent; color: #ff6fb5; }
 .filter-entry.active { border-color: #ff2d9b; background: rgba(255,45,155,.16); }
-.funnel { position: relative; width: 24rpx; height: 20rpx; }
-.funnel::before { content: ''; position: absolute; left: 0; top: 0; border-left: 12rpx solid transparent; border-right: 12rpx solid transparent; border-top: 13rpx solid currentColor; }
-.funnel::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 5rpx; height: 7rpx; margin-left: -2.5rpx; background: currentColor; }
+.funnel { position: relative; width: 42rpx; height: 36rpx; }
+.funnel::before { content: ''; position: absolute; left: 0; top: 0; border-left: 21rpx solid transparent; border-right: 21rpx solid transparent; border-top: 23rpx solid currentColor; }
+.funnel::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 9rpx; height: 12rpx; margin-left: -4.5rpx; background: currentColor; }
 /* ===== 筛选弹层 ===== */
 .flt-mask { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; }
 .flt-panel { width: 100%; height: 78vh; border-radius: 32rpx 32rpx 0 0; background: #17171a; display: flex; flex-direction: column; animation: sheet-up .25s ease-out; overflow: hidden; }
@@ -378,18 +415,16 @@ onShow(() => {
 .store-head { padding: 31rpx 30rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
 .store-head > view { font-size: 29rpx; font-weight: 900; }
 .store-head > view > text { width: 28rpx; height: 28rpx; margin-right: 16rpx; display: inline-block; border-radius: 7rpx; background: #ff2d9b; transform: rotate(45deg); vertical-align: -4rpx; }
-.store-head > text { color: #ff6fb5; font-size: 20rpx; }
 .course-list { padding: 0 30rpx; display: flex; flex-direction: column; gap: 20rpx; }
 .schedule-card { overflow: hidden; display: flex; }
-.course-thumb { position: relative; width: 215rpx; flex: none; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#3a3a40,#1c1c20); }
+.course-thumb { position: relative; width: 215rpx; flex: none; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#3a3a40,#1c1c20); overflow: hidden; }
+.course-thumb .thumb-img { width: 100%; height: 100%; }
 .course-thumb > text { font-size: 58rpx; }
-.course-thumb > view { position: absolute; left: 0; bottom: 0; padding: 7rpx 15rpx; border-radius: 0 18rpx 0 0; background: #ff2d9b; color: #fff; font-size: 17rpx; font-weight: 700; }
+.course-thumb > view { position: absolute; left: 0; bottom: 0; padding: 7rpx 15rpx; border-radius: 0 18rpx 0 0; background: #ff2d9b; color: #fff; font-size: 20rpx; font-weight: 700; z-index: 1; }
 .schedule-body { min-width: 0; flex: 1; padding: 24rpx; }
 .schedule-title { color: #fff; font-size: 27rpx; font-weight: 900; }
 .schedule-title text { color: #ff6fb5; }
 .teacher-line { margin-top: 11rpx; display: flex; align-items: center; color: #fff; font-size: 22rpx; }
-.t-avatar { width: 40rpx; height: 40rpx; margin-right: 10rpx; border-radius: 50%; flex: none; background: #26262b; }
-.t-avatar.ph { display: flex; align-items: center; justify-content: center; color: #ff6fb5; font-size: 20rpx; font-weight: 800; }
 .teacher-line .t-name { margin-right: 10rpx; color: #ff6fb5; font-weight: 800; }
 .room-line { margin-top: 5rpx; color: #9a9aa2; font-size: 20rpx; }
 .song-line { margin-top: 11rpx; color: #b3a0ff; font-size: 20rpx; }

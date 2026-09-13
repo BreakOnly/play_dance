@@ -99,7 +99,8 @@
         <include refid="voSelect"/>
         WHERE b.user_id = #{userId}
         <if test="status != null and status != ''">AND b.status = #{status}</if>
-        ORDER BY s.start_time DESC
+        <!-- 未结束课次按开始时间正序（最近的在最前，进行中也算未结束），已结束课次按距今最近在前排在后面 -->
+        ORDER BY (s.end_time &gt;= NOW()) DESC, ABS(TIMESTAMPDIFF(SECOND, NOW(), s.start_time))
     </select>
 
     <select id="listBySchedule" resultMap="VoMap">

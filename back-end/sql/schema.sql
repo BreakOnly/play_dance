@@ -209,6 +209,7 @@ CREATE TABLE `course` (
   `type`          VARCHAR(10)   NOT NULL DEFAULT 'group' COMMENT 'group团课 private私教',
   `dance_type_id` BIGINT        DEFAULT NULL COMMENT '舞种',
   `level_id`      BIGINT        DEFAULT NULL COMMENT '难度',
+  `tag`           VARCHAR(30)   DEFAULT NULL COMMENT '课程标签(小程序课程卡片角标)',
   `duration_min`  INT           NOT NULL DEFAULT 60 COMMENT '时长(分钟)',
   `price`         DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '价格',
   `cost_hours`    INT           NOT NULL DEFAULT 1 COMMENT '每节消耗课时',
@@ -246,6 +247,7 @@ CREATE TABLE `course_schedule` (
   `teacher_id`   BIGINT      DEFAULT NULL COMMENT '教师',
   `room`         VARCHAR(50) DEFAULT NULL COMMENT '教室',
   `song`         VARCHAR(100) DEFAULT NULL COMMENT '本课次曲目',
+  `notice_id`     BIGINT       DEFAULT NULL COMMENT '注意事项(排课时选填)',
   `start_time`   DATETIME    NOT NULL COMMENT '开始时间',
   `end_time`     DATETIME    NOT NULL COMMENT '结束时间',
   `capacity`     INT         NOT NULL DEFAULT 12 COMMENT '容量(可覆盖课程默认)',
@@ -258,6 +260,23 @@ CREATE TABLE `course_schedule` (
   KEY `idx_course` (`course_id`),
   KEY `idx_teacher_time` (`teacher_id`,`start_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='排课/课次';
+
+-- ============================================================
+-- 3.x 注意事项（排课选填关联，小程序课程详情展示）
+-- ============================================================
+DROP TABLE IF EXISTS `notice`;
+CREATE TABLE `notice` (
+  `id`         BIGINT      NOT NULL AUTO_INCREMENT,
+  `store_id`   BIGINT      NOT NULL,
+  `name`       VARCHAR(50) NOT NULL COMMENT '注意事项名称',
+  `content`    TEXT        NOT NULL COMMENT '内容(支持换行)',
+  `sort`       INT         NOT NULL DEFAULT 0,
+  `status`     TINYINT     NOT NULL DEFAULT 1,
+  `created_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_store` (`store_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='注意事项';
 
 -- ============================================================
 -- 4. 约课 / 签到
