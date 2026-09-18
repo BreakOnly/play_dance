@@ -11,7 +11,7 @@
       </el-table-column>
       <el-table-column prop="remark" label="说明" />
     </el-table>
-    <div class="tip">新预约使用保存后的规则；已有预约按原课时和签到积分结算。候补不冻结课时，转正时冻结。商品到店领取。</div>
+    <div class="tip">新预约使用保存后的规则；已有预约按原课时和签到积分结算。候补不扣课时，转正时扣课。商品到店领取。</div>
   </div>
 </template>
 

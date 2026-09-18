@@ -16,10 +16,9 @@
       <view class="balance-top"><text>课时余额</text><button @tap="callStudio">充值</button></view>
       <view class="balance-number"><text>{{ member.availableHours || 0 }}</text><text>课时</text></view>
       <view class="balance-meta">
-        <view><text>已冻结</text><text>{{ member.frozenHours || 0 }} 课时</text></view>
         <view><text>有效期至</text><text>{{ member.validUntil || '长期有效' }}</text></view>
       </view>
-      <text class="balance-tip">预约后冻结，上课完成后正式扣课</text>
+      <text class="balance-tip">预约成功即扣课时，正常取消退回有效课时</text>
     </view>
 
     <view v-if="member.expiringHours" class="expire-card">
@@ -92,7 +91,7 @@ function goRedeem() { uni.switchTab({ url: '/pages/redeem/redeem' }) }
 function showRule() {
   uni.showModal({
     title: '预约与取消规则',
-    content: `预约按课程标注冻结课时，签到后核销；候补不冻结，转正才冻结。距开课不足 ${rules.value.cancelFreeHours ?? 6} 小时仅管理员可以取消。取消时原批次已到期的课时不会恢复为可用。请使用微信扫一扫门店签到码。`,
+    content: `预约按课程标注扣课时，签到不重复扣课；候补不扣课，转正才扣课。距开课不足 ${rules.value.cancelFreeHours ?? 6} 小时仅管理员可以取消。取消时原批次已到期的课时不会恢复为可用。请使用微信扫一扫门店签到码。`,
     showCancel: false, confirmColor: '#ff2d9b'
   })
 }

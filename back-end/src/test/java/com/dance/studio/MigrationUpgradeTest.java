@@ -20,6 +20,25 @@ class MigrationUpgradeTest {
     }
 
     private void migrate(boolean corrupt) throws Exception {
+        migrate(corrupt, false, false, false);
+    }
+
+    @Test
+    void restoresLegacyWaitlistCredit() throws Exception {
+        migrate(false, true, false, false);
+    }
+
+    @Test
+    void doesNotRestoreExpiredLegacyWaitlistCredit() throws Exception {
+        migrate(false, true, true, false);
+    }
+
+    @Test
+    void rejectsInconsistentV4BatchBeforeDroppingColumns() throws Exception {
+        migrate(false, false, false, true);
+    }
+
+    private void migrate(boolean corrupt, boolean waitlist, boolean expired, boolean corruptV4) throws Exception {
         String original =
                 System.getenv()
                         .getOrDefault(
@@ -60,9 +79,25 @@ class MigrationUpgradeTest {
                             "INSERT INTO"
                                 + " booking(id,store_id,user_id,schedule_id,status,locked_hours)"
                                 + " VALUES(1,1,1,1,'booked',1)");
+                    if (waitlist) s.execute("UPDATE booking SET status='waitlist'");
+                    if (expired) s.execute("UPDATE course_hour_batch SET expire_at=DATE_SUB(NOW(),INTERVAL 1 DAY)");
+                }
+                if (corruptV4) {
+                    Flyway.configure().dataSource(url, user, password).target("4").load().migrate();
+                    try (var c = DriverManager.getConnection(url, user, password); var s = c.createStatement()) {
+                        s.execute("UPDATE course_hour_batch SET frozen=2");
+                    }
                 }
                 var flyway = Flyway.configure().dataSource(url, user, password).load();
-                if (corrupt) assertThrows(Exception.class, flyway::migrate);
+                if (corrupt || corruptV4) {
+                    assertThrows(Exception.class, flyway::migrate);
+                    try (var c = DriverManager.getConnection(url, user, password);
+                            var s = c.createStatement();
+                            var r = s.executeQuery("SELECT frozen_hours FROM `user` WHERE id=1")) {
+                        assertTrue(r.next());
+                        assertEquals(1, r.getInt(1));
+                    }
+                }
                 else {
                     flyway.migrate();
                     flyway.migrate();
@@ -71,15 +106,24 @@ class MigrationUpgradeTest {
                             var r =
                                     s.executeQuery(
                                             "SELECT"
-                                                + " u.course_balance,u.frozen_hours,b.frozen,a.hours"
+                                                + " u.course_balance,b.remaining,a.hours,a.state"
                                                 + " FROM `user` u JOIN course_hour_batch b ON"
                                                 + " b.user_id=u.id JOIN booking_hour_allocation a"
                                                 + " ON a.batch_id=b.id")) {
                         assertTrue(r.next());
-                        assertEquals(2, r.getInt(1));
-                        assertEquals(1, r.getInt(2));
+                        assertEquals(waitlist && !expired ? 3 : 2, r.getInt(1));
+                        assertEquals(waitlist && !expired ? 3 : 2, r.getInt(2));
                         assertEquals(1, r.getInt(3));
-                        assertEquals(1, r.getInt(4));
+                        assertEquals(waitlist ? expired ? "expired" : "released" : "charged", r.getString(4));
+                    }
+                    try (var c = DriverManager.getConnection(url, user, password);
+                            var s = c.createStatement();
+                            var r = s.executeQuery("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE()"
+                                    + " AND ((table_name='user' AND column_name='frozen_hours')"
+                                    + " OR (table_name='course_hour_batch' AND column_name='frozen')"
+                                    + " OR (table_name='booking' AND column_name='locked_hours'))")) {
+                        assertTrue(r.next());
+                        assertEquals(0, r.getInt(1));
                     }
                 }
             } finally {

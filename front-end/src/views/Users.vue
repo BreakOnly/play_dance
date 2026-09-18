@@ -12,7 +12,6 @@
       <el-table-column label="姓名" width="110"><template #default="{ row }">{{ row.name || '未命名' }}</template></el-table-column>
       <el-table-column label="手机" width="140"><template #default="{ row }">{{ row.phone || '—' }}</template></el-table-column>
       <el-table-column prop="courseBalance" label="可用课时" width="90" />
-      <el-table-column prop="frozenHours" label="冻结" width="70" />
       <el-table-column prop="pointsBalance" label="积分" width="90" />
       <el-table-column label="操作" min-width="260">
         <template #default="{ row }">
@@ -62,7 +61,6 @@
     <el-drawer v-model="detailVisible" :title="cur.name + ' · 明细'" size="520px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="可用课时">{{ cur.courseBalance }}</el-descriptions-item>
-        <el-descriptions-item label="冻结">{{ cur.frozenHours }}</el-descriptions-item>
         <el-descriptions-item label="积分">{{ cur.pointsBalance }}</el-descriptions-item>
       </el-descriptions>
       <el-tabs v-model="logTab" style="margin-top:12px">

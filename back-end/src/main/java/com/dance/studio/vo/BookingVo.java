@@ -24,6 +24,6 @@ public class BookingVo {
     private LocalDateTime endTime;
     private String status;
     private Integer waitlistNo;
-    private Integer lockedHours;
+    private Integer costHours;
     private LocalDateTime createdAt;
 }

@@ -17,7 +17,6 @@ public class User {
     private LocalDate birthday;
     private String avatar;
     private Integer courseBalance;
-    private Integer frozenHours;
     private Integer pointsBalance;
     private Integer status;
     private LocalDateTime createdAt;

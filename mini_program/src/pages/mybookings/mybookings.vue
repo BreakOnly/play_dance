@@ -76,7 +76,7 @@ const useds = computed(() => all.value.filter((b) => ['checked', 'noshow', 'canc
 const cancelFreeText = computed(() => {
   const b = cancelTarget.value
   if (b?.status === 'waitlist') return `确定取消《${b.courseName || ''}》的候补吗？取消后当前候补位置将立即释放。`
-  return `确定要取消预约《${cancelTarget.value?.courseName || ''}》吗？\n取消后冻结的课时将立即退回。`
+  return `确定要取消预约《${cancelTarget.value?.courseName || ''}》吗？\n取消后仍在有效期内的已扣课时将退回。`
 })
 
 /** 候补随时可取消；已约课仅开课 cancelFreeHours 小时之前可线上取消 */
@@ -100,7 +100,7 @@ function doCancel() {
   const b = cancelTarget.value
   api.cancelBooking(b.id).then(() => {
     cancelTarget.value = null
-    uni.showToast({ title: `已取消：${b.courseName}，冻结课时已退回`, icon: 'none' })
+    uni.showToast({ title: `已取消：${b.courseName}，有效课时已退回`, icon: 'none' })
     api.myBookings().then((d) => { all.value = d || [] })
   }).catch(() => {})
 }

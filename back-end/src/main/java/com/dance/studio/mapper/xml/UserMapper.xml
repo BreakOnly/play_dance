@@ -14,7 +14,6 @@
         <result column="birthday" property="birthday"/>
         <result column="avatar" property="avatar"/>
         <result column="course_balance" property="courseBalance"/>
-        <result column="frozen_hours" property="frozenHours"/>
         <result column="points_balance" property="pointsBalance"/>
         <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
@@ -31,10 +30,10 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `user` (store_id, openid, unionid, name, phone, gender, birthday,
-                             avatar, course_balance, frozen_hours, points_balance, status)
+                             avatar, course_balance, points_balance, status)
         VALUES (#{storeId}, #{openid}, #{unionid}, #{name}, #{phone}, #{gender}, #{birthday},
                 #{avatar},
-                COALESCE(#{courseBalance},0), COALESCE(#{frozenHours},0), COALESCE(#{pointsBalance},0),
+                COALESCE(#{courseBalance},0), COALESCE(#{pointsBalance},0),
                 COALESCE(#{status},1))
     </insert>
 
@@ -79,11 +78,6 @@
         <if test="delta &lt; 0">AND course_balance + #{delta} &gt;= 0</if>
     </update>
 
-    <update id="addFrozen">
-        UPDATE `user` SET frozen_hours = frozen_hours + #{delta}
-        WHERE id = #{id}
-        <if test="delta &lt; 0">AND frozen_hours + #{delta} &gt;= 0</if>
-    </update>
 
     <update id="addPoints">
         UPDATE `user` SET points_balance = points_balance + #{delta}

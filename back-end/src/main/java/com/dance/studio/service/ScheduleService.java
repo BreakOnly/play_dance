@@ -169,7 +169,7 @@ public class ScheduleService {
         return scheduleMapper.findVoById(s.getId(), null);
     }
 
-    /** 取消课次：流转状态，并批量取消所有"待上课/候补"预约、退还锁定课时、通知学员。 课次取消属门店原因，一律免费退回（不受 6h 规则约束）。 */
+    /** 取消课次：流转状态，并批量取消所有"待上课/候补"预约、退还仍有效的已扣课时、通知学员。 课次取消属门店原因，一律免费退回（不受 6h 规则约束）。 */
     @Transactional(rollbackFor = Exception.class)
     public void cancel(Long id) {
         lock.acquire();
@@ -186,15 +186,15 @@ public class ScheduleService {
         for (Booking b : actives) {
             // 条件取消：并发操作已改变状态则跳过
             if (bookingMapper.cancel(b.getId(), b.getStatus(), 0) == 0) continue;
-            int cost = b.getLockedHours() == null ? 1 : b.getLockedHours();
-            if (cost > 0) {
-                accountService.refundLock(b.getUserId(), cost, b.getId());
+            int cost = b.getCostHours() == null ? 1 : b.getCostHours();
+            if ("booked".equals(b.getStatus())) {
+                accountService.refundBooking(b.getUserId(), cost, b.getId());
             }
             notificationService.push(
                     b.getUserId(),
                     "booking",
                     "课程已取消",
-                    "你预约的《" + courseName + "》课次已取消，课时已退回，抱歉带来不便。",
+                    "你预约的《" + courseName + "》课次已取消，仍在有效期内的课时已退回，抱歉带来不便。",
                     "booking",
                     b.getId());
         }

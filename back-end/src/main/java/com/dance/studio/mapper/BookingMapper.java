@@ -9,18 +9,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingMapper {
-    @org.apache.ibatis.annotations.Update(
-            "UPDATE booking SET locked_hours=0 WHERE id=#{id} AND status='waitlist'")
-    int clearWaitlistLock(Long id);
 
     @org.apache.ibatis.annotations.Select(
             "SELECT COALESCE(MAX(waitlist_no),0)+1 FROM booking WHERE schedule_id=#{scheduleId}")
     int nextWaitlistNumber(Long scheduleId);
 
-    @org.apache.ibatis.annotations.Update(
-            "UPDATE booking SET status='booked',waitlist_no=NULL,locked_hours=#{cost} WHERE"
-                    + " id=#{id} AND status='waitlist'")
-    int promoteWithHours(@Param("id") Long id, @Param("cost") int cost);
 
     @org.apache.ibatis.annotations.Select(
             "SELECT b.* FROM booking b JOIN course_schedule s ON s.id=b.schedule_id WHERE"

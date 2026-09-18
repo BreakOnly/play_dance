@@ -70,7 +70,7 @@ public class CheckinService {
                 "bookingId",
                 b.getId(),
                 "costHours",
-                b.getLockedHours(),
+                b.getCostHours(),
                 "pointsGain",
                 b.getCheckinPoints(),
                 "balanceAfter",
@@ -94,11 +94,11 @@ public class CheckinService {
                             ? ResultCode.CHECKIN_DUPLICATE
                             : ResultCode.CHECKIN_NO_BOOKING);
         }
-        int cost = b.getLockedHours() == null ? 1 : b.getLockedHours();
+        int cost = b.getCostHours() == null ? 1 : b.getCostHours();
         int points = b.getCheckinPoints();
 
-        // 1. 课时核销：lock_on_booking=1 消耗冻结；=0 时约课未锁定，从可用余额直接扣
-        accountService.consumeOnCheckin(b.getUserId(), cost, b.getId());
+        // 1. 确认预约扣课记录，签到不再次扣课
+        accountService.confirmCheckin(b.getUserId(), cost, b.getId());
         // 2. 加积分
         accountService.earnPoints(b.getUserId(), points, "checkin", "checkin", b.getId(), "签到积分");
         // 4. 写签到记录

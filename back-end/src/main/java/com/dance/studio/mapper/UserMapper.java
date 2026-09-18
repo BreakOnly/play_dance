@@ -25,7 +25,6 @@ public interface UserMapper {
     // ---- 余额变更（带条件保证不为负）----
     int addCourseBalance(@Param("id") Long id, @Param("delta") int delta);
 
-    int addFrozen(@Param("id") Long id, @Param("delta") int delta);
 
     /** 返回受影响行数；delta 为负时若余额不足则不更新(返回0) */
     int addPoints(@Param("id") Long id, @Param("delta") int delta);

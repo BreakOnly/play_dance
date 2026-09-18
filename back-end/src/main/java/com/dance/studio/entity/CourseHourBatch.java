@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class CourseHourBatch {
-    private Integer frozen;
     private Long id;
     private Long userId;
     private Integer total;

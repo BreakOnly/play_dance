@@ -14,22 +14,12 @@ public interface CourseHourBatchMapper {
     List<CourseHourBatch> lockAll(Long userId);
 
     @org.apache.ibatis.annotations.Update(
-            "UPDATE course_hour_batch SET frozen=frozen+#{qty} WHERE id=#{id} AND"
-                    + " remaining-frozen>=#{qty}")
-    int freeze(@Param("id") Long id, @Param("qty") int qty);
-
-    @org.apache.ibatis.annotations.Update(
-            "UPDATE course_hour_batch SET remaining=remaining-#{consume}, frozen=frozen-#{qty}"
-                    + " WHERE id=#{id} AND frozen>=#{qty} AND remaining>=#{consume}")
-    int release(@Param("id") Long id, @Param("qty") int qty, @Param("consume") int consume);
-
-    @org.apache.ibatis.annotations.Update(
-            "UPDATE course_hour_batch SET remaining=frozen WHERE id=#{id} AND remaining>=frozen")
-    int expireFree(Long id);
+            "UPDATE course_hour_batch SET remaining=remaining+#{qty} WHERE id=#{id} AND remaining+#{qty}<=total")
+    int restore(@Param("id") Long id, @Param("qty") int qty);
 
     @org.apache.ibatis.annotations.Select(
             "SELECT DISTINCT user_id FROM course_hour_batch WHERE expire_at<=NOW() AND"
-                    + " remaining>frozen ORDER BY user_id")
+                    + " remaining>0 ORDER BY user_id")
     List<Long> expiredUsers();
 
     int insert(CourseHourBatch batch);

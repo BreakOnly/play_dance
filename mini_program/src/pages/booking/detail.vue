@@ -53,10 +53,10 @@
       <view class="sec-card card">
         <view class="sc-h"><text class="sc-t">支付规则</text></view>
         <view class="sc-list">
-          <text class="sc-li">· 约课冻结 {{ detail.costHours || 1 }} 课时</text>
+          <text class="sc-li">· 预约扣除 {{ detail.costHours || 1 }} 课时</text>
           <text class="sc-li">· 距开课至少 {{ cancelHours }} 小时可在线取消</text>
-          <text class="sc-li">· 临近开课请联系管理员取消；爽约核销冻结课时</text>
-          <text class="sc-li">· 候补不冻结课时；取消时已到期的原课时不会恢复</text>
+          <text class="sc-li">· 临近开课请联系管理员取消；爽约不退还已扣课时</text>
+          <text class="sc-li">· 候补不扣课时；取消时已到期的原课时不会恢复</text>
         </view>
       </view>
       <view class="sec-card card">
@@ -80,7 +80,7 @@
     <view v-if="bookPopup" class="mask" @tap="bookPopup = false">
       <view class="sheet card" @tap.stop>
         <view class="s-title">确定预约课程？</view>
-        <view class="s-text">{{ detail.courseName }} · {{ fmtRange(detail.startTime, detail.endTime) }}，{{ remaining === 0 ? '候补暂不冻结，转正时冻结' : '将冻结' }} {{ detail.costHours || 1 }} 课时；距开课至少 {{ cancelHours }} 小时可在线取消。</view>
+        <view class="s-text">{{ detail.courseName }} · {{ fmtRange(detail.startTime, detail.endTime) }}，{{ remaining === 0 ? '候补暂不扣课，转正时扣除' : '将扣除' }} {{ detail.costHours || 1 }} 课时；距开课至少 {{ cancelHours }} 小时可在线取消。</view>
         <view class="s-btns">
           <button class="s-cancel" @tap="bookPopup = false">取 消</button>
           <button class="btn-primary s-ok" @tap="doBook">确 定</button>
@@ -185,7 +185,7 @@ function onCancelBooking() {
   const d = detail.value
   uni.showModal({
     title: '取消预约',
-    content: `确定要取消预约该课程吗？\n《${d.courseName}》 ${dateCn(d.startTime)} ${fmtRange(d.startTime, d.endTime)}\n取消后冻结的 ${d.costHours || 1} 课时将立即退回。`,
+    content: `确定要取消预约该课程吗？\n《${d.courseName}》 ${dateCn(d.startTime)} ${fmtRange(d.startTime, d.endTime)}\n取消后仍在有效期内的已扣课时将退回。`,
     confirmText: '取消预约',
     cancelText: '再想想',
     confirmColor: '#ff2d9b',
@@ -199,7 +199,7 @@ function onCancelBooking() {
   })
 }
 
-/** 候补单取消（不受 6 小时限制，不涉及课时冻结） */
+/** 候补单取消（不受 6 小时限制，不扣课时） */
 function onCancelWaitlist() {
   const d = detail.value
   uni.showModal({

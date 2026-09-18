@@ -33,7 +33,7 @@ function load() {
 }
 function typeText(t) {
   return {
-    recharge: '充值', gift: '赠送', lock: '约课锁定', deduct: '签到核销', refund: '取消退回',
+    recharge: '充值', gift: '赠送', booking: '预约扣课', lock: '历史预约', deduct: '签到核销', refund: '取消退回',
     noshow: '爽约核销', expire: '过期', manual: '管理员调整', checkin: '签到积分', redeem: '积分兑换'
   }[t] || t
 }

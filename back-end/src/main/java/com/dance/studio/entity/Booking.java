@@ -16,7 +16,6 @@ public class Booking {
     /** booked待上课 checked已签到 cancelled已取消 noshow爽约 waitlist候补中 */
     private String status;
 
-    private Integer lockedHours;
     private Integer waitlistNo;
     private Integer isAdmin;
     private Integer cancelDeduct;

@@ -15,7 +15,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/** 余额=未冻结课时；批次 remaining 包含 frozen。门店事务锁保证多进程写入有序。 */
+/** 余额等于各批次剩余课时；预约直接扣课，取消按原批次退款。门店事务锁保证多进程写入有序。 */
 @Service
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
@@ -79,7 +79,6 @@ public class AccountService {
         b.setUserId(userId);
         b.setTotal(total);
         b.setRemaining(total);
-        b.setFrozen(0);
         b.setSource("recharge");
         b.setOrderId(order.getId());
         b.setExpireAt(days == 0 ? null : LocalDateTime.now().plusDays(days));
@@ -130,21 +129,21 @@ public class AccountService {
         pointLogMapper.insert(p);
     }
 
-    public void lockHours(Long userId, int cost, Long bookingId) {
+    public void deductForBooking(Long userId, int cost, Long bookingId) {
         lock.acquire();
         positive(cost);
         expireUser(userId);
         if (user(userId).getCourseBalance() < cost)
             throw new BizException(ResultCode.COURSE_HOUR_NOT_ENOUGH);
-        if (!allocationMapper.locked(bookingId).isEmpty()) throw new BizException("预约已冻结课时");
+        if (!allocationMapper.charged(bookingId).isEmpty()) throw new BizException("预约已扣课时");
         int left = cost;
         LocalDateTime now = LocalDateTime.now();
         for (CourseHourBatch b : batchMapper.lockAll(userId)) {
             if (left == 0) break;
             if (b.getExpireAt() != null && !b.getExpireAt().isAfter(now)) continue;
-            int take = Math.min(left, b.getRemaining() - b.getFrozen());
+            int take = Math.min(left, b.getRemaining());
             if (take <= 0) continue;
-            changed(batchMapper.freeze(b.getId(), take));
+            changed(batchMapper.decrease(b.getId(), take));
             HourAllocation a = new HourAllocation();
             a.setBookingId(bookingId);
             a.setBatchId(b.getId());
@@ -154,36 +153,35 @@ public class AccountService {
         }
         if (left != 0) throw new BizException("可用批次不足，操作已撤销，请核对课时");
         changed(userMapper.addCourseBalance(userId, -cost));
-        changed(userMapper.addFrozen(userId, cost));
-        writeHourLog(userId, "lock", -cost, "booking", bookingId, null, "预约冻结");
+        writeHourLog(userId, "booking", -cost, "booking", bookingId, null, "预约扣课时");
         assertBalanced(userId);
     }
 
-    public void refundLock(Long userId, int cost, Long bookingId) {
+    public void refundBooking(Long userId, int cost, Long bookingId) {
         settle(userId, cost, bookingId, true, "refund");
     }
 
-    public void consumeOnCheckin(Long userId, int cost, Long bookingId) {
+    public void confirmCheckin(Long userId, int cost, Long bookingId) {
         settle(userId, cost, bookingId, false, "deduct");
     }
 
-    public void forfeitOnNoShow(Long userId, int cost, Long bookingId, boolean noshow) {
-        settle(userId, cost, bookingId, false, noshow ? "noshow" : "deduct");
+    public void confirmNoShow(Long userId, int cost, Long bookingId) {
+        settle(userId, cost, bookingId, false, "noshow");
     }
 
     private void settle(Long userId, int cost, Long bookingId, boolean refund, String type) {
         lock.acquire();
         positive(cost);
         expireUser(userId);
-        List<HourAllocation> allocations = allocationMapper.locked(bookingId);
+        List<HourAllocation> allocations = allocationMapper.charged(bookingId);
         if (allocations.stream().mapToInt(HourAllocation::getHours).sum() != cost)
-            throw new BizException("预约冻结记录不匹配，操作已撤销");
+            throw new BizException("预约扣课记录不匹配，操作已撤销");
         int returned = 0;
         LocalDateTime now = LocalDateTime.now();
         for (HourAllocation a : allocations) {
             boolean valid = a.getExpireAt() == null || a.getExpireAt().isAfter(now);
             boolean release = refund && valid;
-            changed(batchMapper.release(a.getBatchId(), a.getHours(), release ? 0 : a.getHours()));
+            if (release) changed(batchMapper.restore(a.getBatchId(), a.getHours()));
             changed(
                     allocationMapper.finish(
                             bookingId,
@@ -191,7 +189,6 @@ public class AccountService {
                             release ? "released" : refund ? "expired" : "consumed"));
             if (release) returned += a.getHours();
         }
-        changed(userMapper.addFrozen(userId, -cost));
         if (returned > 0) changed(userMapper.addCourseBalance(userId, returned));
         writeHourLog(
                 userId,
@@ -202,7 +199,7 @@ public class AccountService {
                 null,
                 refund
                         ? "取消退回 " + returned + " 课时；已到期部分 " + (cost - returned) + " 课时不恢复"
-                        : type.equals("noshow") ? "爽约核销冻结课时" : "签到核销冻结课时");
+                        : type.equals("noshow") ? "爽约确认，预约时已扣课时" : "签到确认，预约时已扣课时");
         assertBalanced(userId);
     }
 
@@ -224,14 +221,14 @@ public class AccountService {
         for (CourseHourBatch b : batchMapper.lockAll(userId)) {
             if (b.getExpireAt() != null
                     && !b.getExpireAt().isAfter(now)
-                    && b.getRemaining() > b.getFrozen()) {
-                expired += b.getRemaining() - b.getFrozen();
-                changed(batchMapper.expireFree(b.getId()));
+                    && b.getRemaining() > 0) {
+                expired += b.getRemaining();
+                changed(batchMapper.zeroRemaining(b.getId()));
             }
         }
         if (expired > 0) {
             changed(userMapper.addCourseBalance(userId, -expired));
-            writeHourLog(userId, "expire", -expired, null, null, null, "未预约课时到期；冻结课时保留至本次预约结算");
+            writeHourLog(userId, "expire", -expired, null, null, null, "剩余课时到期");
         }
         assertBalanced(userId);
     }
@@ -250,13 +247,11 @@ public class AccountService {
                                                 && !b.getExpireAt()
                                                         .isAfter(
                                                                 LocalDateTime.now().plusDays(days)))
-                        .mapToInt(b -> b.getRemaining() - b.getFrozen())
+                        .mapToInt(b -> b.getRemaining())
                         .sum();
         return Map.of(
                 "available",
                 u.getCourseBalance(),
-                "frozen",
-                u.getFrozenHours(),
                 "points",
                 u.getPointsBalance(),
                 "expiring",
@@ -267,10 +262,8 @@ public class AccountService {
         User u = user(userId);
         List<CourseHourBatch> bs = batchMapper.lockAll(userId);
         int remaining = bs.stream().mapToInt(CourseHourBatch::getRemaining).sum();
-        int frozen = bs.stream().mapToInt(CourseHourBatch::getFrozen).sum();
-        if (remaining != u.getCourseBalance() + u.getFrozenHours()
-                || frozen != u.getFrozenHours()
-                || bs.stream().anyMatch(b -> b.getRemaining() < b.getFrozen() || b.getFrozen() < 0))
+        if (remaining != u.getCourseBalance()
+                || bs.stream().anyMatch(b -> b.getRemaining() < 0))
             throw new BizException("课时对账不一致，操作已撤销，请联系管理员核对历史记录");
     }
 

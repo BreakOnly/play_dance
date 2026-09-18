@@ -20,9 +20,15 @@
           </view>
         </view>
       </scroll-view>
-      <view class="date-count filter-entry" :class="{ active: hasFilter }" @tap="openFilter">
-        <view class="funnel"></view>
-      </view>
+      <button class="filter-entry" :class="{ active: hasFilter }" aria-label="筛选课程" @tap="openFilter">
+        <view class="filter-icon" aria-hidden="true">
+          <view class="filter-line"><view class="filter-knob"></view></view>
+          <view class="filter-line"><view class="filter-knob"></view></view>
+          <view class="filter-line"><view class="filter-knob"></view></view>
+        </view>
+        <text class="filter-label">筛选</text>
+        <view v-if="hasFilter" class="filter-dot"></view>
+      </button>
     </view>
 
     <view class="store-head"><view><text></text>玩舞尚志</view></view>
@@ -339,7 +345,7 @@ function onBook(s) {
   const full = isFull(s)
   uni.showModal({
     title: full ? '加入候补' : '确认约课',
-    content: `${s.courseName}\n${fmtTime(s.startTime)}–${fmtTime(s.endTime)}\n${full ? '候补暂不冻结，转正时冻结' : '预约冻结'} ${s.costHours || 1} 课时`,
+    content: `${s.courseName}\n${fmtTime(s.startTime)}–${fmtTime(s.endTime)}\n${full ? '候补暂不扣课，转正时扣除' : '预约扣除'} ${s.costHours || 1} 课时`,
     confirmColor: '#ff2d9b',
     success: (r) => {
       if (!r.confirm) return
@@ -388,12 +394,17 @@ onShow(async () => {
 .date-item view { margin-top: 7rpx; color: #9a9aa2; font-size: 31rpx; font-weight: 800; }
 .date-item.active, .date-item.active view { color: #ff6fb5; }
 .date-item.active::after { content: ''; position: absolute; bottom: 12rpx; width: 35rpx; height: 5rpx; border-radius: 4rpx; background: #ff2d9b; }
-/* 筛选按钮：仅漏斗图标；底色与日期区一致（透明），靠描边辨识 */
-.filter-entry { margin: 8rpx 20rpx 12rpx 0; padding: 0 40rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid #34343a; border-radius: 25rpx; background: transparent; color: #ff6fb5; }
-.filter-entry.active { border-color: #ff2d9b; background: rgba(255,45,155,.16); }
-.funnel { position: relative; width: 42rpx; height: 36rpx; }
-.funnel::before { content: ''; position: absolute; left: 0; top: 0; border-left: 21rpx solid transparent; border-right: 21rpx solid transparent; border-top: 23rpx solid currentColor; }
-.funnel::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 9rpx; height: 12rpx; margin-left: -4.5rpx; background: currentColor; }
+/* 等宽滑杆与圆形节点，避免漏斗拼接产生错位。 */
+.filter-entry { position: relative; box-sizing: border-box; flex: 0 0 96rpx; width: 96rpx; margin: 8rpx 20rpx 12rpx 8rpx; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10rpx; border: 1rpx solid #34343a; border-radius: 24rpx; background: #17171b; color: #ff6fb5; line-height: 1; }
+.filter-entry::after { border: 0; }
+.filter-entry.active { border-color: #ff6fb5; background: #301c29; }
+.filter-icon { width: 36rpx; height: 36rpx; display: flex; flex-direction: column; justify-content: space-between; padding: 4rpx 0; box-sizing: border-box; }
+.filter-line { position: relative; width: 36rpx; height: 3rpx; border-radius: 3rpx; background: currentColor; }
+.filter-knob { position: absolute; top: 50%; left: 7rpx; width: 10rpx; height: 10rpx; box-sizing: border-box; border: 3rpx solid currentColor; border-radius: 50%; background: #17171b; transform: translateY(-50%); }
+.filter-line:nth-child(2) .filter-knob { left: 22rpx; }
+.filter-entry.active .filter-knob { background: #301c29; }
+.filter-label { font-size: 20rpx; font-weight: 600; letter-spacing: 2rpx; }
+.filter-dot { position: absolute; top: 12rpx; right: 12rpx; width: 8rpx; height: 8rpx; border-radius: 50%; background: #ff6fb5; }
 /* ===== 筛选弹层 ===== */
 .flt-mask { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; }
 .flt-panel { width: 100%; height: 78vh; border-radius: 32rpx 32rpx 0 0; background: #17171a; display: flex; flex-direction: column; animation: sheet-up .25s ease-out; overflow: hidden; }

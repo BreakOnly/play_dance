@@ -142,11 +142,10 @@ class BusinessIntegrationTest {
         recharge(10);
         BookingVo b = bookings.book(user, schedule, false);
         assertEquals(9, value("course_balance"));
-        assertEquals(1, value("frozen_hours"));
+        assertEquals(9, db.queryForObject("SELECT SUM(remaining) FROM course_hour_batch WHERE user_id=?", Integer.class, user));
         bookings.cancel(b.getId(), user, false);
         bookings.cancel(b.getId(), user, false);
         assertEquals(10, value("course_balance"));
-        assertEquals(0, value("frozen_hours"));
         balanced();
     }
 
@@ -163,6 +162,7 @@ class BusinessIntegrationTest {
         }
         assertEquals(1, db.queryForObject("SELECT COUNT(*) FROM booking", Integer.class));
         assertEquals(9, value("course_balance"));
+        assertEquals(9, db.queryForObject("SELECT SUM(remaining) FROM course_hour_batch WHERE user_id=?", Integer.class, user));
         balanced();
     }
 
@@ -180,7 +180,6 @@ class BusinessIntegrationTest {
         checkins.scanCheckin(schedule, user);
         assertEquals(points, value("points_balance"));
         assertEquals(2, value("course_balance"));
-        assertEquals(0, value("frozen_hours"));
         assertEquals(1, db.queryForObject("SELECT COUNT(*) FROM checkin", Integer.class));
         balanced();
     }
@@ -196,10 +195,8 @@ class BusinessIntegrationTest {
         accounts.expireBatches();
         accounts.expireBatches();
         assertEquals(0, value("course_balance"));
-        assertEquals(1, value("frozen_hours"));
         bookings.cancel(b.getId(), user, false);
         assertEquals(0, value("course_balance"));
-        assertEquals(0, value("frozen_hours"));
         balanced();
     }
 
@@ -227,13 +224,12 @@ class BusinessIntegrationTest {
     }
 
     @Test
-    void waitlistDoesNotFreezeAndPromotesWithOneAllocation() {
+    void waitlistDoesNotChargeAndExpiresWithoutDeduction() {
         recharge(3);
         db.update("UPDATE course_schedule SET capacity=1,booked_count=1 WHERE id=?", schedule);
         var wait = bookings.book(user, schedule, false);
         assertEquals("waitlist", wait.getStatus());
         assertEquals(3, value("course_balance"));
-        assertEquals(0, value("frozen_hours"));
         db.update(
                 "UPDATE course_schedule SET start_time=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE"
                         + " id=?",
@@ -427,7 +423,6 @@ class BusinessIntegrationTest {
         assertThrows(BizException.class, () -> checkins.scanCheckin(schedule, user));
         assertEquals("booked", db.queryForObject("SELECT status FROM booking", String.class));
         assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM checkin", Integer.class));
-        assertEquals(1, value("frozen_hours"));
     }
 
     @Test
@@ -456,7 +451,7 @@ class BusinessIntegrationTest {
     }
 
     @Test
-    void cancellingASeatPromotesWaitlistAndFreezesOnlyThen() {
+    void cancellingASeatPromotesWaitlistAndChargesOnlyThen() {
         recharge(3);
         db.update("UPDATE course_schedule SET capacity=1 WHERE id=?", schedule);
         var first = bookings.book(user, schedule, false);
@@ -467,14 +462,54 @@ class BusinessIntegrationTest {
         r.setAmount(BigDecimal.ZERO);
         accounts.recharge(waiter, r, 1L);
         var waiting = bookings.book(waiter, schedule, false);
-        assertEquals(0, waiting.getLockedHours());
+        assertEquals(3, db.queryForObject("SELECT course_balance FROM `user` WHERE id=?", Integer.class, waiter));
         bookings.cancel(first.getId(), user, false);
         assertEquals("booked", bookingMapper.findById(waiting.getId()).getStatus());
         assertEquals(
-                1,
+                2,
                 db.queryForObject(
-                        "SELECT frozen_hours FROM `user` WHERE id=?", Integer.class, waiter));
+                        "SELECT course_balance FROM `user` WHERE id=?", Integer.class, waiter));
         accounts.assertBalanced(waiter);
+        balanced();
+    }
+
+    @Test
+    void insufficientHoursRollBackBookingAndSeat() {
+        assertThrows(BizException.class, () -> bookings.book(user, schedule, false));
+        assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM booking", Integer.class));
+        assertEquals(0, db.queryForObject("SELECT booked_count FROM course_schedule WHERE id=?", Integer.class, schedule));
+        balanced();
+    }
+
+    @Test
+    void noShowDoesNotDeductAgain() {
+        recharge(3);
+        var b = bookings.book(user, schedule, false);
+        db.update("UPDATE course_schedule SET end_time=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE id=?", schedule);
+        bookings.handleNoShow(b.getId());
+        bookings.handleNoShow(b.getId());
+        assertEquals("noshow", bookingMapper.findById(b.getId()).getStatus());
+        assertEquals(2, value("course_balance"));
+        assertEquals(2, db.queryForObject("SELECT SUM(remaining) FROM course_hour_batch WHERE user_id=?", Integer.class, user));
+        assertEquals(1, db.queryForObject("SELECT COUNT(*) FROM hour_log WHERE user_id=? AND amount<0", Integer.class, user));
+        balanced();
+    }
+
+    @Test
+    void cancellationRefundsOnlyValidOriginalBatchesAndUsesOriginalCost() {
+        recharge(1);
+        long firstBatch = db.queryForObject("SELECT MAX(id) FROM course_hour_batch", Long.class);
+        recharge(3);
+        db.update("UPDATE course SET cost_hours=3");
+        var b = bookings.book(user, schedule, false);
+        assertEquals(3, b.getCostHours());
+        assertEquals(1, value("course_balance"));
+        db.update("UPDATE course_hour_batch SET expire_at=DATE_SUB(NOW(),INTERVAL 1 DAY) WHERE id=?", firstBatch);
+        db.update("UPDATE course SET cost_hours=8");
+        bookings.cancel(b.getId(), user, false);
+        bookings.cancel(b.getId(), user, false);
+        assertEquals(3, value("course_balance"));
+        assertEquals(2, db.queryForObject("SELECT amount FROM hour_log WHERE ref_id=? AND type='refund'", Integer.class, b.getId()));
         balanced();
     }
 

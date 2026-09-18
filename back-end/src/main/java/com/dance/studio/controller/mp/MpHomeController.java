@@ -53,7 +53,6 @@ public class MpHomeController {
         User stu = userMapper.findById(sid);
 
         int available = (stu.getCourseBalance() == null ? 0 : stu.getCourseBalance());
-        int frozen = (stu.getFrozenHours() == null ? 0 : stu.getFrozenHours());
 
         // 今日已约课
         LocalDate today = LocalDate.now();
@@ -73,7 +72,6 @@ public class MpHomeController {
         account.put("name", stu.getName());
         account.put("avatar", stu.getAvatar());
         account.put("courseAvailable", available);
-        account.put("frozenHours", frozen);
         account.put("pointsBalance", stu.getPointsBalance());
         data.put("account", account);
         data.put("banners", bannerService.listEnabled(storeId));

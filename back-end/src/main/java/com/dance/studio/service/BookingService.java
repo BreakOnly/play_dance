@@ -65,13 +65,12 @@ public class BookingService {
         b.setUserId(userId);
         b.setScheduleId(scheduleId);
         b.setStatus(booked ? "booked" : "waitlist");
-        b.setLockedHours(booked ? c.getCostHours() : 0);
         b.setCostHours(c.getCostHours());
         b.setIsAdmin(isAdmin ? 1 : 0);
         b.setCheckinPoints(configService.getInt(1L, "points_per_checkin", 100));
         b.setWaitlistNo(booked ? null : bookingMapper.nextWaitlistNumber(scheduleId));
         bookingMapper.insert(b);
-        if (booked) accountService.lockHours(userId, b.getLockedHours(), b.getId());
+        if (booked) accountService.deductForBooking(userId, b.getCostHours(), b.getId());
         return myBookings(userId, null).stream()
                 .filter(v -> v.getId().equals(b.getId()))
                 .findFirst()
@@ -100,8 +99,8 @@ public class BookingService {
             throw new BizException("临近开课不可在线取消，请联系管理员处理");
         if (bookingMapper.cancel(b.getId(), b.getStatus(), 0) != 1)
             throw new BizException(ResultCode.CANCEL_NOT_ALLOWED);
-        if (b.getLockedHours() > 0)
-            accountService.refundLock(b.getUserId(), b.getLockedHours(), b.getId());
+        if ("booked".equals(b.getStatus()))
+            accountService.refundBooking(b.getUserId(), b.getCostHours(), b.getId());
         if ("booked".equals(b.getStatus())) {
             scheduleMapper.decrBooked(s.getId());
             promoteWaitlist(s.getId());
@@ -115,10 +114,6 @@ public class BookingService {
         Booking next;
         while ((next = bookingMapper.nextWaitlist(scheduleId)) != null) {
             int cost = next.getCostHours();
-            if (next.getLockedHours() > 0) {
-                accountService.refundLock(next.getUserId(), next.getLockedHours(), next.getId());
-                bookingMapper.clearWaitlistLock(next.getId());
-            }
             if (accountService.balances(next.getUserId()).get("available") < cost) {
                 bookingMapper.cancel(next.getId(), "waitlist", 0);
                 notificationService.push(
@@ -131,14 +126,14 @@ public class BookingService {
                 continue;
             }
             if (scheduleMapper.incrBooked(scheduleId) != 1) return;
-            if (bookingMapper.promoteWithHours(next.getId(), cost) != 1)
+            if (bookingMapper.promote(next.getId()) != 1)
                 throw new BizException("候补状态已变化，请重试");
-            accountService.lockHours(next.getUserId(), cost, next.getId());
+            accountService.deductForBooking(next.getUserId(), cost, next.getId());
             notificationService.push(
                     next.getUserId(),
                     "booking",
                     "候补转正成功",
-                    "已为你预留名额并冻结课时，请按时到店。",
+                    "已为你预留名额并扣除课时，请按时到店。",
                     "booking",
                     next.getId());
             return;
@@ -153,7 +148,7 @@ public class BookingService {
         CourseSchedule s = scheduleMapper.findById(b.getScheduleId());
         if (s.getEndTime().isAfter(LocalDateTime.now())) return;
         if (bookingMapper.updateStatusIf(b.getId(), "noshow", "booked") != 1) return;
-        accountService.forfeitOnNoShow(b.getUserId(), b.getLockedHours(), b.getId(), true);
+        accountService.confirmNoShow(b.getUserId(), b.getCostHours(), b.getId());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -161,8 +156,6 @@ public class BookingService {
         lock.acquire();
         for (Booking b : bookingMapper.expiredWaitlists()) {
             if (bookingMapper.cancel(b.getId(), "waitlist", 0) != 1) continue;
-            if (b.getLockedHours() > 0)
-                accountService.refundLock(b.getUserId(), b.getLockedHours(), b.getId());
             notificationService.push(
                     b.getUserId(),
                     "booking",

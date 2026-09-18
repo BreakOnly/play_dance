@@ -33,7 +33,7 @@ public class MpMemberController {
     private final BookingService bookingService;
     private final com.dance.studio.service.AccountService accountService;
 
-    @Operation(summary = "会员资料（姓名/等级/课时/冻结/有效期/临期/待上课数）")
+    @Operation(summary = "会员资料（姓名/等级/课时/有效期/临期/待上课数）")
     @GetMapping
     public Result<Map<String, Object>> member() {
         Long sid = ContextHolder.userId();
@@ -41,8 +41,7 @@ public class MpMemberController {
         User stu = userMapper.findById(sid);
 
         int available = stu.getCourseBalance() == null ? 0 : stu.getCourseBalance();
-        int frozen = stu.getFrozenHours() == null ? 0 : stu.getFrozenHours();
-        int totalHours = available + frozen;
+        int totalHours = available;
 
         // 待上课数
         List<BookingVo> booked = bookingService.myBookings(sid, "booked");
@@ -52,7 +51,6 @@ public class MpMemberController {
         LocalDateTime expireAt = batchMapper.earliestExpire(sid);
         String validUntil = expireAt != null ? expireAt.toLocalDate().toString() : "长期有效";
         if (totalHours == 0) validUntil = "暂无课时";
-        else if (expireAt == null && available == 0 && frozen > 0) validUntil = "已预约课时待结算";
 
         // 按配置天数逐批次汇总临期课时。
         int expiringHours = balances.get("expiring");
@@ -61,7 +59,6 @@ public class MpMemberController {
         data.put("name", stu.getName());
         data.put("phone", stu.getPhone());
         data.put("totalHours", totalHours);
-        data.put("frozenHours", frozen);
         data.put("availableHours", available);
         data.put("upcomingCount", upcomingCount);
         data.put("validUntil", validUntil);
