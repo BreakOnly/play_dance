@@ -9,9 +9,6 @@ const routes = [
     component: Layout,
     redirect: '/users',
     children: [
-      { path: 'goods', name: '积分商品', component: () => import('@/views/Goods.vue'), meta: { icon: 'Present' } },
-      { path: 'redeems', name: '到店领取', component: () => import('@/views/Redeems.vue'), meta: { icon: 'CircleCheck' } },
-      { path: 'dashboard', name: '经营概览', component: () => import('@/views/Dashboard.vue'), meta: { icon: 'DataAnalysis' } },
       { path: 'users', name: '用户管理', component: () => import('@/views/Users.vue'), meta: { icon: 'User' } },
       { path: 'courses', name: '课程管理', component: () => import('@/views/Courses.vue'), meta: { icon: 'Reading' } },
       { path: 'teachers', name: '教师管理', component: () => import('@/views/Teachers.vue'), meta: { icon: 'Avatar' } },

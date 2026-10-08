@@ -28,6 +28,7 @@
         <result column="user_id" property="userId"/>
         <result column="title" property="title"/>
         <result column="cover_url" property="coverUrl"/>
+        <result column="file_url" property="fileUrl"/>
         <result column="description" property="description"/>
         <result column="duration" property="duration"/>
         <result column="status" property="status"/>
@@ -96,7 +97,7 @@
     </select>
 
     <select id="listAdmin" resultMap="VoMap">
-        SELECT v.id, v.user_id, v.title, v.cover_url, v.description, v.duration,
+        SELECT v.id, v.user_id, v.title, v.cover_url, v.file_url, v.description, v.duration,
                v.status, v.reject_reason, v.is_recommended, v.like_count, v.created_at,
                s.name AS author_name, s.avatar AS author_avatar, 0 AS liked
         FROM user_video v

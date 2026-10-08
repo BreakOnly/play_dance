@@ -47,9 +47,9 @@
   --el-color-primary-light-9: #2a0f1f;
   --el-color-primary-dark-2: #d61f80;
 
-  /* 功能色 */
-  --el-color-success: #00e676;
-  --el-color-success-light-9: rgba(0, 230, 118, 0.1);
+  /* 功能色（success 统一用品牌粉，不引入绿色，保持黑粉风格） */
+  --el-color-success: #FF2D9B;
+  --el-color-success-light-9: rgba(255, 45, 155, 0.1);
   --el-color-warning: #ffd166;
   --el-color-warning-light-9: rgba(255, 209, 102, 0.1);
   --el-color-danger: #ff5252;
@@ -155,13 +155,13 @@ body {
 
 /* 成功按钮 */
 .el-button--success {
-  background: rgba(0, 230, 118, 0.15) !important;
-  border-color: rgba(0, 230, 118, 0.3) !important;
-  color: #00e676 !important;
+  background: rgba(255, 45, 155, 0.15) !important;
+  border-color: rgba(255, 45, 155, 0.3) !important;
+  color: #FF6FB5 !important;
 }
 .el-button--success:hover {
-  background: rgba(0, 230, 118, 0.25) !important;
-  color: #00e676 !important;
+  background: rgba(255, 45, 155, 0.25) !important;
+  color: #FF6FB5 !important;
 }
 
 /* 警告按钮 */
@@ -585,9 +585,9 @@ body {
   border-radius: 10px;
 }
 .el-message--success {
-  border-color: rgba(0, 230, 118, 0.3) !important;
-  background: rgba(0, 230, 118, 0.1) !important;
-  color: #00e676 !important;
+  border-color: rgba(255, 45, 155, 0.3) !important;
+  background: rgba(255, 45, 155, 0.1) !important;
+  color: #FF6FB5 !important;
 }
 .el-message--warning {
   border-color: rgba(255, 209, 102, 0.3) !important;
@@ -697,8 +697,8 @@ body {
   border: none !important;
 }
 .el-tag--success {
-  background: rgba(0, 230, 118, 0.12) !important;
-  color: #00e676 !important;
+  background: rgba(255, 45, 155, 0.12) !important;
+  color: #FF6FB5 !important;
   border: none !important;
 }
 .el-tag--warning {
@@ -938,8 +938,8 @@ body {
   color: #b3a0ff !important;
 }
 .el-alert--success {
-  background: rgba(0, 230, 118, 0.1) !important;
-  color: #00e676 !important;
+  background: rgba(255, 45, 155, 0.1) !important;
+  color: #FF6FB5 !important;
 }
 .el-alert--warning {
   background: rgba(255, 209, 102, 0.1) !important;

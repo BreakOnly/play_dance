@@ -20,8 +20,9 @@ public interface QaQuestionMapper {
 
     int count(@Param("storeId") Long storeId);
 
-    /** 后台列表（含隐藏问题） */
+    /** 后台列表（含隐藏问题；viewerId 传 null，不查点赞态） */
     List<QaQuestionVo> listAdmin(@Param("storeId") Long storeId,
+                                 @Param("viewerId") Long viewerId,
                                  @Param("limit") Integer limit,
                                  @Param("offset") Integer offset);
 

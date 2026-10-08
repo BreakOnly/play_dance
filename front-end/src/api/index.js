@@ -92,10 +92,7 @@ export const uploadUrl = '/api/admin/upload'
 export const videoApi = {
   publicList: () => http.get('/api/admin/public-videos'),
   publish: (data) => http.post('/api/admin/public-videos', data),
-  hidePublic: (id) => http.delete(`/api/admin/public-videos/${id}`),
-  list: (params) => http.get('/api/admin/videos', { params }),
-  create: (data) => http.post('/api/admin/videos', data),
-  del: (id) => http.delete(`/api/admin/videos/${id}`)
+  hidePublic: (id) => http.delete(`/api/admin/public-videos/${id}`)
 }
 
 export const qaApi = {

@@ -1,7 +1,10 @@
 # 本地配置文件不打包；兼容当前开发者已有的文件。
+# 第一条路径匹配从 back-end 目录启动（java -jar）；
+# 第二条匹配 IDE 从项目根目录直跑 main 类（VS Code 默认工作目录为 workspace 根）。
+# dev.yml 被 pom 排除在打包外，classpath 中不存在，只能走源码目录的 file: 路径。
 spring:
   config:
-    import: optional:file:./src/main/resources/application-dev.yml,optional:file:./config/application-local.yml
+    import: optional:file:./src/main/resources/application-dev.yml,optional:file:./back-end/src/main/resources/application-dev.yml,optional:file:./config/application-local.yml
 app:
   wechat:
     mock: ${WX_MOCK:true}

@@ -11,6 +11,8 @@ public class UserVideoVo {
     private Long userId;
     private String title;
     private String coverUrl;
+    /** 存储地址（仅后台列表返回，小程序端接口不返回） */
+    private String fileUrl;
     private String description;
     /** 秒 */
     private Integer duration;

@@ -58,7 +58,7 @@
     <select id="listByQuestion" resultMap="VoMap">
         <include refid="voSelect"/>
         WHERE a.question_id = #{questionId} AND a.status = 1
-        ORDER BY a.is_teacher DESC, a.like_count DESC, a.id
+        ORDER BY a.created_at DESC, a.like_count DESC, a.id DESC
     </select>
 
     <select id="findFirst" resultMap="VoMap">
@@ -72,7 +72,7 @@
     <select id="listByQuestionAdmin" resultMap="VoMap">
         <include refid="voSelect"/>
         WHERE a.question_id = #{questionId}
-        ORDER BY a.is_teacher DESC, a.id
+        ORDER BY a.created_at DESC, a.like_count DESC, a.id DESC
     </select>
 
     <update id="changeLikeCount">

@@ -9,7 +9,6 @@
     { "path": "pages/qa/qa", "style": { "navigationBarTitleText": "咨询问答" } },
     { "path": "pages/qa/ranking", "style": { "navigationBarTitleText": "点赞排行" } },
     { "path": "pages/qa/detail", "style": { "navigationBarTitleText": "问题详情" } },
-    { "path": "pages/redeem/redeem", "style": { "navigationBarTitleText": "手办兑换" } },
     { "path": "pages/mine/mine", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/login/login", "style": { "navigationBarTitleText": "登录", "navigationStyle": "custom" } },
     { "path": "pages/mybookings/mybookings", "style": { "navigationBarTitleText": "我的约课" } },
@@ -33,7 +32,6 @@
       { "pagePath": "pages/home/home", "text": "首页" },
       { "pagePath": "pages/booking/booking", "text": "门店课程" },
       { "pagePath": "pages/qa/qa", "text": "咨询" },
-      { "pagePath": "pages/redeem/redeem", "text": "积分兑换" },
       { "pagePath": "pages/mine/mine", "text": "我的" }
     ]
   }

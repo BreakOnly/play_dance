@@ -2,13 +2,12 @@
   <div class="page-card">
     <div class="page-toolbar">
       <span class="page-title">视频管理</span>
-      <el-radio-group v-model="mode" @change="load"><el-radio-button value="classroom">私有课堂视频</el-radio-button><el-radio-button value="public">公开推荐视频</el-radio-button></el-radio-group>
       <el-button type="primary" @click="open()">新增视频</el-button>
     </div>
     <el-table :data="list" border>
       <el-table-column prop="title" label="标题" />
-      <el-table-column prop="videoDate" label="日期" width="120" />
-      <el-table-column label="可见范围" width="140"><template #default="{row}">{{ mode === 'public' ? '全体注册学员' : scopeText(row.scopeType) }}</template></el-table-column>
+      <el-table-column prop="createdAt" label="发布时间" width="170" />
+      <el-table-column prop="likeCount" label="点赞数" width="90" />
       <el-table-column prop="fileUrl" label="地址" show-overflow-tooltip />
       <el-table-column label="操作" width="100"><template #default="{row}"><el-button link type="danger" @click="del(row)">删除</el-button></template></el-table-column>
     </el-table>
@@ -16,45 +15,75 @@
     <el-dialog v-model="visible" title="新增视频" width="480px">
       <el-form :model="f" label-width="90px">
         <el-form-item label="标题"><el-input v-model="f.title" /></el-form-item>
-        <el-form-item v-if="mode === 'classroom'" label="所属课程"><el-select v-model="f.courseId" clearable><el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" /></el-select></el-form-item>
-        <el-form-item v-if="mode === 'classroom'" label="所属课次"><el-input-number v-model="f.scheduleId" :min="1" placeholder="课次ID" /></el-form-item>
-        <el-form-item label="课堂日期"><el-date-picker v-model="f.videoDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
-        <el-form-item v-if="mode === 'classroom'" label="可见范围">
-          <el-select v-model="f.scopeType">
-            <el-option label="该课已签到用户" value="checked_in" />
-            <el-option label="该课已约课用户" value="booked" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="视频文件">
-          <el-upload :action="uploadVideoUrl" :headers="headers" :show-file-list="true" :limit="1" :on-success="onUploaded">
-            <el-button>上传视频</el-button>
+          <el-upload
+            ref="uploadRef"
+            :action="uploadVideoUrl"
+            :headers="headers"
+            :auto-upload="false"
+            :limit="1"
+            accept="video/*"
+            :on-exceed="onExceed"
+            :on-change="syncPending"
+            :on-remove="syncPending"
+            :on-success="onUploaded"
+            :on-error="onUploadError"
+          >
+            <el-button>选择视频</el-button>
           </el-upload>
-          <p v-if="mode === 'public'">保存后将向所有注册学员公开，并展示在首页推荐和榜单。请确认有权公开此视频。</p>
         </el-form-item>
       </el-form>
-      <template #footer><el-button @click="visible=false">取消</el-button><el-button type="primary" @click="save">保存</el-button></template>
+      <template #footer>
+        <el-button @click="visible=false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save">{{ saving ? '上传中…' : '保存' }}</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { videoApi, courseApi } from '@/api'
+import { ref, nextTick, onMounted } from 'vue'
+import { ElMessage, ElMessageBox, genFileId } from 'element-plus'
+import { videoApi } from '@/api'
 
-const list = ref([]); const courses = ref([]); const visible = ref(false); const f = ref({})
-const mode = ref('classroom')
+const list = ref([]); const visible = ref(false); const f = ref({})
+const uploadRef = ref(); const saving = ref(false); const hasPending = ref(false)
 const uploadVideoUrl = '/api/admin/upload/video'
 const headers = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }
 
-function load() { (mode.value === 'public' ? videoApi.publicList() : videoApi.list({})).then((d) => list.value = d || []) }
-function open() { f.value = { scopeType: 'checked_in' }; visible.value = true }
-function onUploaded(res) { if (res && res.code === 0) { f.value.fileUrl = res.data.url; ElMessage.success('上传成功') } else { ElMessage.error('上传失败') } }
-function save() {
-  if (!f.value.fileUrl) { ElMessage.warning('请先上传或填写视频地址'); return }
-  (mode.value === 'public' ? videoApi.publish(f.value) : videoApi.create(f.value)).then(() => { ElMessage.success('已保存'); visible.value = false; load() })
+function load() { videoApi.publicList().then((d) => list.value = d || []) }
+function open() {
+  f.value = {}; saving.value = false; hasPending.value = false; visible.value = true
+  nextTick(() => uploadRef.value && uploadRef.value.clearFiles())
 }
-function del(row) { ElMessageBox.confirm('下架该视频？').then(() => (mode.value === 'public' ? videoApi.hidePublic(row.id) : videoApi.del(row.id)).then(() => { ElMessage.success('已下架'); load() })).catch(() => {}) }
-function scopeText(s) { return { checked_in: '已签到用户', booked: '已约课用户', custom: '指定用户' }[s] || s }
-onMounted(() => { courseApi.courses().then((d) => courses.value = d || []); load() })
+// 同步"已选择、尚未上传"状态（auto-upload=false，选择文件不触发上传）
+function syncPending(_file, fileList) { hasPending.value = fileList.some((x) => x.status === 'ready') }
+// 已选过文件再重选：直接替换旧选择；旧文件从未上传，不会在 OSS 留残留
+function onExceed(files) {
+  uploadRef.value.clearFiles()
+  const file = files[0]
+  file.uid = genFileId()
+  uploadRef.value.handleStart(file)
+}
+function onUploaded(res) {
+  if (res && res.code === 0) { f.value.fileUrl = res.data.url; publish() } else { onUploadError() }
+}
+function onUploadError() {
+  saving.value = false; hasPending.value = false
+  uploadRef.value && uploadRef.value.clearFiles()
+  ElMessage.error('视频上传失败，请重新选择文件')
+}
+function save() {
+  if (!f.value.title) { ElMessage.warning('请填写标题'); return }
+  if (hasPending.value) { saving.value = true; uploadRef.value.submit(); return } // 上传完成后在 onUploaded 里自动发布
+  if (!f.value.fileUrl) { ElMessage.warning('请先选择视频文件'); return }
+  saving.value = true; publish()
+}
+function publish() {
+  videoApi.publish(f.value).then(() => {
+    ElMessage.success('已发布'); visible.value = false; load()
+  }).catch(() => {}).finally(() => { saving.value = false })
+}
+function del(row) { ElMessageBox.confirm('下架该视频？').then(() => videoApi.hidePublic(row.id).then(() => { ElMessage.success('已下架'); load() })).catch(() => {}) }
+onMounted(load)
 </script>

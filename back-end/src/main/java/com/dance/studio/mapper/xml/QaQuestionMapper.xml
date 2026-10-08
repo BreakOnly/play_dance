@@ -56,7 +56,7 @@
     <select id="list" resultMap="VoMap">
         <include refid="voSelect"/>
         WHERE q.store_id = #{storeId} AND q.status = 1
-        ORDER BY q.id DESC
+        ORDER BY q.created_at DESC, q.like_count DESC, q.id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -68,7 +68,7 @@
     <select id="listAdmin" resultMap="VoMap">
         <include refid="voSelect"/>
         WHERE q.store_id = #{storeId}
-        ORDER BY q.id DESC
+        ORDER BY q.created_at DESC, q.like_count DESC, q.id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 

@@ -151,13 +151,13 @@ public class QaService {
 
     public PageResult<QaQuestionVo> listAdmin(Long storeId, int page, int size) {
         int total = questionMapper.countAdmin(storeId);
-        List<QaQuestionVo> list = questionMapper.listAdmin(storeId, size, (page - 1) * size);
+        List<QaQuestionVo> list = questionMapper.listAdmin(storeId, null, size, (page - 1) * size);
         return new PageResult<>(list, total, page, size);
     }
 
     /** 后台：某问题全部回答（含隐藏） */
     public List<QaAnswerVo> answers(Long questionId) {
-        return answerMapper.listByQuestionAdmin(questionId);
+        return answerMapper.listByQuestionAdmin(questionId, null);
     }
 
     /** 隐藏/删除问题（连带隐藏回答） */

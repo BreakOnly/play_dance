@@ -31,7 +31,6 @@
       <view @tap="goBookings"><view class="service-icon">约</view><text>我的约课</text><text>{{ member.upcomingCount || 0 }} 节待上课</text><text>›</text></view>
       <view @tap="showMessages"><view class="service-icon">信</view><text>消息通知</text><text>{{ unread ? unread + ' 条未读' : '查看消息' }}</text><text>›</text></view>
       <view @tap="goLogs"><view class="service-icon">账</view><text>课时与积分明细</text><text></text><text>›</text></view>
-      <view @tap="goRedeem"><view class="service-icon">兑</view><text>积分兑换</text><text>{{ member.pointsBalance ?? 0 }} 积分</text><text>›</text></view>
       <view @tap="showRule"><view class="service-icon">规</view><text>预约与取消规则</text><text></text><text>›</text></view>
       <view @tap="callStudio"><view class="service-icon">电</view><text>联系舞房</text><text>{{ servicePhone }}</text><text>›</text></view>
     </view>
@@ -87,7 +86,6 @@ function callStudio() {
 
 function showMessages() { uni.navigateTo({ url: '/pages/notifications/notifications' }) }
 function goLogs() { uni.navigateTo({ url: '/pages/logs/logs' }) }
-function goRedeem() { uni.switchTab({ url: '/pages/redeem/redeem' }) }
 function showRule() {
   uni.showModal({
     title: '预约与取消规则',
